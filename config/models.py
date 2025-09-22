@@ -115,6 +115,7 @@ class ProductBatch(models.Model):
     lot_number = models.CharField(max_length=100, db_column='lot_number')
     expiry_date = models.DateTimeField(db_column='expiry_date')
     quantity = models.PositiveIntegerField(db_column='quantity')
+    reserved = models.PositiveIntegerField(default=0, db_column='reserved')
     location = models.ForeignKey(
         Location, 
         on_delete=models.SET_NULL, 
@@ -156,6 +157,7 @@ class Order(models.Model):
     STATUS_CHOICES = [
         ('APPROVED', 'Approved'),
         ('PENDING', 'Pending'),
+        ('PARTIAL', 'Partial'),
         ('REJECTED', 'Rejected'),
         ('RECEIVED', 'Received'),
         ('CANCELLED', 'Cancelled'),
@@ -214,7 +216,9 @@ class OrderItem(models.Model):
         ProductBatch, 
         on_delete=models.CASCADE, 
         db_column='batch_id',
-        to_field='batch_id'
+        to_field='batch_id',
+        null=True,
+        blank=True
     )
     product = models.ForeignKey(
         Product, 
@@ -244,10 +248,9 @@ class OrderItem(models.Model):
         if not self.order_item_id:
             self.order_item_id = generate_code(OrderItem, 'order_item_id', 'ITEM')
         
-        # Calculate with decimal precision
         if self.price_per_unit is not None and self.quantity_ordered is not None:
             self.total_price = self.price_per_unit * self.quantity_ordered
-            self.total_cost = self.total_price  # Assuming no additional costs
+            self.total_cost = self.total_price
         
         super().save(*args, **kwargs)
 
