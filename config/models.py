@@ -19,12 +19,12 @@ def generate_code(model, field_name, prefix, length=5):
 
 class Category(models.Model):
     category_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='category_code')
-    category_id = models.CharField(max_length=10, unique=True, editable=False, db_column='category_id')
+    category_id = models.CharField(max_length=15, unique=True, editable=False, db_column='category_id')
     category_name = models.CharField(max_length=100, unique=True, db_column='category_name')
 
     def save(self, *args, **kwargs):
         if not self.category_id:
-            self.category_id = generate_code(Category, 'category_id', 'CAT')
+            self.category_id = generate_code(Category, 'category_id', 'CAT-')
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -35,12 +35,12 @@ class Category(models.Model):
 
 class Location(models.Model):
     location_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='location_code')
-    location_id = models.CharField(max_length=10, unique=True, editable=False, db_column='location_id')
+    location_id = models.CharField(max_length=15, unique=True, editable=False, db_column='location_id')
     location_name = models.CharField(max_length=255, unique=True, db_column='location_name')
 
     def save(self, *args, **kwargs):
         if not self.location_id:
-            self.location_id = generate_code(Location, 'location_id', 'LOC')
+            self.location_id = generate_code(Location, 'location_id', 'LOC-')
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -51,13 +51,13 @@ class Location(models.Model):
 
 class Supplier(models.Model):
     supplier_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='supplier_code')
-    supplier_id = models.CharField(max_length=10, unique=True, editable=False, db_column='supplier_id')
+    supplier_id = models.CharField(max_length=15, unique=True, editable=False, db_column='supplier_id')
     supplier_name = models.CharField(max_length=255, unique=True, db_column='supplier_name')
     contact_info = models.TextField(blank=True, null=True, db_column='contact_info')
 
     def save(self, *args, **kwargs):
         if not self.supplier_id:
-            self.supplier_id = generate_code(Supplier, 'supplier_id', 'SUP')
+            self.supplier_id = generate_code(Supplier, 'supplier_id', 'SUP-')
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -94,7 +94,7 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.product_id:
-            self.product_id = generate_code(Product, "product_id", "PROD")
+            self.product_id = generate_code(Product, "product_id", "PROD-")
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -164,7 +164,7 @@ class Order(models.Model):
     ]
 
     order_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='order_code')
-    order_id = models.CharField(max_length=15, unique=True, editable=False, db_column='order_id')
+    order_id = models.CharField(max_length=20, unique=True, editable=False, db_column='order_id')
     supplier = models.ForeignKey(
         Supplier, 
         on_delete=models.CASCADE, 
@@ -180,7 +180,7 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if not self.order_id:
             year = timezone.now().year
-            prefix = f"ORD{year}"
+            prefix = f"ORD-{year}-"
             last_entry = Order.objects.filter(order_id__startswith=prefix).order_by("-order_id").first()
 
             if not last_entry:
@@ -246,7 +246,7 @@ class OrderItem(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_item_id:
-            self.order_item_id = generate_code(OrderItem, 'order_item_id', 'ITEM')
+            self.order_item_id = generate_code(OrderItem, 'order_item_id', 'ITEM-')
         
         if self.price_per_unit is not None and self.quantity_ordered is not None:
             self.total_price = self.price_per_unit * self.quantity_ordered
@@ -259,6 +259,32 @@ class OrderItem(models.Model):
 
     class Meta:
         db_table = 'order_item'
+
+class OrderEvent(models.Model):
+
+    event_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='event_code')
+    event_id = models.CharField(max_length=20, unique=True, editable=False, db_column='event_id')
+    order = models.ForeignKey(
+        Order, 
+        on_delete=models.CASCADE, 
+        related_name='events', 
+        db_column='order_id',
+        to_field='order_id'
+    )
+    event_type = models.CharField(max_length=20, db_column='event_type')
+    previous_status = models.CharField(max_length=10, null=True, db_column='previous_status')
+    new_status = models.CharField(max_length=10, db_column='new_status')
+    performed_by = models.TextField(db_column='performed_by')
+    timestamp = models.DateTimeField(default=timezone.now, db_column='timestamp')
+    notes = models.TextField(blank=True, null=True, db_column='notes')
+
+    def save(self, *args, **kwargs):
+        if not self.event_id:
+            self.event_id = generate_code(OrderEvent, 'event_id', 'O-EVT-')
+        super().save(*args, **kwargs)
+
+    class Meta:
+        db_table = 'order_event'
 
 class Dispense(models.Model):
     STATUS_CHOICES = [
@@ -325,6 +351,39 @@ class DispenseItem(models.Model):
     class Meta:
         db_table = 'dispense_item'
 
+class DispenseEvent(models.Model):
+    EVENT_TYPES = [
+        ('CREATED', 'Created'),
+        ('APPROVED', 'Approved'),
+        ('RELEASED', 'Released'),
+        ('CANCELLED', 'Cancelled'),
+        ('REJECTED', 'Rejected'),
+    ]
+
+    event_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='event_code')
+    event_id = models.CharField(max_length=20, unique=True, editable=False, db_column='event_id')
+    dispense = models.ForeignKey(
+        Dispense, 
+        on_delete=models.CASCADE, 
+        related_name='events', 
+        db_column='dispense_id',
+        to_field='dispense_id'
+    )
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPES, db_column='event_type')
+    previous_status = models.CharField(max_length=10, db_column='previous_status')
+    new_status = models.CharField(max_length=10, db_column='new_status')
+    performed_by = models.TextField(db_column='performed_by')
+    timestamp = models.DateTimeField(default=timezone.now, db_column='timestamp')
+    notes = models.TextField(blank=True, null=True, db_column='notes')
+
+    def save(self, *args, **kwargs):
+        if not self.event_id:
+            self.event_id = generate_code(DispenseEvent, 'event_id', 'DEVT')
+        super().save(*args, **kwargs)
+
+    class Meta:
+        db_table = 'dispense_event'
+
 class Transaction(models.Model):
     TRANSACTION_TYPES = [
         ('IN', 'Stock In'),
@@ -359,7 +418,7 @@ class Transaction(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.transaction_id:
-            self.transaction_id = generate_code(Transaction, "transaction_id", "TXN")
+            self.transaction_id = generate_code(Transaction, "transaction_id", "TXN-")
         super().save(*args, **kwargs)
 
     def __str__(self):
