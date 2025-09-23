@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.db.models import Count, Sum
 
 from config.models import Category, Location, Order, OrderEvent, OrderItem, Product, ProductBatch, Supplier, Transaction
+from config.views import order_create, order_approve, order_reject, order_receive, order_cancel
 
 
 def setup_test_data():
@@ -66,31 +67,13 @@ def setup_test_data():
 
     return user, product, supplier
 
-def create_order_event(order, event_type, previous_status, new_status, performed_by, notes=""):
-    event = OrderEvent.objects.create(
-        order = order,
-        event_type = event_type,
-        previous_status = previous_status,
-        new_status = new_status,
-        performed_by = performed_by,
-        notes = notes
-    )
-
-    print(f"Order Record:")
-    print(f"Order ID: {order.order_id}")
-    print(f"Event Type: {event.event_type}")
-    print(f"Status Change: {event.previous_status} -> {event.new_status}")
-    print(f"Performed By: {event.performed_by}")
-
 
 def test_create_order():
     print("\n" + "================================================")
     print("TEST 1: Order Creation...")
     print("================================================")
 
-
     user, product, supplier = setup_test_data()
-
     factory = RequestFactory()
 
     order_data = {
@@ -104,50 +87,48 @@ def test_create_order():
         ]
     }
 
-    request = factory.post('/orders/create/', data = json.dumps(order_data), content_type = 'application/json')
-
-    request.user = user
-    request._body = json.dumps(order_data).encode('utf-8')
+    print("Testing order creation using views.py function")
 
     try:
-        print("Testing order creation logic calling it from views directly")
-
-        # Call the view function directly
-        order = Order.objects.create(
-            supplier = supplier,
-            ordered_by = user.get_full_name() or user.username,
-            status = 'PENDING'
+        # Create request using RequestFactory
+        request = factory.post(
+            '/orders/create/', 
+            data=json.dumps(order_data), 
+            content_type='application/json'
         )
+        request.user = user
 
-        print(f"Order Created: {order.order_id}")
-        print(f"Order Status:  {order.status}")
-        print(f"Ordered By: {order.ordered_by}")
+        # Call the actual view function
+        response = order_create(request)
+        
+        # Parse the JSON response
+        response_data = json.loads(response.content)
+        
+        if response_data.get('success'):
+            order_id = response_data.get('order_id')
+            order = Order.objects.get(order_id=order_id)
+            
+            print(f"Order Created: {order.order_id}")
+            print(f"Order Status: {order.status}")
+            print(f"Ordered By: {order.ordered_by}")
+            print(f"Response: {response_data.get('message')}")
 
-        create_order_event(
-            order = order,
-            event_type = 'IN',
-            previous_status = None,
-            new_status = order.status,
-            performed_by = order.ordered_by,
-            notes = "Order created in system."
-        )
+            # Display order items
+            for item in order.items.all():
+                print(f"Order Item Created")
+                print(f"Product: {item.product.product_name}")
+                print(f"Quantity: {item.quantity_ordered}")
+                print(f"Price per Unit: {item.price_per_unit}")
+                print(f"Total Price: {item.total_price}")
 
-        order_item = OrderItem.objects.create(
-            order = order,
-            product = product,
-            quantity_ordered = 100,
-            price_per_unit = 15.00
-        )
+            return order
+        else:
+            print(f"Order creation failed: {response_data.get('error')}")
+            return None
 
-        print(f"Order Item Created")
-        print(f"Product: {order_item.product.product_name}")
-        print(f"Quantity: {order_item.quantity_ordered}")
-        print(f"Price per Unit: {order_item.price_per_unit}")
-        print(f"Total Price: {order_item.total_price}")
-
-        return order
     except Exception as e:
         print(f"Order creation failed: {e}")
+        traceback.print_exc()
         return None
     
 
@@ -165,37 +146,40 @@ def test_order_approval(order):
         print(f"Approving Order: {order.order_id}")
         print(f"Current Status: {order.status}")
 
-        if order.status != 'PENDING':
-            print(f"Order cannot be approved. Current status: {order.status}")
-            return False
-
-        prev_status = order.status
-        order.status = 'APPROVED'
-        order.save()
-        curr_status = order.status 
+        factory = RequestFactory()
         
-        create_order_event(
-            order = order,
-            event_type = 'IN',
-            previous_status = prev_status,
-            new_status = curr_status,
-            performed_by = order.ordered_by,
-            notes = "Order approved in system."
-        )
+        # Create request for approval
+        request = factory.post(f'/orders/{order.order_id}/approve/')
+        request.user = User.objects.get(username='inventorysystem')
 
-        print(f"Order Approved!")
-        print(f"New Status: {order.status}")
+        # Call the actual view function
+        response = order_approve(request, order.order_id)
+        
+        # Parse the JSON response
+        response_data = json.loads(response.content)
+        
+        if response_data.get('success'):
+            # Refresh the order from database
+            order.refresh_from_db()
+            
+            print(f"Order Approved!")
+            print(f"New Status: {order.status}")
+            print(f"Response: {response_data.get('message')}")
 
-        #Debug info
-        events = OrderEvent.objects.filter(order = order)
-        transactions = Transaction.objects.filter(related_id = order.order_id)
+            #Debug info
+            events = OrderEvent.objects.filter(order=order)
+            transactions = Transaction.objects.filter(related_id=order.order_id)
 
-        print(f"Order Events Count: {events.count()}")
-        print(f"Transactions Count: {transactions.count()}")
-        return True
+            print(f"Order Events Count: {events.count()}")
+            print(f"Transactions Count: {transactions.count()}")
+            return True
+        else:
+            print(f"Order approval failed: {response_data.get('error')}")
+            return False
 
     except Exception as e:
         print(f"Order approval failed: {e}")
+        traceback.print_exc()
         return False
 
 def test_order_receive(order):
@@ -211,90 +195,70 @@ def test_order_receive(order):
         print(f"Receiving Order: {order.order_id}")
         print(f"Current Status: {order.status}")
 
-        if order.status not in ['APPROVED', 'PARTIAL']:
-            print(f"Order cannot be received. Current status: {order.status}")
-            return False
+        factory = RequestFactory()
         
+        # Get the order item to create received quantities data
         order_item = order.items.first()
         if not order_item:
             print("No items found in the order.")
             return False
+
+        received_quantity = 50  # Simulate receiving partial quantity
         
-        received_quantity = 50 # Simulate receiving full quantity
+        # Prepare received quantities data
+        receive_data = {
+            'received_quantities': {
+                str(order_item.order_item_id): received_quantity
+            }
+        }
+
         print(f"Receiving {received_quantity} units of {order_item.product.product_name}")
 
-        order_item.quantity_received = received_quantity
-        order_item.save()
-
-        batch, created = ProductBatch.objects.get_or_create(
-            product = order_item.product,
-            lot_number = f"RECEIVED-{order.order_id}",
-            defaults = {
-                'quantity': received_quantity,
-                'expiry_date': timezone.now() + timedelta(days = 365),
-                'location': order_item.product.location
-            }
+        # Create request for receiving
+        request = factory.post(
+            f'/orders/{order.order_id}/receive/',
+            data=json.dumps(receive_data),
+            content_type='application/json'
         )
+        request.user = User.objects.get(username='inventorysystem')
 
-        if not created:
-            batch.quantity += received_quantity
-            batch.save()
+        # Call the actual view function
+        response = order_receive(request, order.order_id)
+        
+        # Parse the JSON response
+        response_data = json.loads(response.content)
+        
+        if response_data.get('success'):
+            # Refresh the order from database
+            order.refresh_from_db()
+            order_item.refresh_from_db()
+            
+            print(f"Order received successfully!")
+            print(f"New Status: {order.status}")
+            print(f"Quantity Received: {order_item.quantity_received}")
+            print(f"Response: {response_data.get('message')}")
 
-        print(f"Inventory updated")
-        print(f"Batch: {batch.batch_id}")
-        print(f"Lot: {batch.lot_number}")
-        print(f"Quantity in Batch: {batch.quantity}")
+            # Check inventory updates
+            batches = ProductBatch.objects.filter(product=order_item.product)
+            for batch in batches:
+                print(f"Batch: {batch.batch_id}")
+                print(f"Lot: {batch.lot_number}")
+                print(f"Quantity in Batch: {batch.quantity}")
 
-        prev_status = order.status
-        if received_quantity >= order_item.quantity_ordered:
-            order.status = 'RECEIVED'
+            #Debug Info
+            events = OrderEvent.objects.filter(order=order)
+            transactions = Transaction.objects.filter(related_id=order.order_id)
+            print(f"Order Events Count: {events.count()}")
+            print(f"Transactions Count: {transactions.count()}")
+
+            print("Order Event History:")
+            for event in events.order_by('timestamp'):
+                print(f"{event.order.order_id} - {event.timestamp}: {event.event_type} - {event.previous_status} -> {event.new_status} by {event.performed_by}")
+
+            return True
         else:
-            order.status = 'PARTIAL'
-        curr_status = order.status
-
-        create_order_event(
-            order = order,
-            event_type = 'IN',
-            previous_status = prev_status,
-            new_status = curr_status,
-            performed_by = order.ordered_by,
-            notes = "Order received/partially received in system."
-        )
-
-        transaction, created = Transaction.objects.get_or_create(
-            transaction_type = 'IN',
-            product = order_item.product,
-            batch = batch,
-            quantity_change = received_quantity,
-            before = batch.quantity - received_quantity,
-            after = batch.quantity,
-            performed_by = order.ordered_by,
-            related_id = order.order_id,
-            notes = f"Order receipt: {order.order_id} - {order_item.product.product_name}"
-        )
-
-        print(f"Transaction recorded")
-        print(f"Transaction Type: {transaction.transaction_type}")
-        print(f"Quantity Change: {transaction.quantity_change}")
-        print(f"Before/After {transaction.before} -> {transaction.after}")
-
-        order.received_by = "Test Receiver"
-        order.date_received = timezone.now()
-        order.save()
-
-        print(f"Order Status Updated to: {order.status}")
-
-        #Debug Info
-        events = OrderEvent.objects.filter(order = order)
-        transactions = Transaction.objects.filter(related_id = order.order_id)
-        print(f"Order Events Count: {events.count()}")
-        print(f"Transactions Count: {transactions.count()}")
-
-        print("Order Event History:")
-        for event in events.order_by('timestamp'):
-            print(f"{event.order.order_id} - {event.timestamp}: {event.event_type} - {event.previous_status} -> {event.new_status} by {event.performed_by}")
-
-        return True
+            print(f"Order receipt failed: {response_data.get('error')}")
+            return False
 
     except Exception as e:
         print(f"Order receipt failed: {e}")
@@ -307,62 +271,69 @@ def test_order_reject():
     print("================================================")
 
     user, product, supplier = setup_test_data()
+    factory = RequestFactory()
 
     try:
-        order = Order.objects.create(
-            supplier = supplier,
-            ordered_by = user.get_full_name() or user.username,
-            status = 'PENDING'
+        # First create an order to reject
+        order_data = {
+            'supplier_id': supplier.supplier_id,
+            'items': [
+                {
+                    'product_id': product.product_id,
+                    'quantity_ordered': 100,
+                    'price_per_unit': 15.00
+                }
+            ]
+        }
+
+        # Create the order using the view
+        create_request = factory.post(
+            '/orders/create/', 
+            data=json.dumps(order_data), 
+            content_type='application/json'
         )
+        create_request.user = user
 
-        OrderItem.objects.create(
-            order = order,
-            product = product,
-            quantity_ordered = 100,
-            price_per_unit = 15.00
-        )
+        create_response = order_create(create_request)
+        create_data = json.loads(create_response.content)
+        
+        if not create_data.get('success'):
+            print(f"Failed to create order for rejection test: {create_data.get('error')}")
+            return False
 
-        print(f"Created Order for Rejection Testing: {order.order_id}")
+        order_id = create_data.get('order_id')
+        print(f"Created Order for Rejection Testing: {order_id}")
 
-        create_order_event(
-            order = order,
-            event_type = 'IN',
-            previous_status = None,
-            new_status = order.status,
-            performed_by = order.ordered_by,
-            notes = "Order created in system."
-        )
+        # Now reject the order using the view
+        reject_request = factory.post(f'/orders/{order_id}/reject/')
+        reject_request.user = user
 
-        prev_status = order.status
-        order.status = 'REJECTED'
-        order.save()
-        curr_status = order.status
+        response = order_reject(reject_request, order_id)
+        response_data = json.loads(response.content)
+        
+        if response_data.get('success'):
+            order = Order.objects.get(order_id=order_id)
+            
+            print(f"Order Rejected!")
+            print(f"Order ID: {order.order_id}")
+            print(f"New Status: {order.status}")
+            print(f"Response: {response_data.get('message')}")
 
-        create_order_event(
-            order = order,
-            event_type = 'IN',
-            previous_status = prev_status,
-            new_status = curr_status,
-            performed_by = order.ordered_by,
-            notes = "Order rejected in system."
-        )
+            #Debug Info
+            events = OrderEvent.objects.filter(order=order)
+            transactions = Transaction.objects.filter(related_id=order.order_id)
 
-        print(f"Order Rejected!")
-        print(f"Order ID: {order.order_id}")
-        print(f"New Status: {order.status}")
+            print(f"Order Events Count: {events.count()}")
+            print(f"Transactions Count: {transactions.count()}")
 
-        #Debug Info
-        events = OrderEvent.objects.filter(order = order)
-        transactions = Transaction.objects.filter(related_id = order.order_id)
+            batches = ProductBatch.objects.filter(product=product)
+            total_stock = sum(batch.quantity for batch in batches)
+            print(f"Total Stock for {product.product_name}: {total_stock}")
 
-        print(f"Order Events Count: {events.count()}")
-        print(f"Transactions Count: {transactions.count()}")
-
-        batches = ProductBatch.objects.filter(product = product)
-        total_stock = sum(batch.quantity for batch in batches)
-        print(f"Total Stock for {product.product_name}: {total_stock}")
-
-        return True
+            return True
+        else:
+            print(f"Order rejection failed: {response_data.get('error')}")
+            return False
 
     except Exception as e:
         print(f"Order rejection failed: {e}")
@@ -375,62 +346,69 @@ def test_order_cancel():
     print("================================================")
 
     user, product, supplier = setup_test_data()
+    factory = RequestFactory()
 
     try:
-        order = Order.objects.create(
-            supplier = supplier,
-            ordered_by = user.get_full_name() or user.username,
-            status = 'PENDING'
+        # First create an order to cancel
+        order_data = {
+            'supplier_id': supplier.supplier_id,
+            'items': [
+                {
+                    'product_id': product.product_id,
+                    'quantity_ordered': 100,
+                    'price_per_unit': 15.00
+                }
+            ]
+        }
+
+        # Create the order using the view
+        create_request = factory.post(
+            '/orders/create/', 
+            data=json.dumps(order_data), 
+            content_type='application/json'
         )
+        create_request.user = user
 
-        OrderItem.objects.create(
-            order = order,
-            product = product,
-            quantity_ordered = 100,
-            price_per_unit = 15.00
-        )
+        create_response = order_create(create_request)
+        create_data = json.loads(create_response.content)
+        
+        if not create_data.get('success'):
+            print(f"Failed to create order for cancellation test: {create_data.get('error')}")
+            return False
 
-        print(f"Created Order for Cancellation Testing: {order.order_id}")
+        order_id = create_data.get('order_id')
+        print(f"Created Order for Cancellation Testing: {order_id}")
 
-        create_order_event(
-            order = order,
-            event_type = 'IN',
-            previous_status = None,
-            new_status = order.status,
-            performed_by = order.ordered_by,
-            notes = "Order created in system."
-        )
+        # Now cancel the order using the view
+        cancel_request = factory.post(f'/orders/{order_id}/cancel/')
+        cancel_request.user = user
 
-        prev_status = order.status
-        order.status = 'CANCELLED'
-        order.save()
-        curr_status = order.status
+        response = order_cancel(cancel_request, order_id)
+        response_data = json.loads(response.content)
+        
+        if response_data.get('success'):
+            order = Order.objects.get(order_id=order_id)
+            
+            print(f"Order Cancelled!")
+            print(f"Order ID: {order.order_id}")
+            print(f"New Status: {order.status}")
+            print(f"Response: {response_data.get('message')}")
 
-        create_order_event(
-            order = order,
-            event_type = 'IN',
-            previous_status = prev_status,
-            new_status = curr_status,
-            performed_by = order.ordered_by,
-            notes = "Order cancelled in system."
-        )
+            #Debug Info
+            events = OrderEvent.objects.filter(order=order)
+            transactions = Transaction.objects.filter(related_id=order.order_id)
 
-        print(f"Order Cancelled!")
-        print(f"Order ID: {order.order_id}")
-        print(f"New Status: {order.status}")
+            print(f"Order Events Count: {events.count()}")
+            print(f"Transactions Count: {transactions.count()}")
 
-        #Debug Info
-        events = OrderEvent.objects.filter(order = order)
-        transactions = Transaction.objects.filter(related_id = order.order_id)
+            batches = ProductBatch.objects.filter(product=product)
+            total_stock = sum(batch.quantity for batch in batches)
+            print(f"Total Stock for {product.product_name}: {total_stock}")
 
-        print(f"Order Events Count: {events.count()}")
-        print(f"Transactions Count: {transactions.count()}")
-
-        batches = ProductBatch.objects.filter(product = product)
-        total_stock = sum(batch.quantity for batch in batches)
-        print(f"Total Stock for {product.product_name}: {total_stock}")
-
-        return True
+            return True
+        else:
+            print(f"Order cancellation failed: {response_data.get('error')}")
+            return False
 
     except Exception as e:
         print(f"Order cancellation failed: {e}")
