@@ -98,6 +98,33 @@ def order_approve(request, order_id):
             'error': str(e)
         }, status=400)
 
+def order_reject(request, order_id):
+    try:
+        order = get_object_or_404(Order, order_id = order_id)
+
+        if order != 'PENDING':
+            return JsonResponse({
+                'success': False,
+                'error': f"Only orders with status 'PENDING' can be rejected. Current status: {order.status}"
+            }, status=400)
+        
+        order.status = 'REJECTED'
+        order.save()
+
+        message.success(request, f"Order {order.order_id} rejected successfully.")
+
+        return JsonResponse({
+            'success': True,
+            'order_id': order.order_id,
+            'message': f"Order {order.order_id} rejected successfully."
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+    
 def order_receive(request, order_id):
     try:
         data = json.loads(request.body)

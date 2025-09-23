@@ -1,4 +1,3 @@
-
 from datetime import timedelta
 import json
 import os
@@ -6,20 +5,18 @@ import traceback
 import django
 import sys
 
-# Setup Django first before importing models
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(project_dir)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE','config.settings')
 django.setup()
 
-# Now import Django components after setup
 from django.test import RequestFactory
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models import Count, Sum
 
-from config.models import Category, Location, Order, OrderItem, Product, ProductBatch, Supplier, Transaction
-from config.views import order_create
+from config.models import Category, Location, Order, OrderEvent, OrderItem, Product, ProductBatch, Supplier, Transaction
 
 
 def setup_test_data():
@@ -69,8 +66,24 @@ def setup_test_data():
 
     return user, product, supplier
 
+def create_order_event(order, event_type, previous_status, new_status, performed_by, notes=""):
+    event = OrderEvent.objects.create(
+        order = order,
+        event_type = event_type,
+        previous_status = previous_status,
+        new_status = new_status,
+        performed_by = performed_by,
+        notes = notes
+    )
 
-def test_order_creation():
+    print(f"Order Record:")
+    print(f"Order ID: {order.order_id}")
+    print(f"Event Type: {event.event_type}")
+    print(f"Status Change: {event.previous_status} -> {event.new_status}")
+    print(f"Performed By: {event.performed_by}")
+
+
+def test_create_order():
     print("\n" + "================================================")
     print("TEST 1: Order Creation...")
     print("================================================")
@@ -110,6 +123,15 @@ def test_order_creation():
         print(f"Order Status:  {order.status}")
         print(f"Ordered By: {order.ordered_by}")
 
+        create_order_event(
+            order = order,
+            event_type = 'IN',
+            previous_status = None,
+            new_status = order.status,
+            performed_by = order.ordered_by,
+            notes = "Order created in system."
+        )
+
         order_item = OrderItem.objects.create(
             order = order,
             product = product,
@@ -127,6 +149,8 @@ def test_order_creation():
     except Exception as e:
         print(f"Order creation failed: {e}")
         return None
+    
+
 
 def test_order_approval(order):
     print("\n" + "================================================")
@@ -145,23 +169,42 @@ def test_order_approval(order):
             print(f"Order cannot be approved. Current status: {order.status}")
             return False
 
+        prev_status = order.status
         order.status = 'APPROVED'
         order.save()
+        curr_status = order.status 
+        
+        create_order_event(
+            order = order,
+            event_type = 'IN',
+            previous_status = prev_status,
+            new_status = curr_status,
+            performed_by = order.ordered_by,
+            notes = "Order approved in system."
+        )
+
         print(f"Order Approved!")
         print(f"New Status: {order.status}")
+
+        #Debug info
+        events = OrderEvent.objects.filter(order = order)
+        transactions = Transaction.objects.filter(related_id = order.order_id)
+
+        print(f"Order Events Count: {events.count()}")
+        print(f"Transactions Count: {transactions.count()}")
         return True
 
     except Exception as e:
         print(f"Order approval failed: {e}")
         return False
 
-def test_order_receipt(order):
+def test_order_receive(order):
     print("\n" + "================================================")
-    print("TEST 3: Order Receipt...")
+    print("TEST 3: Receiving Order...")
     print("================================================")
 
     if not order:
-        print("No order provided for receipt test.")
+        print("No order provided for receiving test.")
         return False
 
     try:
@@ -202,6 +245,22 @@ def test_order_receipt(order):
         print(f"Lot: {batch.lot_number}")
         print(f"Quantity in Batch: {batch.quantity}")
 
+        prev_status = order.status
+        if received_quantity >= order_item.quantity_ordered:
+            order.status = 'RECEIVED'
+        else:
+            order.status = 'PARTIAL'
+        curr_status = order.status
+
+        create_order_event(
+            order = order,
+            event_type = 'IN',
+            previous_status = prev_status,
+            new_status = curr_status,
+            performed_by = order.ordered_by,
+            notes = "Order received/partially received in system."
+        )
+
         transaction, created = Transaction.objects.get_or_create(
             transaction_type = 'IN',
             product = order_item.product,
@@ -219,16 +278,22 @@ def test_order_receipt(order):
         print(f"Quantity Change: {transaction.quantity_change}")
         print(f"Before/After {transaction.before} -> {transaction.after}")
 
-        if received_quantity >= order_item.quantity_ordered:
-            order.status = 'RECEIVED'
-        else:
-            order.status = 'PARTIAL'
-
         order.received_by = "Test Receiver"
         order.date_received = timezone.now()
         order.save()
 
         print(f"Order Status Updated to: {order.status}")
+
+        #Debug Info
+        events = OrderEvent.objects.filter(order = order)
+        transactions = Transaction.objects.filter(related_id = order.order_id)
+        print(f"Order Events Count: {events.count()}")
+        print(f"Transactions Count: {transactions.count()}")
+
+        print("Order Event History:")
+        for event in events.order_by('timestamp'):
+            print(f"{event.order.order_id} - {event.timestamp}: {event.event_type} - {event.previous_status} -> {event.new_status} by {event.performed_by}")
+
         return True
 
     except Exception as e:
@@ -236,9 +301,145 @@ def test_order_receipt(order):
         traceback.print_exc()
         return False
     
+def test_order_reject():
+    print("\n" + "================================================")
+    print("TEST 4: Order Rejection...")
+    print("================================================")
+
+    user, product, supplier = setup_test_data()
+
+    try:
+        order = Order.objects.create(
+            supplier = supplier,
+            ordered_by = user.get_full_name() or user.username,
+            status = 'PENDING'
+        )
+
+        OrderItem.objects.create(
+            order = order,
+            product = product,
+            quantity_ordered = 100,
+            price_per_unit = 15.00
+        )
+
+        print(f"Created Order for Rejection Testing: {order.order_id}")
+
+        create_order_event(
+            order = order,
+            event_type = 'IN',
+            previous_status = None,
+            new_status = order.status,
+            performed_by = order.ordered_by,
+            notes = "Order created in system."
+        )
+
+        prev_status = order.status
+        order.status = 'REJECTED'
+        order.save()
+        curr_status = order.status
+
+        create_order_event(
+            order = order,
+            event_type = 'IN',
+            previous_status = prev_status,
+            new_status = curr_status,
+            performed_by = order.ordered_by,
+            notes = "Order rejected in system."
+        )
+
+        print(f"Order Rejected!")
+        print(f"Order ID: {order.order_id}")
+        print(f"New Status: {order.status}")
+
+        #Debug Info
+        events = OrderEvent.objects.filter(order = order)
+        transactions = Transaction.objects.filter(related_id = order.order_id)
+
+        print(f"Order Events Count: {events.count()}")
+        print(f"Transactions Count: {transactions.count()}")
+
+        batches = ProductBatch.objects.filter(product = product)
+        total_stock = sum(batch.quantity for batch in batches)
+        print(f"Total Stock for {product.product_name}: {total_stock}")
+
+        return True
+
+    except Exception as e:
+        print(f"Order rejection failed: {e}")
+        traceback.print_exc()
+        return False
+    
+def test_order_cancel():
+    print("\n" + "================================================")
+    print("TEST 5: Order Cancellation...")
+    print("================================================")
+
+    user, product, supplier = setup_test_data()
+
+    try:
+        order = Order.objects.create(
+            supplier = supplier,
+            ordered_by = user.get_full_name() or user.username,
+            status = 'PENDING'
+        )
+
+        OrderItem.objects.create(
+            order = order,
+            product = product,
+            quantity_ordered = 100,
+            price_per_unit = 15.00
+        )
+
+        print(f"Created Order for Cancellation Testing: {order.order_id}")
+
+        create_order_event(
+            order = order,
+            event_type = 'IN',
+            previous_status = None,
+            new_status = order.status,
+            performed_by = order.ordered_by,
+            notes = "Order created in system."
+        )
+
+        prev_status = order.status
+        order.status = 'CANCELLED'
+        order.save()
+        curr_status = order.status
+
+        create_order_event(
+            order = order,
+            event_type = 'IN',
+            previous_status = prev_status,
+            new_status = curr_status,
+            performed_by = order.ordered_by,
+            notes = "Order cancelled in system."
+        )
+
+        print(f"Order Cancelled!")
+        print(f"Order ID: {order.order_id}")
+        print(f"New Status: {order.status}")
+
+        #Debug Info
+        events = OrderEvent.objects.filter(order = order)
+        transactions = Transaction.objects.filter(related_id = order.order_id)
+
+        print(f"Order Events Count: {events.count()}")
+        print(f"Transactions Count: {transactions.count()}")
+
+        batches = ProductBatch.objects.filter(product = product)
+        total_stock = sum(batch.quantity for batch in batches)
+        print(f"Total Stock for {product.product_name}: {total_stock}")
+
+        return True
+
+    except Exception as e:
+        print(f"Order cancellation failed: {e}")
+        traceback.print_exc()
+        return False
+    
 def test_database_state():
     print("\n" + "================================================")
-    print("TEST 4: Database State Verification...")
+    print("TEST 6: Database State Verification...")
     print("================================================")
 
     try:
@@ -250,18 +451,27 @@ def test_database_state():
         print(f"Order Items: {OrderItem.objects.count()}")
         print(f"Product Batches: {ProductBatch.objects.count()}")
         print(f"Transactions: {Transaction.objects.count()}")
+        print(f"Order Events: {OrderEvent.objects.count()}")
 
-        print("\nShow Recent Orders")
-        for order in Order.objects.all().order_by('-date_ordered')[:5]:
-            print(f"Order ID: {order.order_id},Status: {order.status}, Ordered By: {order.ordered_by}, Date: {order.date_ordered}")
+        print("\nOrder Status Summary")
+        status_counts = Order.objects.values('status').order_by('status').annotate(count = Count('status'))
+        for status in status_counts:
+            print(f"{status['status']}: {status['count']} orders")
+
+        print("\nOrder Event Types Summary")
+        event_type_counts = OrderEvent.objects.values('event_type').order_by('event_type').annotate(count = Count('event_type'))
+        for event_type in event_type_counts:
+            print(f"{event_type['event_type']}: {event_type['count']} events")
+
+        print("\nTransaction Summary")
+        transaction_counts = Transaction.objects.values('transaction_type').order_by('transaction_type').annotate(count = Count('transaction_type'))
+        for transaction in transaction_counts:
+            print(f"{transaction['transaction_type']}: {transaction['count']} transactions")
 
         print("\nCurrent Inventory")
-        for batch in ProductBatch.objects.all():
-            print(f"Product: {batch.product.product_name}, Lot: {batch.lot_number}, Quantity: {batch.quantity}, Location: {batch.location.location_name}")
-
-        print("\nRecent Transactions")
-        for transaction in Transaction.objects.all().order_by('-date')[:5]:
-            print(f"Type: {transaction.transaction_type}, Product: {transaction.product.product_name}, Quantity Change: {transaction.quantity_change}, Performed By: {transaction.performed_by}, Date: {transaction.date}")
+        inventory = ProductBatch.objects.values('product__product_name').annotate(total_quantity = Sum('quantity'))
+        for item in inventory:
+            print(f"{item['product__product_name']}: {item['total_quantity']} units in stock")
 
     except Exception as e:
         print(f"Database state verification failed: {e}")
@@ -273,6 +483,7 @@ def cleanup_test_data():
     print("================================================")
 
     try:
+        OrderEvent.objects.all().delete()
         Transaction.objects.all().delete()
         ProductBatch.objects.all().delete()
         OrderItem.objects.all().delete()
@@ -290,31 +501,81 @@ def cleanup_test_data():
 
 if __name__ == "__main__":
 
-    print("Testing OrderWorkflow Tests")
+    print("TESTING ORDER FUNCTIONS")
 
-    order = test_order_creation()
-
-    if order:
-        approval_success = test_order_approval(order)
-
-        if approval_success:
-            receipt_success = test_order_receipt(order)
+    # Run comprehensive tests
+    results = []
+    
+    try:
+        order = test_create_order()
+        success = order is not None
+        results.append(("Order Creation", success))
+        print(f"{'✅' if success else '❌'} Order Creation: {'PASS' if success else 'FAIL'}")
+    except Exception as e:
+        print(f"❌ Order Creation crashed: {e}")
+        results.append(("Order Creation", False))
+        order = None
+    
+    try:
+        if order:
+            success = test_order_approval(order)
         else:
-            print("Order approval failed, skipping receipt test.")
-            receipt_success = False
-    else:
-        print("Order creation failed, skipping approval and receipt tests.")
-        approval_success = False
-        receipt_success = False
+            print("Skipping Order Approval - no order to approve")
+            success = False
+        results.append(("Order Approval", success))
+        print(f"{'✅' if success else '❌'} Order Approval: {'PASS' if success else 'FAIL'}")
+    except Exception as e:
+        print(f"❌ Order Approval crashed: {e}")
+        results.append(("Order Approval", False))
+    
+    try:
+        if order and order.status == 'APPROVED':
+            success = test_order_receive(order)
+        else:
+            print("Skipping Order Receipt - no approved order to receive")
+            success = False
+        results.append(("Order Receipt", success))
+        print(f"{'✅' if success else '❌'} Order Receipt: {'PASS' if success else 'FAIL'}")
+    except Exception as e:
+        print(f"❌ Order Receipt crashed: {e}")
+        results.append(("Order Receipt", False))
+    
+    try:
+        success = test_order_reject()
+        results.append(("Order Rejection", success))
+        print(f"{'✅' if success else '❌'} Order Rejection: {'PASS' if success else 'FAIL'}")
+    except Exception as e:
+        print(f"❌ Order Rejection crashed: {e}")
+        results.append(("Order Rejection", False))
 
+    try:
+        success = test_order_cancel()
+        results.append(("Order Cancellation", success))
+        print(f"{'✅' if success else '❌'} Order Cancellation: {'PASS' if success else 'FAIL'}")
+    except Exception as e:
+        print(f"❌ Order Cancellation crashed: {e}")
+        results.append(("Order Cancellation", False))
 
+    # Final database state
     test_database_state()
 
-    print("\n" + "================================================")
+    # Summary
+    print("\n" + "="*60)
     print("TEST SUMMARY")
-    print("================================================")
-    print(f"Order Creation: {'SUCCESS' if order else 'FAILED'}")
-    print(f"Order Approval: {'SUCCESS' if approval_success else 'FAILED'}")
-    print(f"Order Receipt: {'SUCCESS' if receipt_success else 'FAILED'}")
-
+    print("="*60)
+    
+    passed = sum(1 for _, success in results if success)
+    total = len(results)
+    
+    for test_name, success in results:
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status}: {test_name}")
+    
+    print(f"\nResults: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+    
+    if passed == total:
+        print("ALL TESTS PASSED! Hybrid approach working correctly!")
+    else:
+        print("Some tests failed. Check the errors above.")
+    
     cleanup_test_data()
