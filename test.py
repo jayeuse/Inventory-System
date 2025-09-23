@@ -4,6 +4,7 @@ import os
 import traceback
 import django
 import sys
+from zoneinfo import ZoneInfo
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(project_dir)
@@ -18,6 +19,18 @@ from django.db.models import Count, Sum
 
 from config.models import Category, Location, Order, OrderEvent, OrderItem, Product, ProductBatch, Supplier, Transaction
 from config.views import order_create, order_approve, order_reject, order_receive, order_cancel
+
+
+def format_timestamp_utc8(timestamp):
+    """Convert timestamp to UTC+8 and format in 12-hour format"""
+    if timestamp is None:
+        return "N/A"
+    
+    # Convert to UTC+8 timezone
+    utc8_time = timestamp.astimezone(ZoneInfo("Asia/Manila"))  # UTC+8
+    
+    # Format in 12-hour format
+    return utc8_time.strftime("%Y-%m-%d %I:%M:%S %p")
 
 
 def setup_test_data():
@@ -245,6 +258,11 @@ def test_order_receive(order):
                 print(f"Lot: {batch.lot_number}")
                 print(f"Quantity in Batch: {batch.quantity}")
 
+            # Calculate and display total stock
+            batches = ProductBatch.objects.filter(product=order_item.product)
+            total_stock = sum(batch.quantity for batch in batches)
+            print(f"Total Stock for {order_item.product.product_name}: {total_stock}")
+
             #Debug Info
             events = OrderEvent.objects.filter(order=order)
             transactions = Transaction.objects.filter(related_id=order.order_id)
@@ -253,7 +271,8 @@ def test_order_receive(order):
 
             print("Order Event History:")
             for event in events.order_by('timestamp'):
-                print(f"{event.order.order_id} - {event.timestamp}: {event.event_type} - {event.previous_status} -> {event.new_status} by {event.performed_by}")
+                formatted_time = format_timestamp_utc8(event.timestamp)
+                print(f"{event.order.order_id} - {formatted_time}: {event.event_type} - {event.previous_status} -> {event.new_status} by {event.performed_by}")
 
             return True
         else:
