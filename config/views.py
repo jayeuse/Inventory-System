@@ -5,8 +5,20 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.db import transaction
+from zoneinfo import ZoneInfo
 
-from .models import Order, OrderItem, Product, ProductBatch, Supplier, Transaction
+from .models import Order, OrderEvent, OrderItem, Product, ProductBatch, Supplier, Transaction
+
+def format_timestamp_utc8(timestamp):
+    """Convert timestamp to UTC+8 and format in 12-hour format"""
+    if timestamp is None:
+        return None
+    
+    # Convert to UTC+8 timezone
+    utc8_time = timestamp.astimezone(ZoneInfo("Asia/Manila"))  # UTC+8
+    
+    # Format in 12-hour format
+    return utc8_time.strftime("%Y-%m-%d %I:%M:%S %p")
 
 def landing_page(request):
     return render(request, 'landing_page/base.html')
@@ -21,6 +33,16 @@ def order_create(request):
                     supplier_id = data['supplier_id'],
                     ordered_by = request.user.get_full_name() or request.user.username,
                     status = 'PENDING'
+                )
+
+                # Create OrderEvent record for order creation
+                OrderEvent.objects.create(
+                    order=order,
+                    event_type='CREATION',
+                    previous_status=None,
+                    new_status=order.status,
+                    performed_by=request.user.get_full_name() or request.user.username,
+                    notes=f"Order {order.order_id} created"
                 )
 
                 for item_data in data['items']:
@@ -81,8 +103,21 @@ def order_approve(request, order_id):
                 'error': f"Only orders with status 'PENDING' can be approved. Current status: {order.status}"
             }, status=400)
         
+        # Store previous status for OrderEvent
+        previous_status = order.status
+        
         order.status = 'APPROVED'
         order.save()
+
+        # Create OrderEvent record
+        OrderEvent.objects.create(
+            order=order,
+            event_type='APPROVAL',
+            previous_status=previous_status,
+            new_status=order.status,
+            performed_by=request.user.get_full_name() or request.user.username,
+            notes=f"Order {order.order_id} approved"
+        )
 
         return JsonResponse({
             'success': True,
@@ -105,8 +140,21 @@ def order_reject(request, order_id):
                 'error': f"Only orders with status 'PENDING' can be rejected. Current status: {order.status}"
             }, status=400)
         
+        # Store previous status for OrderEvent
+        previous_status = order.status
+        
         order.status = 'REJECTED'
         order.save()
+
+        # Create OrderEvent record
+        OrderEvent.objects.create(
+            order=order,
+            event_type='REJECTION',
+            previous_status=previous_status,
+            new_status=order.status,
+            performed_by=request.user.get_full_name() or request.user.username,
+            notes=f"Order {order.order_id} rejected"
+        )
 
         return JsonResponse({
             'success': True,
@@ -135,6 +183,9 @@ def order_receive(request, order_id):
                     'error': f"Only orders with status 'APPROVED' or 'PARTIAL' can be received. Current status: {order.status}"
                 }, status=400)
             
+            # Store previous status for OrderEvent
+            previous_status = order.status
+            
             total_received = 0
             total_ordered = 0
 
@@ -161,6 +212,16 @@ def order_receive(request, order_id):
             order.received_by = request.user.get_full_name() or request.user.username
             order.date_received = timezone.now()
             order.save()
+
+            # Create OrderEvent record
+            OrderEvent.objects.create(
+                order=order,
+                event_type='RECEIVED',
+                previous_status=previous_status,
+                new_status=order.status,
+                performed_by=request.user.get_full_name() or request.user.username,
+                notes=f"Order {order.order_id} received - {total_received} out of {total_ordered} items"
+            )
 
             return JsonResponse({
                 'success': True,
@@ -213,8 +274,21 @@ def order_cancel(request, order_id):
                 'error': f"Only orders with status 'PENDING', 'APPROVED' or 'PARTIAL' can be cancelled. Current status: {order.status}"
             }, status=400)
         
+        # Store previous status for OrderEvent
+        previous_status = order.status
+        
         order.status = 'CANCELLED'
         order.save()
+
+        # Create OrderEvent record
+        OrderEvent.objects.create(
+            order=order,
+            event_type='CANCELLATION',
+            previous_status=previous_status,
+            new_status=order.status,
+            performed_by=request.user.get_full_name() or request.user.username,
+            notes=f"Order {order.order_id} cancelled"
+        )
 
         return JsonResponse({
             'success': True,
@@ -248,8 +322,8 @@ def order_list(request):
             'order_id': order.order_id,
             'supplier_name': order.supplier.supplier_name,
             'ordered_by': order.ordered_by,
-            'date_ordered': order.date_ordered.isoformat(),
-            'date_received': order.date_received.isoformat() if order.date_received else None,
+            'date_ordered': format_timestamp_utc8(order.date_ordered),
+            'date_received': format_timestamp_utc8(order.date_received),
             'status': order.status,
             'items': [{
                 'product_name': item.product.product_name,
