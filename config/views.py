@@ -1,6 +1,7 @@
-from email.mime import message
+from django.contrib import messages
 import json
-from time import timezone
+from datetime import timedelta
+from django.utils import timezone
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.db import transaction
@@ -23,17 +24,15 @@ def order_create(request):
                 )
 
                 for item_data in data['items']:
-                    product = get_object_or_404(Product, pk=item_data['product_id'])
+                    product = get_object_or_404(Product, product_id=item_data['product_id'])
 
                     OrderItem.objects.create(
                         order = order,
                         product = product,
-                        batch_id = item_data.get('batch_id', ''),
+                        batch = None,  # Orders don't have batches yet - batches are assigned when receiving
                         quantity_ordered = item_data['quantity_ordered'],
                         price_per_unit = item_data['price_per_unit']
                     )
-
-                message.success(request, f"Order {order.order_id} created successfully.")
 
                 return JsonResponse ({
                     'success': True,
@@ -85,8 +84,6 @@ def order_approve(request, order_id):
         order.status = 'APPROVED'
         order.save()
 
-        message.success(request, f"ORder {order.order_id} approved successfully.")
-
         return JsonResponse({
             'success': True,
             'order_id': order.order_id,
@@ -102,7 +99,7 @@ def order_reject(request, order_id):
     try:
         order = get_object_or_404(Order, order_id = order_id)
 
-        if order != 'PENDING':
+        if order.status != 'PENDING':
             return JsonResponse({
                 'success': False,
                 'error': f"Only orders with status 'PENDING' can be rejected. Current status: {order.status}"
@@ -110,8 +107,6 @@ def order_reject(request, order_id):
         
         order.status = 'REJECTED'
         order.save()
-
-        message.success(request, f"Order {order.order_id} rejected successfully.")
 
         return JsonResponse({
             'success': True,
@@ -167,8 +162,6 @@ def order_receive(request, order_id):
             order.date_received = timezone.now()
             order.save()
 
-            message.success(request, f"Order {order.order_id} received successfully.")
-
             return JsonResponse({
                 'success': True,
                 'order_id': order.order_id,
@@ -188,7 +181,7 @@ def _update_inventory_from_order(order_item, received_qty, user):
         lot_number = f"ORDER-{order_item.order.order_id}",
         defaults = {
             'quantity': 0,
-            'expiry_date': timezone.now() + timezone.timedelta(days=365),
+            'expiry_date': timezone.now() + timedelta(days=365),
             'location': order_item.product.location
         }
     )
@@ -222,8 +215,6 @@ def order_cancel(request, order_id):
         
         order.status = 'CANCELLED'
         order.save()
-
-        message.success(request, f"Order {order.order_id} cancelled successfully.")
 
         return JsonResponse({
             'success': True,
