@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import (
+from inventory_system.models import (
     Product, ProductBatch, Order, OrderItem,
     Dispense, DispenseItem, Transaction,
     Category, Location, Supplier
