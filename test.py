@@ -17,8 +17,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Count, Sum
 
-from config.models import Category, Location, Order, OrderEvent, OrderItem, Product, ProductBatch, Supplier, Transaction
-from config.views import order_create, order_approve, order_reject, order_receive, order_cancel
+from inventory_system.models import Category, Location, Order, OrderEvent, OrderItem, Product, ProductBatch, Supplier, Transaction
+from inventory_system.views import order_create, order_approve, order_reject, order_receive, order_cancel
 
 
 def format_timestamp_utc8(timestamp):
