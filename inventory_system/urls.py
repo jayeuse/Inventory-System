@@ -1,13 +1,17 @@
-from django.contrib import admin
-from django.urls import path
+from rest_framework.routers import DefaultRouter
+
+from django.urls import path, include
 from . import views
+
+router = DefaultRouter()
+
+router.register(r'categories', views.CategoryViewSet)
+router.register(r'suppliers', views.SupplierViewSet)
+router.register(r'products', views.ProductViewSet)
+router.register(r'product-batches', views.ProductBatchViewSet)
+
 
 urlpatterns = [
     path('', views.landing_page, name='landing_page'),
-
-    path('orders/create/', views.order_create, name='order_create'),
-    path('orders/<str:order_id>/approve/', views.order_approve, name='order_approve'),
-    path('orders/<str:order_id>/receive/', views.order_receive, name='order_receive'),
-    path('orders/<str:order_id>/cancel/', views.order_cancel, name='order_cancel'),
-    path('orders/list/', views.order_list, name='order_list'),
+    path('api/', include(router.urls)),
 ]
