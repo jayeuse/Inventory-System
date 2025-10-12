@@ -27,12 +27,15 @@ class SupplierSerializer(serializers.ModelSerializer):
         ]
 
 class ProductSerializer(serializers.ModelSerializer):
+
+    category_name = serializers.CharField(source='category.category_name', read_only=True)
     class Meta:
         model = Product
         fields = [
             'product_id',
             'product_name',
-            'category',
+            'category_id',
+            'category_name',
             'sku',
             'price_per_unit',
             'last_update',
