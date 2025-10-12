@@ -2,6 +2,8 @@ import uuid
 from django.db import models
 from django.utils import timezone
 
+from decimal import Decimal, ROUND_HALF_UP
+
 def generate_code(model, field_name, prefix, length=5):
     last_entry = model.objects.order_by(f"-{field_name}").first()
 
@@ -34,7 +36,6 @@ class Category(models.Model):
 
     class Meta:
         db_table = 'category'
-
 
 class Supplier(models.Model):
     supplier_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='supplier_code')
@@ -78,6 +79,16 @@ class Product(models.Model):
     reserved = models.PositiveIntegerField(default=0, db_column='reserved')
     last_update = models.DateTimeField(auto_now=True, db_column='last_update')
 
+    STATUS_CHOICES = [
+        ('Normal', 'Normal'),
+        ('Near Expiry', 'Near Expiry'),
+        ('Expired', 'Expired'),
+        ('Low Stock', 'Low Stock'),
+        ('Out of Stock', 'Out of Stock'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Normal', db_column='status')
+
     expiry_threshold_days = models.PositiveIntegerField(default=30, db_column='expiry_threshold_days')
     low_stock_threshold = models.PositiveIntegerField(default=10, db_column='low_stock_threshold')
 
@@ -114,7 +125,7 @@ class ProductBatch(models.Model):
         ('Out of Stock', 'Out of Stock'),
     ]
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, db_column='status')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Normal', db_column='status')
 
     def save(self, *args, **kwargs):
         if not self.batch_id:
@@ -137,34 +148,25 @@ class ProductBatch(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.batch_id} - {self.product.product_name})"
+        return f"{self.batch_id} - {self.product.product_name}"
 
     class Meta:
         db_table = 'product_batch'
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ('APPROVED', 'Approved'),
-        ('PENDING', 'Pending'),
-        ('PARTIAL', 'Partial'),
-        ('REJECTED', 'Rejected'),
-        ('RECEIVED', 'Received'),
-        ('CANCELLED', 'Cancelled'),
+        ('Pending', 'Pending'),
+        ('Partially Received', 'Partially Received'),
+        ('Received', 'Received'),
+        ('Cancelled', 'Cancelled'),
     ]
 
     order_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='order_code')
     order_id = models.CharField(max_length=20, unique=True, editable=False, db_column='order_id')
-    supplier = models.ForeignKey(
-        Supplier, 
-        on_delete=models.CASCADE, 
-        db_column='supplier_id',
-        to_field='supplier_id'
-    )
     ordered_by = models.TextField(db_column='ordered_by')
-    received_by = models.TextField(blank=True, null=True, db_column='received_by')
     date_ordered = models.DateTimeField(default=timezone.now, db_column='date_ordered')
     date_received = models.DateTimeField(blank=True, null=True, db_column='date_received')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING', db_column='status')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', db_column='status')
 
     def save(self, *args, **kwargs):
         if not self.order_id:
@@ -183,7 +185,28 @@ class Order(models.Model):
                     new_number = 1
 
             self.order_id = f"{prefix}{str(new_number).zfill(4)}"
+
         super().save(*args, **kwargs)
+
+    def update_status(self):
+        """Update order status based on item quantities received"""
+        order_items = self.items.all()
+        if not order_items.exists():
+            return
+        
+        total_ordered = sum(item.quantity_ordered for item in order_items)
+        total_received = sum(item.quantity_received for item in order_items)
+        
+        if total_received == 0:
+            self.status = 'Pending'
+        elif total_received >= total_ordered:
+            self.status = 'Received'
+            if not self.date_received:
+                self.date_received = timezone.now()
+        else:
+            self.status = 'Partially Received'
+        
+        self.save(update_fields=['status', 'date_received'])
 
     def __str__(self):
         return f"Order {self.order_id} - {self.status}"
@@ -194,184 +217,74 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order_item_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='order_item_code')
     order_item_id = models.CharField(max_length=20, unique=True, editable=False, db_column='order_item_id')
+
     order = models.ForeignKey(
         Order, 
         on_delete=models.CASCADE, 
-        related_name='items', 
-        db_column='order_id',
-        to_field='order_id'
-    )
-    batch = models.ForeignKey(
-        ProductBatch, 
-        on_delete=models.CASCADE, 
-        db_column='batch_id',
-        to_field='batch_id',
-        null=True,
-        blank=True
-    )
+        related_name='items',
+        db_column='order_id', 
+        to_field='order_id')
+
     product = models.ForeignKey(
         Product, 
         on_delete=models.CASCADE, 
         db_column='product_id',
         to_field='product_id'
     )
+
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.CASCADE,
+        db_column='supplier_id',
+        to_field='supplier_id')
+    
     quantity_ordered = models.PositiveIntegerField(db_column='quantity_ordered')
     quantity_received = models.PositiveIntegerField(default=0, db_column='quantity_received')
     price_per_unit = models.DecimalField(
         max_digits=10, 
-        decimal_places=2,  # 2 decimal places for currency
+        decimal_places=2,
         db_column='price_per_unit'
     )
-    total_price = models.DecimalField(
-        max_digits=12,  # Larger to accommodate multiplied values
-        decimal_places=2,
-        db_column='total_price'
-    )
     total_cost = models.DecimalField(
-        max_digits=12,  # Larger to accommodate multiplied values
+        max_digits=12,
         decimal_places=2,
+        default=0,
         db_column='total_cost'
     )
 
     def save(self, *args, **kwargs):
+
+        if self.quantity_ordered < 0:
+            raise ValueError("Quantity ordered cannot be negative.")
+        
+        if self.quantity_received > self.quantity_ordered:
+            raise ValueError("Quantity received cannot exceed quantity ordered.")
+        
         if not self.order_item_id:
             self.order_item_id = generate_code(OrderItem, 'order_item_id', 'ITEM-')
+
+        # Auto-assign price from product if not set
+        if self.price_per_unit is None or self.price_per_unit == 0:
+            if self.product and hasattr(self.product, 'price_per_unit'):
+                self.price_per_unit = self.product.price_per_unit or 0
+            else:
+                self.price_per_unit = 0
         
         if self.price_per_unit is not None and self.quantity_ordered is not None:
-            self.total_price = self.price_per_unit * self.quantity_ordered
-            self.total_cost = self.total_price
+            self.total_cost = Decimal(self.price_per_unit * self.quantity_ordered).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP)
         
         super().save(*args, **kwargs)
+        
+        # Update order status after saving the item
+        if self.order_id:
+            self.order.update_status()
 
     def __str__(self):
         return f"Item {self.order_item_id} - {self.product.product_name} ({self.quantity_ordered})"
 
     class Meta:
         db_table = 'order_item'
-
-class OrderEvent(models.Model):
-
-    event_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='event_code')
-    event_id = models.CharField(max_length=20, unique=True, editable=False, db_column='event_id')
-    order = models.ForeignKey(
-        Order, 
-        on_delete=models.CASCADE, 
-        related_name='events', 
-        db_column='order_id',
-        to_field='order_id'
-    )
-    event_type = models.CharField(max_length=20, db_column='event_type')
-    previous_status = models.CharField(max_length=10, null=True, db_column='previous_status')
-    new_status = models.CharField(max_length=10, db_column='new_status')
-    performed_by = models.TextField(db_column='performed_by')
-    timestamp = models.DateTimeField(default=timezone.now, db_column='timestamp')
-    notes = models.TextField(blank=True, null=True, db_column='notes')
-
-    def save(self, *args, **kwargs):
-        if not self.event_id:
-            self.event_id = generate_code(OrderEvent, 'event_id', 'O-EVT-')
-        super().save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'order_event'
-
-class Dispense(models.Model):
-    STATUS_CHOICES = [
-        ('APPROVED', 'Approved'),
-        ('PENDING', 'Pending'),
-        ('REJECTED', 'Rejected'),
-        ('RELEASED', 'Released'),
-        ('CANCELLED', 'Cancelled'),
-    ]
-
-    dispense_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='dispense_code')
-    dispense_id = models.CharField(max_length=15, unique=True, editable=False, db_column='dispense_id')
-    requested_by = models.TextField(db_column='requested_by')
-    approved_by = models.TextField(blank=True, null=True, db_column='approved_by')
-    dispensed_to = models.TextField(blank=True, null=True, db_column='dispensed_to')
-    reason = models.TextField(db_column='reason')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING', db_column='status')
-    date_requested = models.DateTimeField(default=timezone.now, db_column='date_requested')
-    date_dispensed = models.DateTimeField(blank=True, null=True, db_column='date_dispensed')
-
-    def save(self, *args, **kwargs):
-        if not self.dispense_id:
-            self.dispense_id = generate_code(Dispense, "dispense_id", "DISP")
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Dispense {self.dispense_id} - {self.status}"
-
-    class Meta:
-        db_table = 'dispense'
-
-class DispenseItem(models.Model):
-    dispense_item_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='dispense_item_code')
-    dispense_item_id = models.CharField(max_length=20, unique=True, editable=False, db_column='dispense_item_id')
-    dispense = models.ForeignKey(
-        Dispense, 
-        on_delete=models.CASCADE, 
-        related_name='items', 
-        db_column='dispense_id',
-        to_field='dispense_id'
-    )
-    batch = models.ForeignKey(
-        ProductBatch, 
-        on_delete=models.CASCADE, 
-        db_column='batch_id',
-        to_field='batch_id'
-    )
-    product = models.ForeignKey(
-        Product, 
-        on_delete=models.CASCADE, 
-        db_column='product_id',
-        to_field='product_id'
-    )
-    quantity_dispensed = models.PositiveIntegerField(db_column='quantity_dispensed')
-
-    def save(self, *args, **kwargs):
-        if not self.dispense_item_id:
-            self.dispense_item_id = generate_code(DispenseItem, "dispense_item_id", "DI")
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.product.product_name} x {self.quantity_dispensed}"
-
-    class Meta:
-        db_table = 'dispense_item'
-
-class DispenseEvent(models.Model):
-    EVENT_TYPES = [
-        ('CREATED', 'Created'),
-        ('APPROVED', 'Approved'),
-        ('RELEASED', 'Released'),
-        ('CANCELLED', 'Cancelled'),
-        ('REJECTED', 'Rejected'),
-    ]
-
-    event_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='event_code')
-    event_id = models.CharField(max_length=20, unique=True, editable=False, db_column='event_id')
-    dispense = models.ForeignKey(
-        Dispense, 
-        on_delete=models.CASCADE, 
-        related_name='events', 
-        db_column='dispense_id',
-        to_field='dispense_id'
-    )
-    event_type = models.CharField(max_length=20, choices=EVENT_TYPES, db_column='event_type')
-    previous_status = models.CharField(max_length=10, db_column='previous_status')
-    new_status = models.CharField(max_length=10, db_column='new_status')
-    performed_by = models.TextField(db_column='performed_by')
-    timestamp = models.DateTimeField(default=timezone.now, db_column='timestamp')
-    notes = models.TextField(blank=True, null=True, db_column='notes')
-
-    def save(self, *args, **kwargs):
-        if not self.event_id:
-            self.event_id = generate_code(DispenseEvent, 'event_id', 'DEVT')
-        super().save(*args, **kwargs)
-
-    class Meta:
-        db_table = 'dispense_event'
 
 class Transaction(models.Model):
     TRANSACTION_TYPES = [
