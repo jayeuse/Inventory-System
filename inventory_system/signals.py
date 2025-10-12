@@ -91,7 +91,6 @@ def create_or_update_product_batch(order_item, received_quantity):
     
     return new_batch
 
-
 def update_batch_status(batch):
 
     current_date = timezone.now().date()
@@ -188,7 +187,6 @@ def refresh_all_batch_statuses():
     
     for product in Product.objects.all():
         update_product_status(product)
-    
 
 @receiver(post_save, sender=OrderItem)
 def track_quantity_received_changes(sender, instance, **kwargs):
