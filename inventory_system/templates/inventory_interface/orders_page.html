@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Orders{% endblock title %}
+
+{% block content %}
+<h1>Orders Page</h1>
+
+{% if orders %}
+<table border="1">
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Date Ordered</th>
+            <th>Status</th>
+            <th>Date Received</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="orders-tbody">
+        <!-- Orders will be populated here by JavaScript -->
+    </tbody>
+</table>
+
+{% else %}
+<p>No orders found. <a href="/api/orders/">Check the API</a> to add some orders!</p>
+{% endif %}
+
+<script>
+
+    document.addEventListener('DOMContentLoaded',
+        function(){
+            fetchOrders();
+        }
+    )
+
+    async function fetchOrders() {
+        try {
+            const response = await fetch('/api/orders/');
+
+            if (!response.ok){
+                throw new Error('Network response was not ok');
+            }
+
+            const orders = await response.json();
+
+            if (orders && orders.length >0){
+                // Function to display orders
+                displayOrders(orders);
+            } else {
+                // Handle no orders found
+                alert('No orders found.');
+            }
+        } catch(error){
+            console.error('Error fetching orders:', error);
+            alert('Error fetching orders. Please try again later.');
+        }
+
+    }
+
+    function displayOrders(orders){
+        const tbody = document.getElementById('orders-tbody');
+
+        tbody.innerHTML = '';
+
+        orders.forEach(order => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td>${order.order_id}</td>
+                <td>${order.date_ordered}</td>
+                <td>${order.status}</td>
+                <td>${order.date_received}</td>
+                <td>
+                    <button id="btn-${order.order_id}" onclick="toggleOrderItems('${order.order_id}')">View Items</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+
+            const itemRow = document.createElement('tr');
+
+            itemRow.id = `items-${order.order_id}`;
+            itemRow.style.display = 'none';
+            itemRow.innerHTML = `
+                <td colspan="5">
+                    <h4>Items in Order ${order.order_id}:</h4>
+                    <div id="items-content-${order.order_id}">Loading Items...</div>
+                </td>
+            `;
+            tbody.appendChild(itemRow);
+        });
+    }
+
+    async function toggleOrderItems(orderId) {
+        var itemsRow = document.getElementById('items-' + orderId);
+        var button = document.getElementById('btn-' + orderId);
+        
+        if (itemsRow.style.display === 'none' || itemsRow.style.display === '') {
+            itemsRow.style.display = 'table-row';
+            button.textContent = 'Hide Items';
+            await loadOrderItems(orderId);
+        } else {
+            itemsRow.style.display = 'none';
+            button.textContent = 'View Items';
+        }
+    }
+
+    async function loadOrderItems(orderId){
+        const contentDiv = document.getElementById(`items-content-${orderId}`);
+
+        try {
+            const response = await fetch(`/api/orders/${orderId}`);
+
+            if (!response.ok){
+                throw new Error('Network response was not ok');
+            }
+
+            const orderDetail = await response.json();
+
+            if (orderDetail.items && orderDetail.items.length > 0){
+                let itemsTable = `
+                    <table border="1">
+                        <thead>
+                            <tr>
+                                <th>Order Item ID</th>
+                                <th>Product</th>
+                                <th>Supplier</th>
+                                <th>Qty Ordered</th>
+                                <th>Qty Received</th>
+                                <th>Price per Unit</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                orderDetail.items.forEach(item => {
+                    itemsTable += `
+                        <tr>
+                            <td>${item.order_item_id}</td>
+                            <td>${item.product_name || 'N/A'}</td>
+                            <td>${item.supplier_name || 'N/A'}</td>
+                            <td>${item.quantity_ordered}</td>
+                            <td>${item.quantity_received}</td>
+                            <td>$${item.price_per_unit}</td>
+                            <td>$${item.total_cost}</td>
+                        </tr>
+                    `;
+                });
+
+                itemsTable += `
+                        </tbody>
+                    </table>
+                `;
+                contentDiv.innerHTML = itemsTable;
+            } else {
+                contentDiv.innerHTML = '<p>No items found for this order.</p>';
+            }
+        } catch (error){
+            alert("Failed to load order items. Please try again later.");
+        }
+    }
+</script>
+{% endblock %}

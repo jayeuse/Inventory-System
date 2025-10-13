@@ -1,0 +1,30 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% block title %}Inventory System{% endblock %}
+    </title>
+</head>
+<body>
+    <h1>Base Page</h1>
+</body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{% url 'dashboard_page' %}">Dashboard</a></li>
+                <li><a href="{% url 'products_page' %}">Products</a></li>
+                <li><a href="{% url 'orders_page' %}">Orders</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <body>
+        {% block content %}
+        {% endblock %}
+    </body>
+
+    <footer>
+        <p>&copy; 2025 Inventory System</p>
+    </footer>
+</html>

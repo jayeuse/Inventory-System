@@ -15,5 +15,8 @@ router.register(r'orders', views.OrderViewSet)
 
 urlpatterns = [
     path('', views.landing_page, name='landing_page'),
+    path('dashboard/', views.dashboard_page, name='dashboard_page'),
+    path('products/', views.products_page, name='products_page'),
+    path('orders/', views.orders_page, name='orders_page'),
     path('api/', include(router.urls)),
 ]
