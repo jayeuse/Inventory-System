@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Products{% endblock title %}
+
+{% block content %}
+<h1>Products Page</h1>
+
+{% if products %}
+<table border="1" style="border-collapse: collapse; width: 100%;">
+    <thead>
+        <tr>
+            <th>Product ID</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th>SKU</th>
+            <th>Price per Unit</th>
+            <th>On Hand</th>
+            <th>Reserved</th>
+            <th>Status</th>
+            <th>Last Update</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="products-list">
+        <tr>
+            <!-- Orders will be populated here by JavaScript -->
+        </tr>
+    </tbody>
+
+</table>
+{% else %}
+<p>No products found. <a href="/api/products/">Check the API</a> to add some products!</p>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', 
+        function(){
+            fetchProducts();
+        }
+    );
+
+    async function fetchProducts() {
+        try {
+            const response = await fetch('/api/products/');
+
+            if (!response.ok){
+                throw new Error('Network response was not ok');
+            }
+
+            const products = await response.json();
+
+            if (products && products.length > 0) {
+                displayProducts(products);
+            } else {
+                alert('No products found.');
+
+            }
+        }
+        catch (error) {
+            console.error('Error fetching products:', error);
+            alert('Failed to fetch products. Please try again later.');
+        }
+    }
+
+    function displayProducts(products){
+        const tbody = document.getElementById('products-list');
+
+        tbody.innerHTML = '';
+
+        products.forEach(product => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td>${product.product_id}</td>
+                <td>${product.product_name}</td>
+                <td>${product.category_name || 'N/A'}</td>
+                <td>${product.sku}</td>
+                <td>P${product.price_per_unit}</td>
+                <td>${product.on_hand}</td>
+                <td>${product.reserved}</td>
+                <td>${product.status}</td>
+                <td>${product.last_update || 'N/A'}</td>
+                <td>${product.product_id}</td>
+                <td>
+                    <button>Edit</button>
+                    <button>Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+</script>
+{% endblock %}
