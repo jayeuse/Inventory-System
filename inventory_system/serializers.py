@@ -93,6 +93,27 @@ class OrderItemSerializer(serializers.ModelSerializer):
             'total_cost',
         ]
 
+    def validate_quantity_ordered(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Quantity ordered cannot be negative.")
+        return value
+    
+    def validate(self, data):
+        quantity_ordered = data.get('quantity_ordered')
+        quantity_received = data.get('quantity_received')
+        
+        if quantity_received and quantity_ordered and quantity_received > quantity_ordered:
+            raise serializers.ValidationError("Quantity received cannot exceed quantity ordered.")
+        
+        # Prevents decrease in quantity_received
+        if self.instance and quantity_received is not None:
+            if quantity_received < self.instance.quantity_received:
+                raise serializers.ValidationError(
+                    f"Cannot decrease quantity received from {self.instance.quantity_received} to {quantity_received}."
+                )
+        
+        return data
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     total_items = serializers.SerializerMethodField()
