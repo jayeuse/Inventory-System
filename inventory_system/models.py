@@ -188,26 +188,6 @@ class Order(models.Model):
 
         super().save(*args, **kwargs)
 
-    def update_status(self):
-        """Update order status based on item quantities received"""
-        order_items = self.items.all()
-        if not order_items.exists():
-            return
-        
-        total_ordered = sum(item.quantity_ordered for item in order_items)
-        total_received = sum(item.quantity_received for item in order_items)
-        
-        if total_received == 0:
-            self.status = 'Pending'
-        elif total_received >= total_ordered:
-            self.status = 'Received'
-            if not self.date_received:
-                self.date_received = timezone.now()
-        else:
-            self.status = 'Partially Received'
-        
-        self.save(update_fields=['status', 'date_received'])
-
     def __str__(self):
         return f"Order {self.order_id} - {self.status}"
 
@@ -253,17 +233,10 @@ class OrderItem(models.Model):
     )
 
     def save(self, *args, **kwargs):
-
-        if self.quantity_ordered < 0:
-            raise ValueError("Quantity ordered cannot be negative.")
-        
-        if self.quantity_received > self.quantity_ordered:
-            raise ValueError("Quantity received cannot exceed quantity ordered.")
         
         if not self.order_item_id:
             self.order_item_id = generate_code(OrderItem, 'order_item_id', 'ITEM-')
 
-        # Auto-assign price from product if not set
         if self.price_per_unit is None or self.price_per_unit == 0:
             if self.product and hasattr(self.product, 'price_per_unit'):
                 self.price_per_unit = self.product.price_per_unit or 0
@@ -275,10 +248,6 @@ class OrderItem(models.Model):
                 Decimal('0.01'), rounding=ROUND_HALF_UP)
         
         super().save(*args, **kwargs)
-        
-        # Update order status after saving the item
-        if self.order_id:
-            self.order.update_status()
 
     def __str__(self):
         return f"Item {self.order_item_id} - {self.product.product_name} ({self.quantity_ordered})"
