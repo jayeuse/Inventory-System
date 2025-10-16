@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from django.shortcuts import render
 
-from .models import Supplier, Category, Product, ProductBatch, OrderItem, Order
-from .serializers import CategorySerializer, SupplierSerializer, ProductSerializer, ProductBatchSerializer, OrderItemSerializer, OrderSerializer
+from .models import Supplier, Category, Product, ProductBatch, OrderItem, Order, Transaction
+from .serializers import CategorySerializer, SupplierSerializer, ProductSerializer, ProductBatchSerializer, OrderItemSerializer, OrderSerializer, TransactionSerializer
 
 def landing_page(request):
     return render(request, 'base.html')
@@ -57,3 +57,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('order_id')
     serializer_class = OrderSerializer
     lookup_field = 'order_id'
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    queryset = Transaction.objects.all().order_by('transaction_id')
+    serializer_class = TransactionSerializer
+    lookup_field = 'transaction_id'

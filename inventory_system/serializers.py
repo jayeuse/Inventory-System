@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Supplier, Category, Product, ProductBatch, Order, OrderItem
+from .models import Supplier, Category, Product, ProductBatch, Order, OrderItem, Transaction
 
 class CategorySerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
@@ -37,7 +37,6 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             'product_id',
             'product_name',
-            'category',  # This is the actual ForeignKey field
             'category_id',
             'category_name',
             'sku',
@@ -58,7 +57,6 @@ class ProductBatchSerializer(serializers.ModelSerializer):
         model = ProductBatch
         fields = [
             'batch_id',
-            'product',
             'product_id',
             'product_name',
             'on_hand',
@@ -69,7 +67,10 @@ class ProductBatchSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.product_name', read_only=True)
+    product_id = serializers.CharField(source='product.product_id', read_only=True)
     supplier_name = serializers.CharField(source='supplier.supplier_name', read_only=True)
+    supplier_id = serializers.CharField(source='supplier.supplier_id', read_only=True)
+    order_id = serializers.CharField(source='order.order_id', read_only=True)
 
     price_per_unit = serializers.DecimalField(
         max_digits=10, 
@@ -82,10 +83,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = [
             'order_item_id',
-            'order',
-            'product',
+            'order_id',
+            'product_id',
             'product_name',
-            'supplier',
+            'supplier_id',
             'supplier_name',
             'quantity_ordered',
             'quantity_received',
@@ -132,3 +133,31 @@ class OrderSerializer(serializers.ModelSerializer):
     
     def get_total_items(self, obj):
         return obj.items.count()
+    
+class TransactionSerializer(serializers.ModelSerializer):
+    product_id = serializers.CharField(source='product.product_id', read_only=True)
+    product_name = serializers.CharField(source='product.product_name', read_only=True)
+    batch_id = serializers.CharField(source='batch.batch_id', read_only=True, allow_null=True)
+    quantity_change = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Transaction
+        fields = [
+            'transaction_id',
+            'transaction_type',
+            'product_id',
+            'product_name',
+            'batch_id',
+            'quantity_change',
+            'on_hand',
+            'remarks',
+            'performed_by',
+            'date_of_transaction',
+        ]
+    
+    def get_quantity_change(self, obj):
+        """Format quantity_change with explicit + or - sign"""
+        if obj.quantity_change > 0:
+            return f"+{obj.quantity_change}"
+        else:
+            return str(obj.quantity_change)

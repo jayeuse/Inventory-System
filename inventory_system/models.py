@@ -105,7 +105,7 @@ class Product(models.Model):
 
 class ProductBatch(models.Model):
     batch_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='batch_code')
-    batch_id = models.CharField(max_length=20, unique=True, editable=False, db_column='batch_id')
+    batch_id = models.CharField(max_length=30, unique=True, editable=False, db_column='batch_id')
     product = models.ForeignKey(
         Product, 
         on_delete=models.CASCADE, 
@@ -129,7 +129,7 @@ class ProductBatch(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.batch_id:
-            prefix = f"BATCH-{self.product.product_id}-"
+            prefix = f"{self.product.product_id}-BATCH-"
             last_obj = ProductBatch.objects.filter(
                 product=self.product,
                 batch_id__startswith=prefix
@@ -144,7 +144,7 @@ class ProductBatch(models.Model):
                 except ValueError:
                     new_number = 1
 
-            self.batch_id = f"{prefix}{str(new_number).zfill(3)}"
+            self.batch_id = f"{prefix}{str(new_number).zfill(5)}"
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -184,7 +184,7 @@ class Order(models.Model):
                 except ValueError:
                     new_number = 1
 
-            self.order_id = f"{prefix}{str(new_number).zfill(4)}"
+            self.order_id = f"{prefix}{str(new_number).zfill(5)}"
 
         super().save(*args, **kwargs)
 
@@ -196,7 +196,7 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order_item_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='order_item_code')
-    order_item_id = models.CharField(max_length=20, unique=True, editable=False, db_column='order_item_id')
+    order_item_id = models.CharField(max_length=30, unique=True, editable=False, db_column='order_item_id')
 
     order = models.ForeignKey(
         Order, 
@@ -235,7 +235,22 @@ class OrderItem(models.Model):
     def save(self, *args, **kwargs):
         
         if not self.order_item_id:
-            self.order_item_id = generate_code(OrderItem, 'order_item_id', 'ITEM-')
+            prefix = f"{self.order.order_id}-ITEM-"
+            last_obj = OrderItem.objects.filter(
+                order=self.order,
+                order_item_id__startswith=prefix
+            ).order_by("-order_item_id").first()
+
+            if not last_obj:
+                new_number = 1
+            else:
+                last_id = last_obj.order_item_id.replace(prefix, "")
+                try:
+                    new_number = int(last_id) + 1
+                except ValueError:
+                    new_number = 1
+
+            self.order_item_id = f"{prefix}{str(new_number).zfill(5)}"
 
         if self.price_per_unit is None or self.price_per_unit == 0:
             if self.product and hasattr(self.product, 'price_per_unit'):
@@ -259,13 +274,18 @@ class Transaction(models.Model):
     TRANSACTION_TYPES = [
         ('IN', 'Stock In'),
         ('OUT', 'Stock Out'),
-        ('ADJUSTMENT', 'Adjustment'),
+        ('ADJ', 'Stock Adjustment'),
     ]
 
     transaction_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='transaction_code')
     transaction_id = models.CharField(max_length=20, unique=True, editable=False, db_column='transaction_id')
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES, db_column='transaction_type')
-    related_id = models.CharField(max_length=36, null=True, blank=True, db_column='related_id')
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE, 
+        db_column='product_id',
+        to_field='product_id'
+    )
     batch = models.ForeignKey(
         ProductBatch, 
         on_delete=models.SET_NULL, 
@@ -274,18 +294,11 @@ class Transaction(models.Model):
         db_column='batch_id',
         to_field='batch_id'
     )
-    product = models.ForeignKey(
-        Product, 
-        on_delete=models.CASCADE, 
-        db_column='product_id',
-        to_field='product_id'
-    )
     quantity_change = models.IntegerField(db_column='quantity_change')
-    before = models.IntegerField(db_column='before')
-    after = models.IntegerField(db_column='after')
+    on_hand = models.IntegerField(db_column='on_hand')
+    remarks = models.TextField(blank=True, null=True, db_column='remarks')
     performed_by = models.TextField(db_column='performed_by')
-    date = models.DateTimeField(default=timezone.now, db_column='date')
-    notes = models.TextField(blank=True, null=True, db_column='notes')
+    date_of_transaction = models.DateTimeField(default=timezone.now, db_column='date_of_transaction')
 
     def save(self, *args, **kwargs):
         if not self.transaction_id:
