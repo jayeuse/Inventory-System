@@ -20,13 +20,11 @@ class InventoryService:
         )
         cutoff_date = timezone.now().date() - timedelta(days=RECENT_BATCH_DAYS)
 
-        # Find suitable existing batches
         suitable_batches = ProductBatch.objects.filter(
             product=order_item.product,
             expiry_date__gte=cutoff_date,
         ).exclude(status='Near Expiry').order_by('expiry_date')
 
-        # Try to consolidate with existing batch
         for existing_batch in suitable_batches:
             expiry_diff = abs((existing_batch.expiry_date - new_expiry_date).days)
 
@@ -35,7 +33,6 @@ class InventoryService:
                 existing_batch.save(update_fields=['on_hand'])
                 return existing_batch
             
-        # Create new batch if no suitable existing batch found
         new_batch = ProductBatch.objects.create(
             product=order_item.product,
             on_hand=received_quantity,
@@ -57,7 +54,6 @@ class InventoryService:
 
         days_until_expiry = (batch.expiry_date - current_date).days
 
-        # Determine new status based on business rules
         if batch.on_hand == 0:
             new_status = 'Out of Stock'
         elif days_until_expiry <= 0:
@@ -69,7 +65,6 @@ class InventoryService:
         else:
             new_status = 'Normal'
 
-        # Update if status changed
         if batch.status != new_status:
             batch.status = new_status
             batch.save(update_fields=['status'])
@@ -89,12 +84,11 @@ class InventoryService:
             'Expired': 4,
         }
 
-        batch_statuses = ProductBatch.objects.filter(product=product).values_list('status', flat=True)
+        batch_statuses = ProductBatch.objects.filter(product=product).values_list('status', flat = True)
 
         if not batch_statuses:
             return
-
-        # Find highest priority status
+        
         highest_priority_status = max(STATUS_PRIORITY.get(status, 0) for status in batch_statuses)
         
         product_status = next(
@@ -102,7 +96,6 @@ class InventoryService:
             if priority == highest_priority_status
         )
 
-        # Update product status if changed
         if hasattr(product, 'status') and getattr(product, 'status', None) != product_status:
             product.status = product_status
             product.save(update_fields=['status'])
@@ -112,7 +105,7 @@ class InventoryService:
         """
         Update product on_hand quantity from all its batches
         """
-        total_on_hand = ProductBatch.objects.filter(product=product).aggregate(
+        total_on_hand = ProductBatch.objects.filter(product = product).aggregate(
             total=models.Sum('on_hand')
         )['total'] or 0
 
@@ -134,7 +127,7 @@ class InventoryService:
                 batches_updated += 1
         
         # Update all products that have batches
-        product_ids = ProductBatch.objects.values_list('product', flat=True).distinct()
+        product_ids = ProductBatch.objects.values_list('product', flat = True).distinct()
         for product_id in product_ids:
             product_obj = Product.objects.get(pk=product_id)
             InventoryService.update_product_status(product_obj)
