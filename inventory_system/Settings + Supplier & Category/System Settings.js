@@ -1,4 +1,4 @@
-         document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
             const tabs = document.querySelectorAll('.tab');
             const tabContents = document.querySelectorAll('.tab-content');
             
@@ -41,3 +41,18 @@
                 if (e.target === modal) modal.style.display = "none";
             };
         });
+
+        function toggleSubcategories(button) {
+            const row = button.closest('tr');
+            const subcategoryRow = row.nextElementSibling;
+            
+            // Toggle the visibility of the subcategory row
+            subcategoryRow.classList.toggle('hidden');
+            
+            // Update button text and icon based on state
+            if (subcategoryRow.classList.contains('hidden')) {
+                button.innerHTML = '<i class="bi bi-eye"></i> View';
+            } else {
+                button.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
+            }
+        }
