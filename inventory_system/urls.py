@@ -6,11 +6,14 @@ from . import views
 router = DefaultRouter()
 
 router.register(r'categories', views.CategoryViewSet)
+router.register(r'subcategories', views.SubcategoryViewSet)
 router.register(r'suppliers', views.SupplierViewSet)
 router.register(r'products', views.ProductViewSet)
+router.register(r'product-stocks', views.ProductStocksViewSet)
 router.register(r'product-batches', views.ProductBatchViewSet)
-router.register(r'order-items', views.OrderItemViewSet)
 router.register(r'orders', views.OrderViewSet)
+router.register(r'order-items', views.OrderItemViewSet)
+router.register(r'receive-orders', views.ReceiveOrderViewSet)
 router.register(r'transactions', views.TransactionViewSet)
 
 
