@@ -103,9 +103,6 @@ python manage.py createsuperuser
 # Reset/recreate database
 python manage.py init_db
 
-# Load sample data for testing
-python manage.py init_db --load-sample-data
-
 # Run tests
 python manage.py test
 ```
