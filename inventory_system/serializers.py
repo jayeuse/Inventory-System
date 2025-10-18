@@ -66,6 +66,7 @@ class ProductBatchSerializer(serializers.ModelSerializer):
         ]
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    # Read-only display fields
     product_name = serializers.CharField(source='product.product_name', read_only=True)
     product_id = serializers.CharField(source='product.product_id', read_only=True)
     supplier_name = serializers.CharField(source='supplier.supplier_name', read_only=True)
@@ -83,16 +84,24 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = [
             'order_item_id',
-            'order_id',
-            'product_id',
-            'product_name',
-            'supplier_id',
-            'supplier_name',
+            'order',             
+            'order_id',          
+            'product',          
+            'product_id',         
+            'product_name',       
+            'supplier',          
+            'supplier_id',        
+            'supplier_name',      
             'quantity_ordered',
             'quantity_received',
             'price_per_unit',
             'total_cost',
         ]
+        extra_kwargs = {
+            'order': {'write_only': True},      # Only for input
+            'product': {'write_only': True},    # Only for input
+            'supplier': {'write_only': True},   # Only for input
+        }
 
     def validate_quantity_ordered(self, value):
         if value < 0:
