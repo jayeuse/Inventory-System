@@ -1,27 +1,32 @@
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
-from ..models import ProductBatch, Product
+from ..models import ProductBatch, Product, ProductStocks
 
 
 class InventoryService:
     """Business logic for inventory management"""
     
     @staticmethod
-    def create_or_update_product_batch(order_item, received_quantity):
+    def create_or_update_product_batch(product, product_stock, received_quantity):
         """
         Create a new batch or update existing one based on expiry date tolerance
+        Args:
+            product: Product instance
+            product_stock: ProductStocks instance
+            received_quantity: Quantity received
         """
         EXPIRY_TOLERANCE_DAYS = 10
         RECENT_BATCH_DAYS = 30
         
         new_expiry_date = timezone.now().date() + timedelta(
-            days=order_item.product.expiry_threshold_days + EXPIRY_TOLERANCE_DAYS
+            days=product.expiry_threshold_days + EXPIRY_TOLERANCE_DAYS
         )
         cutoff_date = timezone.now().date() - timedelta(days=RECENT_BATCH_DAYS)
 
+        # Find suitable batches for this product_stock
         suitable_batches = ProductBatch.objects.filter(
-            product=order_item.product,
+            product_stock=product_stock,
             expiry_date__gte=cutoff_date,
         ).exclude(status='Near Expiry').order_by('expiry_date')
 
@@ -33,10 +38,10 @@ class InventoryService:
                 existing_batch.save(update_fields=['on_hand'])
                 return existing_batch
             
+        # Create new batch
         new_batch = ProductBatch.objects.create(
-            product=order_item.product,
+            product_stock=product_stock,
             on_hand=received_quantity,
-            reserved=0,
             expiry_date=new_expiry_date,
             status='Normal',
         )
@@ -49,8 +54,9 @@ class InventoryService:
         Update batch status based on business rules
         """
         current_date = timezone.now().date()
-        expiry_threshold = batch.product.expiry_threshold_days
-        low_stock_threshold = batch.product.low_stock_threshold
+        product = batch.product_stock.product
+        expiry_threshold = product.expiry_threshold_days
+        low_stock_threshold = product.low_stock_threshold
 
         days_until_expiry = (batch.expiry_date - current_date).days
 
@@ -72,51 +78,47 @@ class InventoryService:
         return new_status
 
     @staticmethod
-    def update_product_status(product):
+    def update_stock_status(product_stock):
         """
-        Roll up product status from batch statuses using priority system
+        Update ProductStocks status based on total_on_hand and thresholds
         """
-        STATUS_PRIORITY = {
-            'Normal': 0,
-            'Low Stock': 1,
-            'Near Expiry': 2,
-            'Out of Stock': 3,
-            'Expired': 4,
-        }
-
-        batch_statuses = ProductBatch.objects.filter(product=product).values_list('status', flat = True)
-
-        if not batch_statuses:
-            return
+        product = product_stock.product
+        total = product_stock.total_on_hand
         
-        highest_priority_status = max(STATUS_PRIORITY.get(status, 0) for status in batch_statuses)
+        if total == 0:
+            new_status = 'Out of Stock'
+        elif total <= product.low_stock_threshold:
+            new_status = 'Low Stock'
+        else:
+            new_status = 'Normal'
         
-        product_status = next(
-            status for status, priority in STATUS_PRIORITY.items() 
-            if priority == highest_priority_status
-        )
-
-        if hasattr(product, 'status') and getattr(product, 'status', None) != product_status:
-            product.status = product_status
-            product.save(update_fields=['status'])
+        if product_stock.status != new_status:
+            product_stock.status = new_status
+            product_stock.save(update_fields=['status'])
+        
+        return new_status
 
     @staticmethod
-    def update_product_inventory(product):
+    def update_stock_total(product_stock):
         """
-        Update product on_hand quantity from all its batches
+        Update ProductStocks total_on_hand from all its batches
         """
-        total_on_hand = ProductBatch.objects.filter(product = product).aggregate(
+        total_on_hand = ProductBatch.objects.filter(
+            product_stock=product_stock
+        ).aggregate(
             total=models.Sum('on_hand')
         )['total'] or 0
 
-        if product.on_hand != total_on_hand:
-            product.on_hand = total_on_hand
-            product.save(update_fields=['on_hand', 'last_update'])
+        if product_stock.total_on_hand != total_on_hand:
+            product_stock.total_on_hand = total_on_hand
+            product_stock.save(update_fields=['total_on_hand'])
+        
+        return total_on_hand
 
     @staticmethod
     def refresh_all_batch_statuses():
         """
-        Refresh status for all batches and products
+        Refresh status for all batches and product stocks
         """
         batches_updated = 0
 
@@ -126,10 +128,9 @@ class InventoryService:
             if old_status != new_status:
                 batches_updated += 1
         
-        # Update all products that have batches
-        product_ids = ProductBatch.objects.values_list('product', flat = True).distinct()
-        for product_id in product_ids:
-            product_obj = Product.objects.get(pk=product_id)
-            InventoryService.update_product_status(product_obj)
+        # Update all product stocks
+        for product_stock in ProductStocks.objects.all():
+            InventoryService.update_stock_total(product_stock)
+            InventoryService.update_stock_status(product_stock)
             
         return batches_updated

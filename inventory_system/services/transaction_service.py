@@ -23,7 +23,7 @@ class TransactionService:
             quantity_change=quantity_change,
             on_hand=on_hand,
             performed_by=performed_by,
-            remarks=remarks or f"Stock in for {product.product_name}"
+            remarks=remarks or f"Stock in for {product.brand_name} - {product.generic_name}"
         )
         
         return transaction
@@ -47,7 +47,7 @@ class TransactionService:
             quantity_change=quantity_change,
             on_hand=on_hand,
             performed_by=performed_by,
-            remarks=remarks or f"Stock out for {product.product_name}"
+            remarks=remarks or f"Stock out for {product.brand_name} - {product.generic_name}"
         )
         
         return transaction
@@ -69,7 +69,7 @@ class TransactionService:
             quantity_change=quantity_change,
             on_hand=on_hand,
             performed_by=performed_by,
-            remarks=remarks or f"Stock adjustment for {product.product_name}"
+            remarks=remarks or f"Stock adjustment for {product.brand_name} - {product.generic_name}"
         )
         
         return transaction
