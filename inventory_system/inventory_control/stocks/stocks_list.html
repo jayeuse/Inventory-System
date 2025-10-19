@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stocks List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="stocks_list.css">
+</head>
+<body>
+
+    <main class="main">
+        <div class="tabs">
+            <div class="tab active" data-tab="stocks">Stocks List</div>
+            <div class="tab" data-tab="orders" data-url="../orders/orders_list.html">Orders</div>
+        </div>
+
+        <div class="card">
+            <div class="search-row">
+                <div class="search-controls">
+                    <input
+                        class="input search-input"
+                        placeholder="Search by Stock ID, Product ID, Brand, or Generic Name"
+                        id="stockslist_searchInput"
+                    />
+                    <select class="input" id="stockslist_statusFilter">
+                        <option value="all">Filter by Status</option>
+                        <option value="normal">Normal</option>
+                        <option value="low-stock">Low Stock</option>
+                        <option value="near-expiry">Near Expiry</option>
+                        <option value="out-of-stock">Out of Stock</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="info-banner">
+                <i class="bi bi-info-circle"></i>
+                <p><em>Status reflects the most critical batch condition. Expand to view and edit batch details like status and expiry.</em></p>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;"></th>
+                        <th>Stock ID</th>
+                        <th>Product ID</th>
+                        <th>Product Name</th>
+                        <th>Total On Hand</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="stockslist_tableBody">
+                    <!-- Stock Item 1 -->
+                    <tr class="stock-row">
+                        <td>
+                            <button class="expand-btn" onclick="toggleBatches('STK-001')">
+                                <i class="fas fa-chevron-right" id="stockslist_icon-STK-001"></i>
+                            </button>
+                        </td>
+                        <td>STK-001</td>
+                        <td>PRD001</td>
+                        <td>Biogesic (Paracetamol)</td>
+                        <td>150 units</td>
+                        <td><span class="status-badge status-normal">Normal</span></td>
+                    </tr>
+                    <tr class="batch-details" id="stockslist_batches-STK-001" style="display: none;">
+                        <td colspan="6">
+                            <div class="batch-container">
+                                <h4 class="batch-title">Batch Details for STK-001</h4>
+                                <table class="batch-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Batch ID</th>
+                                            <th>On Hand (per batch)</th>
+                                            <th>SKU</th>
+                                            <th>Expiry Date</th>
+                                            <th>Batch Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>STK-001-BTH001</td>
+                                            <td>80 units</td>
+                                            <td>BIO-PAR-500-001</td>
+                                            <td>2026-03-15</td>
+                                            <td><span class="batch-status status-low-stock">Low Stock</span></td>
+                                            <td>
+                                                <button class="action-btn edit-btn" onclick="stockslist_openEditBatchModal('STK-001-BTH001', '80', 'BIO-PAR-500-001', '2026-03-15')">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>STK-001-BTH002</td>
+                                            <td>70 units</td>
+                                            <td>BIO-PAR-500-002</td>
+                                            <td>2026-05-20</td>
+                                            <td><span class="batch-status status-near-expiry">Near Expiry</span></td>
+                                            <td>
+                                                <button class="action-btn edit-btn" onclick="stockslist_openEditBatchModal('STK-001-BTH002', '70', 'BIO-PAR-500-002', '2026-05-20')">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Stock Item 2 -->
+                    <tr class="stock-row">
+                        <td>
+                            <button class="expand-btn" onclick="toggleBatches('STK-002')">
+                                <i class="fas fa-chevron-right" id="stockslist_icon-STK-002"></i>
+                            </button>
+                        </td>
+                        <td>STK-002</td>
+                        <td>PRD002</td>
+                        <td>Solmux (Carbocisteine)</td>
+                        <td>45 units</td>
+                        <td><span class="status-badge status-out-of-stock">Out of Stock</span></td>
+                    </tr>
+                    <tr class="batch-details" id="stockslist_batches-STK-002" style="display: none;">
+                        <td colspan="6">
+                            <div class="batch-container">
+                                <h4 class="batch-title">Batch Details for STK-002</h4>
+                                <table class="batch-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Batch ID</th>
+                                            <th>On Hand (per batch)</th>
+                                            <th>SKU</th>
+                                            <th>Expiry Date</th>
+                                            <th>Batch Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>STK-002-BTH001</td>
+                                            <td>45 units</td>
+                                            <td>SOL-CAR-500-001</td>
+                                            <td>2026-01-10</td>
+                                            <td><span class="batch-status status-expired">Expired</span></td>
+                                            <td>
+                                                <button class="action-btn edit-btn" onclick="stockslist_openEditBatchModal('STK-002-BTH001', '45', 'SOL-CAR-500-001', '2026-01-10')">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <button class="pagination-btn" id="stockslist_prevBtn">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <button class="pagination-btn" id="stockslist_nextBtn">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Batch Modal -->
+    <div class="modal-overlay" id="stockslist_editBatchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Batch Details</h3>
+                <button class="close-btn" onclick="stockslist_closeEditBatchModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="stockslist_edit_batchId">Batch ID</label>
+                    <input type="text" id="stockslist_edit_batchId" class="input" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="stockslist_edit_onHand">On Hand (Quantity) <span class="required">*</span></label>
+                    <input type="number" id="stockslist_edit_onHand" class="input" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="stockslist_edit_sku">SKU <span class="required">*</span></label>
+                    <input type="text" id="stockslist_edit_sku" class="input" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="stockslist_edit_expiryDate">Expiry Date <span class="required">*</span></label>
+                    <input type="date" id="stockslist_edit_expiryDate" class="input" required>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <div class="form-group">
+                    <label for="stockslist_edit_remarks">Remarks / Reason for Editing <span class="required">*</span></label>
+                    <textarea id="stockslist_edit_remarks" class="input textarea" rows="4" placeholder="e.g., Stock recount, Inventory adjustment, Data correction..." required></textarea>
+                    <small class="help-text">Please provide a reason for this edit (e.g., recount, adjustment, correction)</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="stockslist_closeEditBatchModal()">Cancel</button>
+                <button class="btn-primary" onclick="stockslist_saveBatchEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="stocks_list.js"></script>
+</body>
+</html>
