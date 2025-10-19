@@ -2,16 +2,40 @@ document.addEventListener('DOMContentLoaded', function() {
             const tabs = document.querySelectorAll('.tab');
             const tabContents = document.querySelectorAll('.tab-content');
             
+            // Check URL parameters for tab navigation
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            
+            // Function to activate a specific tab
+            function activateTab(tabId) {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                const targetTab = document.querySelector(`[data-tab="${tabId}"]`);
+                const targetContent = document.getElementById(`${tabId}-content`);
+                
+                if (targetTab && targetContent) {
+                    targetTab.classList.add('active');
+                    targetContent.classList.add('active');
+                }
+            }
+            
+            // If there's a tab parameter in URL, activate that tab
+            if (tabParam) {
+                activateTab(tabParam);
+            }
+            
             tabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     const tabId = this.getAttribute('data-tab');
+                    const url = this.getAttribute('data-url');
                     
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    
-                   
-                    this.classList.add('active');
-                    document.getElementById(`${tabId}-content`).classList.add('active');
+                    // If tab has a URL, navigate to it
+                    if (url) {
+                        window.location.href = url;
+                    } else {
+                        activateTab(tabId);
+                    }
                 });
             });
             
