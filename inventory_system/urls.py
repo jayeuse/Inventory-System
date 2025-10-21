@@ -1,7 +1,8 @@
 from rest_framework.routers import DefaultRouter
-
+from django.contrib import admin
 from django.urls import path, include
 from . import views
+
 
 router = DefaultRouter()
 
@@ -18,9 +19,11 @@ router.register(r'transactions', views.TransactionViewSet)
 
 
 urlpatterns = [
-    path('', views.landing_page, name='landing_page'),
-    path('dashboard/', views.dashboard_page, name='dashboard_page'),
-    path('products/', views.products_page, name='products_page'),
-    path('orders/', views.orders_page, name='orders_page'),
+    path('admin/', admin.site.urls),
+    path('dashboard/', views.dashboard_view, name = 'dashboard'),
+    path('products/', views.products_view, name = 'products'),
+    path('inventory/', views.inventory_view, name = 'inventory'),
+    path('transactions/', views.transactions_view, name = 'transactions'),
+    path('settings/', views.settings_view, name = 'settings'),
     path('api/', include(router.urls)),
 ]

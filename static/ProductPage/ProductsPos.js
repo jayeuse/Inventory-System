@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
     manageProductBtn.addEventListener("click", function () {
       // Redirect to Product Management page
       window.location.href =
-        "../../Settings + Supplier & Category/product_management/product_management.html";
+        "/static/SettingsPage/System_Settings.html#products";
     });
   }
 
