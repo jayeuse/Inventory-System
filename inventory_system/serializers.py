@@ -18,6 +18,7 @@ class CategorySerializer(serializers.ModelSerializer):
         return obj.products.count()  # Fixed: using correct related_name
 
 class SubcategorySerializer(serializers.ModelSerializer):
+    product_count = serializers.SerializerMethodField()
     class Meta:
         model = Subcategory
         fields = [
@@ -25,7 +26,11 @@ class SubcategorySerializer(serializers.ModelSerializer):
             'subcategory_name',
             'subcategory_description',
             'category',
+            'product_count',
         ]
+
+    def get_product_count(self, obj):
+        return obj.products.count();
 
 class SupplierSerializer(serializers.ModelSerializer):
     product_id = serializers.CharField(source='product.product_id', read_only=True)
