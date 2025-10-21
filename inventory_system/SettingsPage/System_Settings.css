@@ -37,7 +37,57 @@ body {
   color: #1e293b;
   min-height: 100vh;
 }
+/* Additional CSS for collapsible forms */
+.form-toggle-buttons {
+  display: flex;
+  gap: 10px;
+}
 
+.form-container.collapsible {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+}
+
+.form-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.collapse-toggle {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.form-content {
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.form-container.collapsible.collapsed .form-content {
+  display: none;
+}
+
+.form-container.collapsible.collapsed .collapse-toggle {
+  transform: rotate(180deg);
+}
 .main {
   padding: 48px 32px;
   max-width: 1400px;

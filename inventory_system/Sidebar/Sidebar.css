@@ -1,152 +1,152 @@
 :root {
-      --violet-dark: #8A6DC9; 
-      --violet-medium: #7B5FBD; 
-      --violet-darker: #6C51B0;
-      --violet-accent: #5D43A3; 
-      --white: #FFFFFF;
-      --border: #e2e8f0;
-      --radius: 16px;
-      --shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      --bg-light: #f8fafc;
-    }
+  --violet-dark: #8a6dc9;
+  --violet-medium: #7b5fbd;
+  --violet-darker: #6c51b0;
+  --violet-accent: #5d43a3;
+  --white: #ffffff;
+  --border: #e2e8f0;
+  --radius: 16px;
+  --shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  --bg-light: #f8fafc;
+}
 
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      background: var(--bg-light);
-      font-family: "Poppins", sans-serif;
-      overflow: hidden;
-    }
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  background: var(--bg-light);
+  font-family: "Poppins", sans-serif;
+  overflow: hidden;
+}
 
-    .sidebar-wrapper {
-      display: flex;
-      height: 100%;
-      width: 288px;
-      position: relative;
-      flex-shrink: 0;
-    }
+.sidebar-wrapper {
+  display: flex;
+  height: 100%;
+  width: 288px;
+  position: relative;
+  flex-shrink: 0;
+}
 
-    .sidebar-icons {
-      width: 4rem;
-      background: var(--violet-medium); 
-      border-radius: var(--radius);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.5rem 0;
-      box-shadow: var(--shadow);
-      z-index: 2;
-      position: relative;
-    }
+.sidebar-icons {
+  width: 4rem;
+  background: var(--violet-medium);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  box-shadow: var(--shadow);
+  z-index: 2;
+  position: relative;
+}
 
-    .nav-icon {
-      width: 3rem;
-      height: 3rem;
-      border-radius: 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #FFFFFF;
-      font-size: 1.25rem;
-      background: transparent;
-      border: none;
-      transition: all 0.2s ease;
-    }
+.nav-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.25rem;
+  background: transparent;
+  border: none;
+  transition: all 0.2s ease;
+}
 
-    .nav-icon:hover:not(.active) {
-      background-color: var(--white);
-      color: var(--violet-darker);
-    }
+.nav-icon:hover:not(.active) {
+  background-color: var(--white);
+  color: var(--violet-darker);
+}
 
-    .nav-icon.active {
-      background-color: var(--white);
-      color: var(--violet-darker);
-      box-shadow: var(--shadow);
-    }
+.nav-icon.active {
+  background-color: var(--white);
+  color: var(--violet-darker);
+  box-shadow: var(--shadow);
+}
 
-    .sidebar-labels {
-      flex: 1;
-      background: var(--violet-dark);
-      border-radius: var(--radius);
-      padding: 1.5rem 0 1.5rem 5rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: var(--shadow);
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-    }
+.sidebar-labels {
+  flex: 1;
+  background: var(--violet-dark);
+  border-radius: var(--radius);
+  padding: 1.5rem 0 1.5rem 5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
 
-    .nav-label {
-      height: 3rem;
-      display: flex;
-      align-items: center;
-      padding-left: 1rem;
-      border: none;
-      border-top-left-radius: var(--radius);
-      border-bottom-left-radius: var(--radius);
-      background: transparent;
-      color: #FFFFFF; 
-      font-weight: 500;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      text-align: left;
-    }
+.nav-label {
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  padding-left: 1rem;
+  border: none;
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+  background: transparent;
+  color: #ffffff;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  text-align: left;
+}
 
-    .nav-label:hover:not(.active) {
-      background-color: var(--white);
-      color: var(--violet-medium);
-    }
+.nav-label:hover:not(.active) {
+  background-color: var(--white);
+  color: var(--violet-medium);
+}
 
-    .nav-label.active {
-      background: var(--white);
-      color: var(--violet-medium);
-      font-weight: 600;
-    }
+.nav-label.active {
+  background: var(--white);
+  color: var(--violet-medium);
+  font-weight: 600;
+}
 
-    .logout-label {
-      height: 3rem;
-      display: flex;
-      align-items: center;
-      padding-left: 1rem;
-      border: none;
-      border-top-left-radius: var(--radius);
-      border-bottom-left-radius: var(--radius);
-      background: transparent;
-      color: #FFFFFF;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      margin-top: auto;
-    }
+.logout-label {
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  padding-left: 1rem;
+  border: none;
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+  background: transparent;
+  color: #ffffff;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin-top: auto;
+}
 
-    .logout-label:hover {
-      background-color: var(--white);
-      color: var(--violet-medium);
-    }
+.logout-label:hover {
+  background-color: var(--white);
+  color: var(--violet-medium);
+}
 
-    .logout-label.active {
-      background: var(--white);
-      color: var(--violet-medium);
-      font-weight: 600;
-    }
+.logout-label.active {
+  background: var(--white);
+  color: var(--violet-medium);
+  font-weight: 600;
+}
 
-    .logout-icon {
-      color: #FFFFFF;
-      transition: all 0.2s ease;
-    }
+.logout-icon {
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
 
-    .logout-icon:hover {
-      background-color: var(--white);
-      color: var(--violet-darker);
-    }
+.logout-icon:hover {
+  background-color: var(--white);
+  color: var(--violet-darker);
+}
 
-    .logout-icon.active {
-      background-color: var(--white);
-      color: var(--violet-darker);
-      border-radius: 0.75rem;
-      box-shadow: var(--shadow);
-    }
+.logout-icon.active {
+  background-color: var(--white);
+  color: var(--violet-darker);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow);
+}

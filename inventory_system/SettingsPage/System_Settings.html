@@ -1572,6 +1572,341 @@
       </div>
     </div>
 
+    <!-- Edit Supplier Modal -->
+    <div id="editSupplierModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Supplier</h2>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editSupplierName">Supplier Name</label>
+            <input
+              type="text"
+              id="editSupplierName"
+              class="input"
+              placeholder="Enter supplier name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editContactPerson">Contact Person</label>
+            <input
+              type="text"
+              id="editContactPerson"
+              class="input"
+              placeholder="Enter contact person"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editEmailAddress">Email Address</label>
+            <input
+              type="email"
+              id="editEmailAddress"
+              class="input"
+              placeholder="Enter email"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editPhoneNumber">Phone Number</label>
+            <input
+              type="tel"
+              id="editPhoneNumber"
+              class="input"
+              placeholder="Enter phone number"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editStatusSelect">Status</label>
+            <select id="editStatusSelect" class="input">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+          <button class="btn">
+            <i class="fas fa-save"></i> Update Supplier
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Archive Confirmation Modal -->
+    <div id="archiveModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Archive Confirmation</h2>
+        </div>
+        <div class="modal-body">
+          <p>
+            Are you sure you want to archive this item? This action can be
+            undone later.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelArchiveBtn">
+            Cancel
+          </button>
+          <button class="btn archive-btn" id="confirmArchiveBtn">
+            <i class="fas fa-archive"></i> Archive
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unarchive Confirmation Modal -->
+    <div id="unarchiveModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Unarchive Confirmation</h2>
+        </div>
+        <div class="modal-body">
+          <p>
+            Are you sure you want to unarchive this item? It will be restored to
+            active status.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelUnarchiveBtn">
+            Cancel
+          </button>
+          <button class="btn unarchive-btn" id="confirmUnarchiveBtn">
+            <i class="fas fa-undo"></i> Unarchive
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div id="editProductModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Product</h2>
+          <button class="close-btn" id="closeEditModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="info-banner">
+            <i class="bi bi-info-circle"></i>
+            <p>
+              <em
+                >To manage categories and subcategories, please go to the
+                <strong>Category Management</strong> section.</em
+              >
+            </p>
+          </div>
+          <div class="form-group">
+            <label for="editBrandName"
+              >Brand Name
+              <span style="color: var(--accent-color)">*</span></label
+            >
+            <input
+              type="text"
+              id="editBrandName"
+              class="input"
+              placeholder="e.g., Panadol, Advil"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="editGenericName"
+              >Generic Name
+              <span style="color: var(--accent-color)">*</span></label
+            >
+            <input
+              type="text"
+              id="editGenericName"
+              class="input"
+              placeholder="e.g., Paracetamol, Ibuprofen"
+              required
+            />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editCategory"
+                >Category
+                <span style="color: var(--accent-color)">*</span></label
+              >
+              <select id="editCategory" class="input" required>
+                <option value="">Select Category</option>
+                <option value="medicine">Medicine</option>
+                <option value="non-medicine">Non-Medicine</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editSubcategory"
+                >Subcategory
+                <span style="color: var(--accent-color)">*</span></label
+              >
+              <select id="editSubcategory" class="input" required>
+                <option value="">Select Subcategory</option>
+                <option value="analgesic">Analgesic / Antipyretic</option>
+                <option value="expectorant">Expectorant</option>
+                <option value="antihistamine">Antihistamine</option>
+                <option value="first-aid">First Aid</option>
+                <option value="antiseptic">Antiseptic / Disinfectant</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editPrice"
+                >Price <span style="color: var(--accent-color)">*</span></label
+              >
+              <input
+                type="number"
+                id="editPrice"
+                class="input"
+                placeholder="e.g., 10.00, 2.75"
+                step="0.01"
+                min="0"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="editUnitOfMeasurement"
+                >Unit of Measurement
+                <span style="color: var(--accent-color)">*</span></label
+              >
+              <input
+                type="text"
+                id="editUnitOfMeasurement"
+                class="input"
+                placeholder="e.g., piece, box, bottle, pack"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="section-divider">Notification Settings</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editLowStockThreshold"
+                >Low Stock Threshold (units)
+                <span style="color: var(--accent-color)">*</span></label
+              >
+              <input
+                type="number"
+                id="editLowStockThreshold"
+                class="input"
+                placeholder="e.g., 50, 25"
+                min="0"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="editExpiryThreshold"
+                >Expiry Date Threshold (days)
+                <span style="color: var(--accent-color)">*</span></label
+              >
+              <input
+                type="number"
+                id="editExpiryThreshold"
+                class="input"
+                placeholder="e.g., 30, 15"
+                min="0"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="editNotificationRecipient"
+              >Send Notification To
+              <span style="color: var(--accent-color)">*</span></label
+            >
+            <input
+              type="text"
+              id="editNotificationRecipient"
+              class="input"
+              placeholder="e.g., ceejay@example.com"
+              required
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelEditProductBtn">
+            Cancel
+          </button>
+          <button class="btn btn-primary" id="updateProductBtn">
+            <i class="fas fa-save"></i> Update Product
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Category Modal -->
+    <div id="editCategoryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Category</h2>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editCategoryName">Category Name</label>
+            <input
+              type="text"
+              id="editCategoryName"
+              class="input"
+              placeholder="Enter category name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editCategoryDescription">Description</label>
+            <textarea
+              class="input"
+              id="editCategoryDescription"
+              placeholder="Enter description"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelEditCategoryBtn">
+            Cancel
+          </button>
+          <button class="btn">
+            <i class="fas fa-save"></i> Update Category
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Subcategory Modal -->
+    <div id="editSubcategoryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Subcategory</h2>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="editSubcategoryName">Subcategory Name</label>
+            <input
+              type="text"
+              id="editSubcategoryName"
+              class="input"
+              placeholder="Enter subcategory name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editSubcategoryDescription">Description</label>
+            <textarea
+              class="input"
+              id="editSubcategoryDescription"
+              placeholder="Enter description"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelEditSubcategoryBtn">
+            Cancel
+          </button>
+          <button class="btn">
+            <i class="fas fa-save"></i> Update Subcategory
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       //WAG GAGALIN FOR SIDEBAR PURPOSES
       document.addEventListener("DOMContentLoaded", function () {
