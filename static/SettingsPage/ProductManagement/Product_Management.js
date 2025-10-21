@@ -2,6 +2,9 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   let currentEditProductId = null;
+  // caches for categories/subcategories so other handlers can reuse them
+  let categoriesCache = [];
+  let subcategoriesCache = [];
 
   // Scope queries to the products section to avoid ID collisions in the page
   const container = document.getElementById('products-content');
@@ -67,8 +70,21 @@ document.addEventListener('DOMContentLoaded', function () {
           // Set category/subcategory selects to returned ids if available
           const editCategory = document.getElementById('editCategory');
           const editSubcategory = document.getElementById('editSubcategory');
-          if (editCategory) editCategory.value = p.category_id || p.category || '';
-          if (editSubcategory) editSubcategory.value = p.subcategory_id || p.subcategory || '';
+          const categoryVal = p.category_id || p.category || '';
+          const subcategoryVal = p.subcategory_id || p.subcategory || '';
+
+          if (editCategory) {
+            editCategory.value = categoryVal;
+            // populate editSubcategory options based on current category selection
+            populateSubSelectForCategory(editSubcategory, categoryVal);
+          }
+
+          // set selected subcategory AFTER options have been populated
+          if (editSubcategory) {
+            // If no category was set, ensure subSelect is initialized
+            if (!categoryVal) editSubcategory.innerHTML = '<option value="">Select Subcategory</option>';
+            editSubcategory.value = subcategoryVal;
+          }
 
           if (editProductModal) editProductModal.style.display = 'flex';
         });
@@ -114,13 +130,17 @@ document.addEventListener('DOMContentLoaded', function () {
       const cats = await catsRes.json();
       const subs = await subsRes.json();
 
+      // normalize caches to arrays
+      categoriesCache = Array.isArray(cats) ? cats : (cats.results || []);
+      subcategoriesCache = Array.isArray(subs) ? subs : (subs.results || []);
+
       const catSelects = [document.getElementById('category'), document.getElementById('editCategory')];
       const subSelects = [document.getElementById('subcategory'), document.getElementById('editSubcategory')];
 
       catSelects.forEach(sel => {
         if (!sel) return;
         sel.innerHTML = '<option value="">Select Category</option>';
-        (Array.isArray(cats) ? cats : (cats.results || [])).forEach(c => {
+        categoriesCache.forEach(c => {
           const opt = document.createElement('option');
           opt.value = c.category_id || c.categoryId || c.id || c.category_name;
           opt.textContent = c.category_name || opt.value;
@@ -132,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
           subSelects.forEach(ss => {
             if (!ss) return;
             ss.innerHTML = '<option value="">Select Subcategory</option>';
-            const filtered = (Array.isArray(subs) ? subs : (subs.results || [])).filter(s => ((s.category || s.category_id || '').toString() === selected.toString()));
+            const filtered = subcategoriesCache.filter(s => ((s.category || s.category_id || '').toString() === selected.toString()));
             filtered.forEach(s => {
               const o = document.createElement('option');
               o.value = s.subcategory_id || s.subcategoryId || s.id || s.subcategory_name;
@@ -149,6 +169,20 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (err) {
       console.error('Error populating product dropdowns:', err);
     }
+  }
+
+  // Helper to populate a single subcategory select based on a category value
+  function populateSubSelectForCategory(targetSelect, categoryValue) {
+    if (!targetSelect) return;
+    targetSelect.innerHTML = '<option value="">Select Subcategory</option>';
+    if (!categoryValue) return;
+    const filtered = subcategoriesCache.filter(s => ((s.category || s.category_id || '').toString() === categoryValue.toString()));
+    filtered.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.subcategory_id || s.subcategoryId || s.id || s.subcategory_name;
+      o.textContent = s.subcategory_name || o.value;
+      targetSelect.appendChild(o);
+    });
   }
 
   // Add product
