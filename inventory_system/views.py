@@ -1,5 +1,8 @@
 from rest_framework import viewsets
 from django.shortcuts import render
+from django.conf import settings
+from django.http import HttpResponse
+import os
 
 from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction
 from .serializers import (
@@ -15,30 +18,30 @@ from .serializers import (
     TransactionSerializer
 )
 
-def landing_page(request):
-    return render(request, 'base.html')
+def serve_static_html(request, file_path):
+    full_path = os.path.join(settings.BASE_DIR, 'static', file_path)
 
-def dashboard_page(request):
-    return render(request, 'landing_page/dashboard_page.html')
+    if os.path.exists(full_path):
+        with open(full_path, 'r', encoding = 'utf-8') as f:
+            content = f.read()
+            return HttpResponse(content, content_type = 'text/html')
+    else:
+        return HttpResponse("File not found", status = 404)
 
-def products_page(request):
-    products = Product.objects.all()
-    context = {
-        'products': products
-    }
-    return render(request, 'products/products_page.html', context)
+def dashboard_view(request):
+    return serve_static_html(request, 'DashboardPage/dashboard.html')
 
-def orders_page(request):
-    orders = Order.objects.prefetch_related(
-        'items__product', 
-        'items__supplier'
-    ).order_by('-date_ordered')
-    
-    context = {
-        'orders': orders
-    }
-    return render(request, 'inventory_interface/orders_page.html', context)
+def products_view(request):
+    return serve_static_html(request, 'ProductPage/ProductsPos.html')
 
+def inventory_view(request):
+    return serve_static_html(request, 'InventoryPage/StocksOrder.html')
+
+def transactions_view(request):
+    return serve_static_html(request, 'TransactionPage/transactions.html')
+
+def settings_view(request):
+    return serve_static_html(request, 'SettingsPage/System_Settings.html')
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all().order_by('category_id')
     serializer_class = CategorySerializer

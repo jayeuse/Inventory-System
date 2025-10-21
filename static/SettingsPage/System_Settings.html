@@ -20,7 +20,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <link rel="stylesheet" href="System_Settings.css" />
+    <link rel="stylesheet" href="/static/SettingsPage/System_Settings.css" />
   </head>
   <body>
     <div class="d-flex">
@@ -1911,7 +1911,7 @@
       //WAG GAGALIN FOR SIDEBAR PURPOSES
       document.addEventListener("DOMContentLoaded", function () {
         // Load sidebar component
-        fetch("../Sidebar/Sidebar.html")
+        fetch("/static/Sidebar/Sidebar.html")
           .then((response) => response.text())
           .then((data) => {
             document.getElementById("sidebar-container").innerHTML = data;
@@ -1939,18 +1939,18 @@
           // Hardcoded path matching for your specific URLs
           let activeItem = null;
 
-          if (currentUrl.includes("/settingspage/system_settings.html")) {
+          if (currentUrl.includes("/static/settingspage/system_settings.html")) {
             activeItem = "settings";
           } else if (
-            currentUrl.includes("/productpage/productsPos.html#products")
+            currentUrl.includes("/static/productpage/productsPos.html#products")
           ) {
             activeItem = "products";
           } else if (
-            currentUrl.includes("/inventorypage/inventory_management.html")
+            currentUrl.includes("/static/inventorypage/inventory_management.html")
           ) {
             activeItem = "inventory";
           } else if (
-            currentUrl.includes("/transactionpage/transactions.html")
+            currentUrl.includes("/static/transactionpage/transactions.html")
           ) {
             activeItem = "transactions";
           } else if (
@@ -2096,6 +2096,6 @@
         }
       });
     </script>
-    <script src="System_Settings.js"></script>
+    <script src="/static/SettingsPage/System_Settings.js"></script>
   </body>
 </html>
