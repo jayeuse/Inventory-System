@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pharmacy Management - Products & POS</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="ProductsPos.css" />
+  </head>
+  <body>
+    <div class="d-flex">
+      <div id="sidebar-container"></div>
+      <main class="main flex-grow-1 p-4">
+        <div class="tabs">
+          <div class="tab active" data-page="products">Products List</div>
+          <div class="tab" data-page="pos">Point of Sale</div>
+        </div>
+
+        <!-- Products List Page -->
+        <div id="products-page" class="page-content active">
+          <div class="card">
+            <div class="search-row">
+              <div class="search-controls">
+                <input
+                  class="input search-input"
+                  placeholder="Search by Product ID, Brand, or Generic Name"
+                  id="productslist_searchInput"
+                />
+                <select class="input" id="productslist_categoryFilter">
+                  <option value="all">Filter by Category</option>
+                  <option value="medicine">Medicine</option>
+                  <option value="non-medicine">Non-Medicine</option>
+                </select>
+              </div>
+              <div class="button-group">
+                <button
+                  class="btn btn-primary"
+                  id="productslist_manageProductBtn"
+                >
+                  <i class="fas fa-gear"></i> Manage Products
+                </button>
+              </div>
+            </div>
+
+            <div class="info-banner">
+              <i class="bi bi-info-circle"></i>
+              <p>
+                <em
+                  >To manage a product, including categories and subcategories,
+                  please click the "Manage Products" button above to be
+                  redirected to the System Settings.</em
+                >
+              </p>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Product ID</th>
+                  <th>Brand Name</th>
+                  <th>Generic Name</th>
+                  <th>Category</th>
+                  <th>Subcategory</th>
+                  <th>Unit Price</th>
+                  <th>Last Update</th>
+                </tr>
+              </thead>
+              <tbody id="productslist_tableBody">
+                <tr>
+                  <td>PRD001</td>
+                  <td>Biogesic</td>
+                  <td>Paracetamol</td>
+                  <td>Medicine</td>
+                  <td>Analgesic / Antipyretic</td>
+                  <td>₱5.00 / piece</td>
+                  <td>2025-10-15</td>
+                </tr>
+                <tr>
+                  <td>PRD002</td>
+                  <td>Solmux</td>
+                  <td>Carbocisteine</td>
+                  <td>Medicine</td>
+                  <td>Expectorant</td>
+                  <td>₱10.00 / piece</td>
+                  <td>2025-10-14</td>
+                </tr>
+                <tr>
+                  <td>PRD003</td>
+                  <td>Allerkid</td>
+                  <td>Cetirizine Dihydrochloride</td>
+                  <td>Medicine</td>
+                  <td>Antihistamine</td>
+                  <td>₱15.00 / box</td>
+                  <td>2025-10-13</td>
+                </tr>
+                <tr>
+                  <td>PRD004</td>
+                  <td>Band-Aid</td>
+                  <td>Adhesive Bandage</td>
+                  <td>Non-Medicine</td>
+                  <td>First Aid</td>
+                  <td>₱20.00 / 10 pieces</td>
+                  <td>2025-10-12</td>
+                </tr>
+                <tr>
+                  <td>PRD005</td>
+                  <td>Betadine Solution</td>
+                  <td>Povidone-Iodine</td>
+                  <td>Non-Medicine</td>
+                  <td>Antiseptic / Disinfectant</td>
+                  <td>₱25.00 / bottle</td>
+                  <td>2025-10-11</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="pagination">
+              <button class="pagination-btn" id="productslist_prevBtn">
+                <i class="fas fa-chevron-left"></i> Previous
+              </button>
+              <button class="pagination-btn" id="productslist_nextBtn">
+                Next <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Point of Sale Page -->
+        <div id="pos-page" class="page-content">
+          <div class="card">
+            <div class="pos-placeholder">
+              <div class="placeholder-icon">
+                <i class="bi bi-cash-register"></i>
+              </div>
+              <h2>Point of Sale System</h2>
+              <p>BURATTTT AHHAHAHAHAHA.</p>
+              <p class="placeholder-subtext">TITE TITE TITE TITE TEITE.</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Sidebar initialization only
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("Initializing sidebar...");
+
+        // Load sidebar component
+        fetch("../Sidebar/Sidebar.html")
+          .then((response) => response.text())
+          .then((data) => {
+            document.getElementById("sidebar-container").innerHTML = data;
+            initializeSidebar();
+          })
+          .catch((error) => {
+            console.error("Error loading sidebar:", error);
+          });
+
+        function initializeSidebar() {
+          const navIcons = document.querySelectorAll(
+            ".sidebar-component .nav-icon"
+          );
+          const navLabels = document.querySelectorAll(
+            ".sidebar-component .nav-label"
+          );
+
+          // Get current page URL
+          const currentUrl = window.location.href.toLowerCase();
+          console.log("Current URL:", currentUrl);
+
+          // Remove active class from all items first
+          navIcons.forEach((icon) => icon.classList.remove("active"));
+          navLabels.forEach((label) => label.classList.remove("active"));
+
+          // Hardcoded path matching for your specific URLs
+          let activeItem = "products";
+          console.log("Detected active item:", activeItem);
+
+          // Set active state
+          if (activeItem) {
+            const activeIcon = document.querySelector(
+              `.sidebar-component .nav-icon[data-item="${activeItem}"]`
+            );
+            const activeLabel = document.querySelector(
+              `.sidebar-component .nav-label[data-item="${activeItem}"]`
+            );
+
+            if (activeIcon) {
+              activeIcon.classList.add("active");
+              console.log("Activated icon:", activeItem);
+            }
+
+            if (activeLabel) {
+              activeLabel.classList.add("active");
+              console.log("Activated label:", activeItem);
+            }
+          } else {
+            // Default to dashboard if no match found
+            const dashboardIcon = document.querySelector(
+              '.sidebar-component .nav-icon[data-item="dashboard"]'
+            );
+            const dashboardLabel = document.querySelector(
+              '.sidebar-component .nav-label[data-item="dashboard"]'
+            );
+            if (dashboardIcon && dashboardLabel) {
+              dashboardIcon.classList.add("active");
+              dashboardLabel.classList.add("active");
+            }
+            console.log("No specific match found, defaulting to dashboard");
+          }
+
+          // Add click handlers for navigation
+          navIcons.forEach((icon) => {
+            icon.addEventListener("click", function () {
+              const path = this.getAttribute("data-path");
+              const item = this.getAttribute("data-item");
+
+              if (path && item !== "logout") {
+                console.log("Navigating to:", path);
+                window.location.href = path;
+              }
+            });
+          });
+
+          navLabels.forEach((label) => {
+            label.addEventListener("click", function () {
+              const path = this.getAttribute("data-path");
+              const item = this.getAttribute("data-item");
+
+              if (path && item !== "logout") {
+                console.log("Navigating to:", path);
+                window.location.href = path;
+              }
+            });
+          });
+
+          // Logout handlers
+          const logoutIcon = document.querySelector(
+            ".sidebar-component .logout-icon"
+          );
+          const logoutLabel = document.querySelector(
+            ".sidebar-component .logout-label"
+          );
+
+          if (logoutIcon) {
+            logoutIcon.addEventListener("click", function () {
+              console.log("Logout clicked from icon");
+              // Add your logout logic here
+              // window.location.href = '/logout';
+            });
+          }
+
+          if (logoutLabel) {
+            logoutLabel.addEventListener("click", function () {
+              console.log("Logout clicked from label");
+              // Add your logout logic here
+              // window.location.href = '/logout';
+            });
+          }
+
+          // Sync hover states between icons and labels
+          navIcons.forEach((icon) => {
+            const item = icon.getAttribute("data-item");
+
+            icon.addEventListener("mouseenter", function () {
+              const label = document.querySelector(
+                `.sidebar-component .nav-label[data-item="${item}"]`
+              );
+              if (label && !label.classList.contains("active")) {
+                label.style.backgroundColor = "var(--white)";
+                label.style.color = "var(--violet-medium)";
+              }
+            });
+
+            icon.addEventListener("mouseleave", function () {
+              const label = document.querySelector(
+                `.sidebar-component .nav-label[data-item="${item}"]`
+              );
+              if (label && !label.classList.contains("active")) {
+                label.style.backgroundColor = "";
+                label.style.color = "";
+              }
+            });
+          });
+
+          navLabels.forEach((label) => {
+            const item = label.getAttribute("data-item");
+
+            label.addEventListener("mouseenter", function () {
+              const icon = document.querySelector(
+                `.sidebar-component .nav-icon[data-item="${item}"]`
+              );
+              if (icon && !icon.classList.contains("active")) {
+                icon.style.backgroundColor = "var(--white)";
+                icon.style.color = "var(--violet-darker)";
+              }
+            });
+
+            label.addEventListener("mouseleave", function () {
+              const icon = document.querySelector(
+                `.sidebar-component .nav-icon[data-item="${item}"]`
+              );
+              if (icon && !icon.classList.contains("active")) {
+                icon.style.backgroundColor = "";
+                icon.style.color = "";
+              }
+            });
+          });
+        }
+      });
+    </script>
+    <script src="ProductsPos.js"></script>
+  </body>
+</html>
