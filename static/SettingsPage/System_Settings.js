@@ -281,48 +281,6 @@ document.addEventListener("DOMContentLoaded", function () {
   };
   // ========== END OF NEW MODAL FUNCTIONALITY ==========
 
-  // Fetching Suppliers Data
-
-  async function loadSuppliers() {
-    try {
-      const response = await fetch('/api/suppliers/');
-      const data = await response.json();
-
-      const tbody = document.getElementById('suppliers-table-body');
-      tbody.innerHTML = '';
-
-      data.forEach(supplier => {
-        const row = document.createElement('tr');
-
-        row.innerHTML = `
-          <td>${supplier.supplier_id}</td>
-          <td>${supplier.supplier_name}</td>
-          <td>${supplier.contact_person}</td>
-          <td>${supplier.address}</td>
-          <td>${supplier.email}</td>
-          <td>${supplier.phone_number}</td>
-          <td>${supplier.product_name}</td>
-          <td>${supplier.status}</td>
-          <td>
-            <div class="op-buttons">
-              <button class="action-btn edit-btn">
-                <i class="bi bi-pencil"></i> Edit
-              </button>
-              <button class="action-btn archive-btn">
-                <i class="fas fa-archive"></i> Archive
-              </button>
-            </div>
-          </td>
-        `;
-
-        tbody.appendChild(row);
-      })
-    } catch (error) {
-      console.error('Error fetching suppliers:', error)
-    }
-  }
-
-  loadSuppliers();
 });
 
 function toggleSubcategories(button) {
@@ -336,6 +294,10 @@ function toggleSubcategories(button) {
   if (subcategoryRow.classList.contains("hidden")) {
     button.innerHTML = '<i class="bi bi-eye"></i> View';
   } else {
+    const categoryId = row.children[0].textContent;
+    const subcatTbody = subcategoryRow.querySelector('.subcategory-table-body');
     button.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
+    loadSubCategories(categoryId, subcatTbody);
   }
+
 }

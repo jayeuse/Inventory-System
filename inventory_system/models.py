@@ -49,6 +49,7 @@ class Subcategory(models.Model):
         related_name='subcategories'
     )
     subcategory_description = models.TextField(blank=True, null=True, db_column='subcategory_description')
+    product_count = models.PositiveIntegerField(default=0, db_column='product_count')
 
     def save(self, *args, **kwargs):
         if not self.subcategory_id:
