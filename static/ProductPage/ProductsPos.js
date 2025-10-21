@@ -48,18 +48,28 @@ document.addEventListener("DOMContentLoaded", function () {
   // Products List functionality
   const prevBtn = document.getElementById("productslist_prevBtn");
   const nextBtn = document.getElementById("productslist_nextBtn");
+  // Client-side pagination and filtering state
+  let currentPage = 1;
+  let pageSize = 10;
+  let totalPages = 1;
+  let productsCache = []; // full list from API
+  let lastQuery = '';
 
   if (prevBtn) {
     prevBtn.addEventListener("click", function () {
-      console.log("Previous page clicked");
-      // Backend will handle pagination logic
+      if (currentPage > 1) {
+        currentPage -= 1;
+        renderCurrentView();
+      }
     });
   }
 
   if (nextBtn) {
     nextBtn.addEventListener("click", function () {
-      console.log("Next page clicked");
-      // Backend will handle pagination logic
+      if (currentPage < totalPages) {
+        currentPage += 1;
+        renderCurrentView();
+      }
     });
   }
 
@@ -81,16 +91,92 @@ document.addEventListener("DOMContentLoaded", function () {
   const categoryFilter = document.getElementById("productslist_categoryFilter");
 
   if (searchInput) {
+    // Debounce input
+    let searchTimeout = null;
     searchInput.addEventListener("input", function () {
-      console.log("Searching for:", this.value);
-      // Implement search functionality
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        currentPage = 1;
+        lastQuery = this.value.trim();
+        loadProducts();
+      }, 300);
     });
   }
 
   if (categoryFilter) {
     categoryFilter.addEventListener("change", function () {
       console.log("Category filter changed to:", this.value);
-      // Implement category filtering
+      currentPage = 1;
+      loadProducts();
     });
   }
+
+  // Product table body
+  const tableBody = document.getElementById('productslist_tableBody');
+
+  async function fetchAllProducts() {
+    try {
+      const res = await fetch('/api/products/');
+      if (!res.ok) throw new Error(`Failed to fetch products: ${res.status}`);
+      const data = await res.json();
+      productsCache = Array.isArray(data) ? data : (data.results || []);
+      currentPage = 1;
+      renderCurrentView();
+    } catch (err) {
+      console.error('Error loading products:', err);
+      if (tableBody) tableBody.innerHTML = `<tr><td colspan="7">Error loading products.</td></tr>`;
+    }
+  }
+
+  function renderCurrentView() {
+    const search = lastQuery.toLowerCase();
+    const category = (categoryFilter && categoryFilter.value) ? categoryFilter.value.toLowerCase() : 'all';
+
+    // Filter
+    let filtered = productsCache.filter(p => {
+      // search against product_id, brand_name, generic_name
+      const matchesSearch = !search || [p.product_id, p.brand_name, p.generic_name, p.product_name].some(f => (f || '').toLowerCase().includes(search));
+
+      const catName = (p.category_name || '').toLowerCase();
+      const matchesCategory = (category === 'all') || (catName.includes(category));
+
+      return matchesSearch && matchesCategory;
+    });
+
+    totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * pageSize;
+    const pageItems = filtered.slice(start, start + pageSize);
+
+    // Render
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+
+    if (pageItems.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="7">No products found.</td>`;
+      tableBody.appendChild(tr);
+    } else {
+      for (const p of pageItems) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.product_id || ''}</td>
+          <td>${p.brand_name || ''}</td>
+          <td>${p.generic_name || ''}</td>
+          <td>${p.category_name || ''}</td>
+          <td>${p.subcategory_name || ''}</td>
+          <td>₱${(p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : ''} / ${p.unit_of_measurement || ''}</td>
+          <td>-</td>
+        `;
+        tableBody.appendChild(tr);
+      }
+    }
+
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+  }
+
+  // Initial fetch
+  fetchAllProducts();
 });
