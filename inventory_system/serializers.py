@@ -28,15 +28,22 @@ class SubcategorySerializer(serializers.ModelSerializer):
         ]
 
 class SupplierSerializer(serializers.ModelSerializer):
+    product_id = serializers.CharField(source='product.product_id', read_only=True)
+    product_name = serializers.CharField(source='product.product_name', read_only=True)
+    
     class Meta:
         model = Supplier
         fields = [
             'supplier_id',
             'supplier_name',
             'contact_person',
+            'address',
             'email',
             'phone_number',
-            'address',
+            'product',
+            'product_id',
+            'product_name',  # Now uses source, just like category_name
+            'status',
         ]
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -51,6 +58,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'product_id',
             'brand_name',
             'generic_name',
+            'product_name',
             'category',
             'category_id',
             'category_name',
@@ -65,6 +73,7 @@ class ProductSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'category': {'write_only': True},
             'subcategory': {'write_only': True},
+            'product_name': {'read_only': True},
         }
 
 class ProductStocksSerializer(serializers.ModelSerializer):
