@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   loadSuppliers();
+  
   // Populate Supplier Product Dropdown
   async function populateProductDropdown() {
     try {
@@ -57,6 +58,16 @@ document.addEventListener("DOMContentLoaded", function() {
           <option value="${product.product_id}">${product.product_name}</option>
         `;
       });
+
+      const editProductSelect = document.getElementById('editSupplierProduct');
+      editProductSelect.innerHTML = `
+      <option value="">Select a Product</option>
+      `;
+      products.forEach(product => {
+        editProductSelect.innerHTML += `
+          <option value="${product.product_id}">${product.product_name}</option>
+        `;
+      })
     } catch (errpr){
       console.error('Error loading products: ', error)
     }
@@ -106,4 +117,57 @@ document.addEventListener("DOMContentLoaded", function() {
       alert('Network error: ' + error);
     }
   });
+
+
+  // Editing Suppliers
+  document.getElementById('updateSupplierEditBtn').addEventListener('click', async function(){
+    if (!currentEditSupplierId){
+      console.log("Supplier Id does not exist for editing");
+      return
+    }
+
+    const editSupplierName = document.getElementById('editSupplierName').value;
+    const editContactPerson = document.getElementById('editContactPerson').value;
+    const editSupplierAddress = document.getElementById('editSupplierAddress').value;
+    const editSupplierEmail = document.getElementById('editSupplierEmail').value;
+    const editSupplierPhoneNumber = document.getElementById('editSupplierPhoneNumber').value;
+    const editSupplierProduct = document.getElementById('editSupplierProduct').value;
+    const editSupplierStatus = document.getElementById('editSupplierStatus').value;
+
+    const data = {
+      supplier_name: editSupplierName,
+      contact_person: editContactPerson,
+      address: editSupplierAddress,
+      email: editSupplierEmail,
+      phone_number: editSupplierPhoneNumber,
+      product: editSupplierProduct,
+      status: editSupplierStatus
+    };
+
+    try {
+      const response = await fetch(`/api/suppliers/${currentEditSupplierId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok){
+        alert("Supplier updated Successfully!")
+        currentEditSupplierId = null;
+        // DI KO ALAM PANO MAG AUTO-LOAD
+      } else {
+        const errorData = await response.json()
+        console.error("Error: " + JSON.stringify(errorData))
+      }
+    } catch (error){
+      console.error("Network Error: ", error)
+    }
+  });
+
+  document.getElementById('cancelSupplierEditBtn').addEventListener('click', function(){
+    document.getElementById('editSupplierModal').style.display = 'none';
+    currentEditSupplierId = null;
+  })
 })

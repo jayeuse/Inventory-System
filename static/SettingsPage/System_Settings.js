@@ -301,21 +301,38 @@ function toggleSubcategories(button) {
   }
 
 }
-let archiveTarget = null; 
+let archiveTarget = null;
+let currentEditSupplierId = null;
+let currentEditCategoryId = null;
 
 function attachActionButtonListeners() {
   document.querySelectorAll(".edit-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
       const row = this.closest("tr");
       if (row) {
-        if (row.querySelector("td:nth-child(1)").textContent.includes("SUP")) {
+        const idCell = row.querySelector("td:nth-child(1)");
+        const id = idCell ? idCell.textContent.trim() : null;
+
+        if(!id){
+          return
+        }
+
+        if (id && id.includes("SUP")) {
+          currentEditSupplierId = id;
+          document.getElementById("editSupplierName").value = row.querySelector("td:nth-child(2)").textContent.trim();
+          document.getElementById("editContactPerson").value = row.querySelector("td:nth-child(3)").textContent.trim();
+          document.getElementById("editSupplierAddress").value = row.querySelector("td:nth-child(4)").textContent.trim();
+          document.getElementById("editSupplierEmail").value = row.querySelector("td:nth-child(5)").textContent.trim();
+          document.getElementById("editSupplierPhoneNumber").value = row.querySelector("td:nth-child(6)").textContent.trim();
+          document.getElementById("editSupplierProduct").value = row.querySelector("td:nth-child(7)").textContent.trim();
+          document.getElementById("editSupplierStatus").value = row.querySelector("td:nth-child(8)").textContent.trim().toLowerCase();
+
           editSupplierModal.style.display = "flex";
-        } else if (row.querySelector("td:nth-child(1)").textContent.includes("PRD")) {
-          editProductModal.style.display = "flex";
-        } else if (row.querySelector("td:nth-child(1)").textContent.includes("CAT")) {
+        } else if (id && id.includes("CAT")) {
+          currentEditCategoryId = id;
+          document.getElementById("editCategoryName").value = row.querySelector("td:nth-child(2)").textContent.trim();
+          document.getElementById("editCategoryDescription").value = row.querySelector("td:nth-child(3)").textContent.trim();
           editCategoryModal.style.display = "flex";
-        } else if (row.querySelector("td:nth-child(1)").textContent.includes("SUBCAT")) {
-          editSubcategoryModal.style.display = "flex";
         }
       }
     });

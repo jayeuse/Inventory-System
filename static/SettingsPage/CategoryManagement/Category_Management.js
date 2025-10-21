@@ -155,6 +155,37 @@ document.addEventListener("DOMContentLoaded", function(){
     } catch (error){
       console.error('Network Error: ', error)
     }
+  });
+
+  // Updating Categories
+  document.getElementById('updateCategoryEditBtn').addEventListener('click', async function (){
+    const editCategoryName = document.getElementById('editCategoryName').value;
+    const editCategoryDescription = document.getElementById('editCategoryDescription').value;
+
+    const data = {
+      category_name: editCategoryName,
+      category_description: editCategoryDescription
+    }
+
+    try {
+      const response = await fetch (`/api/categories/${currentEditCategoryId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok){
+        alert("Category updated Successfully!")
+        // DI KO ALAM PANO MAG AUTO LOAD BRAHHHH
+      } else {
+        const errorData = await response.json();
+        console.error("Error: " + JSON.stringify(errorData))
+      }
+    } catch (error){
+      console.error("Network Error: ", error)
+    }
   })
 })
 

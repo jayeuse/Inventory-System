@@ -782,34 +782,48 @@
             />
           </div>
           <div class="form-group">
-            <label for="editEmailAddress">Email Address</label>
+            <label for="editContactPerson">Adress</label>
+            <input
+              type="text"
+              id="editSupplierAddress"
+              class="input"
+              placeholder="Enter contact person"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editSupplierEmail">Email</label>
             <input
               type="email"
-              id="editEmailAddress"
+              id="editSupplierEmail"
               class="input"
               placeholder="Enter email"
             />
           </div>
           <div class="form-group">
-            <label for="editPhoneNumber">Phone Number</label>
+            <label for="editSupplierPhoneNumber">Phone Number</label>
             <input
               type="tel"
-              id="editPhoneNumber"
+              id="editSupplierPhoneNumber"
               class="input"
               placeholder="Enter phone number"
             />
           </div>
           <div class="form-group">
-            <label for="editStatusSelect">Status</label>
-            <select id="editStatusSelect" class="input">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+            <label for="editSupplierProduct">Product</label>
+              <select id="editSupplierProduct" class="input">
+              </select>
+          </div>
+          <div class="form-group">
+            <label for="editSupplierStatus">Status</label>
+            <select id="editSupplierStatus" class="input">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
             </select>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
-          <button class="btn">
+          <button class="btn btn-secondary" id="cancelSupplierEditBtn">Cancel</button>
+          <button class="btn" id="updateSupplierEditBtn">
             <i class="fas fa-save"></i> Update Supplier
           </button>
         </div>
@@ -1048,7 +1062,7 @@
           <button class="btn btn-secondary" id="cancelEditCategoryBtn">
             Cancel
           </button>
-          <button class="btn">
+          <button class="btn" id="updateCategoryEditBtn">
             <i class="fas fa-save"></i> Update Category
           </button>
         </div>
