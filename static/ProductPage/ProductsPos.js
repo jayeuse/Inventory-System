@@ -90,15 +90,15 @@ document.addEventListener("DOMContentLoaded", function () {
   const searchInput = document.getElementById("productslist_searchInput");
   const categoryFilter = document.getElementById("productslist_categoryFilter");
 
+  // Debounce input
+  let searchTimeout = null;
   if (searchInput) {
-    // Debounce input
-    let searchTimeout = null;
     searchInput.addEventListener("input", function () {
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         currentPage = 1;
         lastQuery = this.value.trim();
-        loadProducts();
+        renderCurrentView();
       }, 300);
     });
   }
@@ -107,8 +107,35 @@ document.addEventListener("DOMContentLoaded", function () {
     categoryFilter.addEventListener("change", function () {
       console.log("Category filter changed to:", this.value);
       currentPage = 1;
-      loadProducts();
+      renderCurrentView();
     });
+  }
+
+  // Populate categories dropdown from API
+  async function populateCategoriesDropdown() {
+    if (!categoryFilter) return;
+    try {
+      const res = await fetch('/api/categories/');
+      if (!res.ok) throw new Error('Failed to load categories');
+      const data = await res.json();
+
+      // Replace options with 'all' + categories
+      categoryFilter.innerHTML = '';
+      const allOption = document.createElement('option');
+      allOption.value = 'all';
+      allOption.textContent = 'Filter by Category';
+      categoryFilter.appendChild(allOption);
+
+      data.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.category_id || cat.categoryId || cat.id || cat.category_name;
+        opt.textContent = cat.category_name || cat.name || opt.value;
+        categoryFilter.appendChild(opt);
+      });
+    } catch (err) {
+      console.error('Error loading categories:', err);
+      // leave existing static options if present
+    }
   }
 
   // Product table body
@@ -137,8 +164,10 @@ document.addEventListener("DOMContentLoaded", function () {
       // search against product_id, brand_name, generic_name
       const matchesSearch = !search || [p.product_id, p.brand_name, p.generic_name, p.product_name].some(f => (f || '').toLowerCase().includes(search));
 
-      const catName = (p.category_name || '').toLowerCase();
-      const matchesCategory = (category === 'all') || (catName.includes(category));
+    // Products from API may include a category id field or nested category.
+    const productCategoryId = (p.category || p.category_id || '').toString().toLowerCase();
+    const productCategoryName = (p.category_name || '').toLowerCase();
+    const matchesCategory = (category === 'all') || (productCategoryId === category) || (productCategoryName.includes(category));
 
       return matchesSearch && matchesCategory;
     });
@@ -178,5 +207,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Initial fetch
+  // Populate categories and fetch products
+  populateCategoriesDropdown();
   fetchAllProducts();
 });
