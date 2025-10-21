@@ -1,39 +1,253 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sidebar</title>
-  
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="Sidebar.css">
-</head>
-<body>
-    div class="sidebar-wrapper">
-    <div class="sidebar-labels">
-      <nav class="d-flex flex-column gap-4 flex-grow-1">
-        <button class="nav-label active" data-item="Dashboard">Dashboard</button>
-        <button class="nav-label" data-item="Product Lists">Product Lists</button>
-        <button class="nav-label" data-item="Inventory">Inventory</button>
-        <button class="nav-label" data-item="Transactions">Transactions</button>
-        <button class="nav-label" data-item="Settings">Settings</button>
-      </nav>
-      <button class="logout-label" data-item="Logout">Log Out</button>
-    </div>
+<div class="sidebar-component">
+  <div class="sidebar-wrapper">
     <div class="sidebar-icons">
       <div class="d-flex flex-column gap-4">
-        <button class="nav-icon active" data-item="Dashboard"><i class="fa-solid fa-chart-line"></i></button>
-        <button class="nav-icon" data-item="Product Lists"><i class="fa-solid fa-boxes-stacked"></i></button>
-        <button class="nav-icon" data-item="Inventory"><i class="fa-solid fa-warehouse"></i></button>
-        <button class="nav-icon" data-item="Transactions"><i class="fa-solid fa-receipt"></i></button>
-        <button class="nav-icon" data-item="Settings"><i class="fa-solid fa-gear"></i></button>
+        <button
+          class="nav-icon"
+          data-item="dashboard"
+          data-path="/Inventory-System/inventory_system/dashboard.html"
+        >
+          <i class="fa-solid fa-chart-line"></i>
+        </button>
+        <button
+          class="nav-icon"
+          data-item="products"
+          data-path="/Inventory-System/inventory_system/product_operations/productsPos.html#products"""
+        >
+          <i class="fa-solid fa-boxes-stacked"></i>
+        </button>
+        <button
+          class="nav-icon"
+          data-item="inventory"
+          data-path="/Invento ry-System/inventory_system/InventoryPage/StocksOrder.html"
+        >
+          <i class="fa-solid fa-warehouse"></i>
+        </button>
+        <button
+          class="nav-icon"
+          data-item="transactions"
+          data-path="/Inventory-System/inventory_system/TransactionPage/transactions.html"
+        >
+          <i class="fa-solid fa-receipt"></i>
+        </button>
+        <button
+          class="nav-icon"
+          data-item="settings"
+          data-path="/Inventory-System/inventory_system/SettingsPage/System_Settings.html"
+        >
+          <i class="fa-solid fa-gear"></i>
+        </button>
       </div>
-      <button class="nav-icon logout-icon" data-item="Logout"><i class="fas fa-sign-out-alt"></i></button>
+      <button class="nav-icon logout-icon" data-item="logout">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
+    </div>
+    <div class="sidebar-labels">
+      <nav class="d-flex flex-column gap-4 flex-grow-1">
+        <button
+          class="nav-label"
+          data-item="dashboard"
+          data-path="/Inventory-System/inventory_system/dashboard.html"
+        >
+          Dashboard
+        </button>
+        <button
+          class="nav-label"
+          data-item="products"
+          data-path="/Inventory-System/inventory_system/product_operations/productsPos.html#products""
+        >
+          Products
+        </button>
+        <button
+          class="nav-label"
+          data-item="inventory"
+          data-path="/Inventory-System/inventory_system/InventoryPage/StocksOrder.html"
+        >
+          Inventory
+        </button>
+        <button
+          class="nav-label"
+          data-item="transactions"
+          data-path="/Inventory-System/inventory_system/TransactionPage/transactions.html"
+        >
+          Transactions
+        </button>
+        <button
+          class="nav-label"
+          data-item="settings"
+          data-path="/Inventory-System/inventory_system/SettingsPage/System_Settings.html"
+        >
+          Settings
+        </button>
+      </nav>
+      <button class="logout-label" data-item="logout">Log Out</button>
     </div>
   </div>
+</div>
 
-  <script src="Sidebar.js"></script>
-</body>
-</html>
+<style>
+  .sidebar-component {
+    --violet-dark: #8a6dc9;
+    --violet-medium: #7b5fbd;
+    --violet-darker: #6c51b0;
+    --violet-accent: #5d43a3;
+    --white: #ffffff;
+    --border: #e2e8f0;
+    --radius: 16px;
+    --shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    --bg-light: #f8fafc;
+    font-family: "Poppins", sans-serif;
+  }
+
+  .sidebar-component .sidebar-wrapper {
+    display: flex;
+    height: 100vh;
+    width: 288px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .sidebar-component .sidebar-icons {
+    width: 4rem;
+    background: var(--violet-medium);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 0;
+    box-shadow: var(--shadow);
+    z-index: 2;
+    position: relative;
+  }
+
+  .sidebar-component .nav-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.25rem;
+    background: transparent;
+    border: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .sidebar-component .nav-icon:hover:not(.active) {
+    background-color: var(--white);
+    color: var(--violet-darker);
+  }
+
+  .sidebar-component .nav-icon.active {
+    background-color: var(--white);
+    color: var(--violet-darker);
+    box-shadow: var(--shadow);
+  }
+
+  .sidebar-component .sidebar-labels {
+    flex: 1;
+    background: var(--violet-dark);
+    border-radius: var(--radius);
+    padding: 1.5rem 0 1.5rem 5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .sidebar-component .nav-label {
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    padding-left: 1rem;
+    border: none;
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+    background: transparent;
+    color: #ffffff;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+  }
+
+  .sidebar-component .nav-label:hover:not(.active) {
+    background-color: var(--white);
+    color: var(--violet-medium);
+  }
+
+  .sidebar-component .nav-label.active {
+    background: var(--white);
+    color: var(--violet-medium);
+    font-weight: 600;
+  }
+
+  .sidebar-component .logout-label {
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    padding-left: 1rem;
+    border: none;
+    border-top-left-radius: var(--radius);
+    border-bottom-left-radius: var(--radius);
+    background: transparent;
+    color: #ffffff;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    margin-top: auto;
+    width: 100%;
+  }
+
+  .sidebar-component .logout-label:hover {
+    background-color: var(--white);
+    color: var(--violet-medium);
+  }
+
+  .sidebar-component .logout-label.active {
+    background: var(--white);
+    color: var(--violet-medium);
+    font-weight: 600;
+  }
+
+  .sidebar-component .logout-icon {
+    color: #ffffff;
+    transition: all 0.2s ease;
+  }
+
+  .sidebar-component .logout-icon:hover {
+    background-color: var(--white);
+    color: var(--violet-darker);
+  }
+
+  .sidebar-component .logout-icon.active {
+    background-color: var(--white);
+    color: var(--violet-darker);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow);
+  }
+
+  /* Bootstrap gap utility for sidebar */
+  .sidebar-component .gap-4 {
+    gap: 1.5rem !important;
+  }
+
+  .sidebar-component .d-flex {
+    display: flex !important;
+  }
+
+  .sidebar-component .flex-column {
+    flex-direction: column !important;
+  }
+
+  .sidebar-component .flex-grow-1 {
+    flex-grow: 1 !important;
+  }
+</style>
