@@ -61,32 +61,12 @@ class Subcategory(models.Model):
     class Meta:
         db_table = 'subcategory'
 
-class Supplier(models.Model):
-    supplier_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='supplier_code')
-    supplier_id = models.CharField(max_length=15, unique=True, editable=False, db_column='supplier_id')
-    supplier_name = models.CharField(max_length=255, unique=True, db_column='supplier_name')
-    contact_person = models.TextField(blank=True, null=True, db_column='contact_person')
-    email = models.EmailField(blank=True, null=True, db_column='email')
-    phone_number = models.CharField(max_length=20, blank=True, null=True, db_column='phone_number')
-    address = models.TextField(blank=True, null=True, db_column='address')
-    
-
-    def save(self, *args, **kwargs):
-        if not self.supplier_id:
-            self.supplier_id = generate_code(Supplier, 'supplier_id', 'SUP-')
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.supplier_name
-
-    class Meta:
-        db_table = 'supplier'
-
 class Product(models.Model):
     product_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='product_code')
     product_id = models.CharField(max_length=20, unique=True, editable=False, db_column='product_id')
     brand_name = models.CharField(max_length=255, null=False, db_column='brand_name')
     generic_name = models.CharField(max_length=255, null=False, db_column='generic_name')
+    product_name = models.CharField(max_length=255, null=True, db_column='product_name')
     category = models.ForeignKey(
         Category, 
         on_delete=models.CASCADE, 
@@ -112,6 +92,7 @@ class Product(models.Model):
     low_stock_threshold = models.PositiveIntegerField(default=10, db_column='low_stock_threshold')
 
     def save(self, *args, **kwargs):
+        self.product_name = f"{self.brand_name} - {self.generic_name}"
         if not self.product_id:
             self.product_id = generate_code(Product, "product_id", "PROD-")
         super().save(*args, **kwargs)
@@ -121,6 +102,41 @@ class Product(models.Model):
 
     class Meta:
         db_table = 'product'
+
+class Supplier(models.Model):
+    supplier_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='supplier_code')
+    supplier_id = models.CharField(max_length=15, unique=True, editable=False, db_column='supplier_id')
+    supplier_name = models.CharField(max_length=255, unique=True, db_column='supplier_name')
+    contact_person = models.TextField(blank=True, null=True, db_column='contact_person')
+    email = models.EmailField(blank=True, null=True, db_column='email')
+    phone_number = models.CharField(max_length=20, blank=True, null=True, db_column='phone_number')
+    address = models.TextField(blank=True, null=True, db_column='address')
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        db_column='product_id',
+        to_field='product_id',
+        related_name='products'
+    )
+
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Inactive', 'Inactive'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
+    
+
+    def save(self, *args, **kwargs):
+        if not self.supplier_id:
+            self.supplier_id = generate_code(Supplier, 'supplier_id', 'SUP-')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.supplier_name
+
+    class Meta:
+        db_table = 'supplier'
 
 class SupplierProduct(models.Model):
     supplier_product_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='supplier_product_code')
@@ -169,6 +185,8 @@ class SupplierProduct(models.Model):
 class ProductStocks(models.Model):
     STATUS_CHOICES = [
         ('Normal', 'Normal'),
+        ('Near Expiry', 'Near Expiry'),
+        ('Expired', 'Expired'),
         ('Low Stock', 'Low Stock'),
         ('Out of Stock', 'Out of Stock'),
     ]
