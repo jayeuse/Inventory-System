@@ -10,8 +10,9 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = [
             'category_id',
             'category_name',
-            'category_description',
-            'product_count'
+            'category_description', 
+            'product_count',
+            'status',
         ]
 
     def get_product_count(self, obj):
@@ -27,6 +28,7 @@ class SubcategorySerializer(serializers.ModelSerializer):
             'subcategory_description',
             'category',
             'product_count',
+            'status',
         ]
 
     def get_product_count(self, obj):
@@ -47,7 +49,7 @@ class SupplierSerializer(serializers.ModelSerializer):
             'phone_number',
             'product',
             'product_id',
-            'product_name',  # Now uses source, just like category_name
+            'product_name',
             'status',
         ]
 

@@ -26,6 +26,14 @@ class Category(models.Model):
     category_description = models.TextField(blank=True, null=True, db_column='category_description')
     product_count = models.PositiveIntegerField(default=0, db_column='product_count')
 
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Inactive', 'Inactive'),
+        ('Archived', 'Archived'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
+
     def save(self, *args, **kwargs):
         if not self.category_id:
             self.category_id = generate_code(Category, 'category_id', 'CAT-')
@@ -50,6 +58,14 @@ class Subcategory(models.Model):
     )
     subcategory_description = models.TextField(blank=True, null=True, db_column='subcategory_description')
     product_count = models.PositiveIntegerField(default=0, db_column='product_count')
+
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Inactive', 'Inactive'),
+        ('Archived', 'Archived'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
 
     def save(self, *args, **kwargs):
         if not self.subcategory_id:
@@ -92,6 +108,14 @@ class Product(models.Model):
     expiry_threshold_days = models.PositiveIntegerField(default=30, db_column='expiry_threshold_days')
     low_stock_threshold = models.PositiveIntegerField(default=10, db_column='low_stock_threshold')
 
+    STATUS_CHOICES = [
+        ('Active', 'Active'),
+        ('Inactive', 'Inactive'),
+        ('Archived', 'Archived'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
+
     def save(self, *args, **kwargs):
         self.product_name = f"{self.brand_name} - {self.generic_name}"
         if not self.product_id:
@@ -123,6 +147,7 @@ class Supplier(models.Model):
     STATUS_CHOICES = [
         ('Active', 'Active'),
         ('Inactive', 'Inactive'),
+        ('Archived', 'Archived'),
     ]
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')

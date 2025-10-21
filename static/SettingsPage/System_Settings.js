@@ -301,3 +301,92 @@ function toggleSubcategories(button) {
   }
 
 }
+let archiveTarget = null; 
+
+function attachActionButtonListeners() {
+  document.querySelectorAll(".edit-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const row = this.closest("tr");
+      if (row) {
+        if (row.querySelector("td:nth-child(1)").textContent.includes("SUP")) {
+          editSupplierModal.style.display = "flex";
+        } else if (row.querySelector("td:nth-child(1)").textContent.includes("PRD")) {
+          editProductModal.style.display = "flex";
+        } else if (row.querySelector("td:nth-child(1)").textContent.includes("CAT")) {
+          editCategoryModal.style.display = "flex";
+        } else if (row.querySelector("td:nth-child(1)").textContent.includes("SUBCAT")) {
+          editSubcategoryModal.style.display = "flex";
+        }
+      }
+    });
+  });
+
+  document.querySelectorAll(".archive-btn").forEach((btn) => {
+    btn.addEventListener("click", async function () {
+      const row = this.closest("tr");
+      if (!row) return;
+      const idCell = row.querySelector("td:nth-child(1)");
+      if (!idCell) return;
+      const id = idCell ? idCell.textContent.trim() : null;
+
+      if (!id) return;
+
+      // Determine the type based on the ID prefix
+      let apiUrl = '';
+      if (id.startsWith('CAT')) {
+        apiUrl = `/api/categories/${id}/`;
+      } else if (id.startsWith('SUBCAT')) {
+        apiUrl = `/api/subcategories/${id}/`;
+      } else if (id.startsWith('SUP')) {
+        apiUrl = `/api/suppliers/${id}/`;
+      } else if (id.startsWith('PROD')) {
+        apiUrl = `/api/products/${id}/`;
+      } else {
+        return;
+      }
+
+      archiveTarget = { apiUrl, id }; // Store for confirmation
+
+      document.getElementById('archiveModal').style.display = 'flex';
+    });
+  });
+
+  document.querySelectorAll(".unarchive-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      unarchiveModal.style.display = "flex";
+    });
+  });
+}
+
+// Confirm archive
+document.getElementById('confirmArchiveBtn').addEventListener('click', async function () {
+  if (!archiveTarget) return;
+
+  document.getElementById('archiveModal').style.display = 'none';
+
+  try {
+    const response = await fetch(archiveTarget.apiUrl, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Archived' })
+    });
+
+    if (response.ok) {
+      alert('Record archived!');
+    } else {
+      alert('Failed to archive record.');
+    }
+  } catch (error) {
+    alert('Network error: ' + error);
+  }
+
+  // Hide modal and reset
+  document.getElementById('archiveModal').style.display = 'none';
+  archiveTarget = null;
+});
+
+// Cancel archive
+document.getElementById('cancelArchiveBtn').addEventListener('click', function () {
+  document.getElementById('archiveModal').style.display = 'none';
+  archiveTarget = null;
+});

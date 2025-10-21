@@ -43,24 +43,52 @@ def transactions_view(request):
 def settings_view(request):
     return serve_static_html(request, 'SettingsPage/System_Settings.html')
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all().order_by('category_id')
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'category_id'
 
+    def get_queryset(self):
+        show_archived = self.request.query_params.get('show_archived')
+        queryset = Category.objects.all().order_by('category_id')
+        if show_archived == 'true':
+            return queryset.filter(status = 'Archived')
+        return queryset.exclude(status = 'Archived')
+
 class SubcategoryViewSet(viewsets.ModelViewSet):
-    queryset = Subcategory.objects.all().order_by('subcategory_id')
+    queryset = Subcategory.objects.all()
     serializer_class = SubcategorySerializer
     lookup_field = 'subcategory_id'
 
+    def get_queryset(self):
+        show_archived = self.request.query_params.get('show_archived')
+        queryset = Subcategory.objects.all().order_by('subcategory_id')
+        if show_archived == 'true':
+            return queryset.filter(status = 'Archived')
+        return queryset.exclude(status = 'Archived')
+
 class SupplierViewSet(viewsets.ModelViewSet):
-    queryset = Supplier.objects.all().order_by('supplier_id')
+    queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
     lookup_field = 'supplier_id'
 
+    def get_queryset(self):
+        show_archived = self.request.query_params.get('show_archived')
+        queryset = Supplier.objects.all().order_by('supplier_id')
+        if show_archived == 'true':
+            return queryset.filter(status = 'Archived')
+        return queryset.exclude(status = 'Archived')
+
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all().order_by('product_id')
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = 'product_id'
+
+    def get_queryset(self):
+        show_archived = self.request.query_params.get('show_archived')
+        queryset = Product.objects.all().order_by('product_id')
+        if show_archived == 'true':
+            return queryset.filter(status = 'Archived')
+        return queryset.exclude(status = 'Archived')
 
 class ProductStocksViewSet(viewsets.ModelViewSet):
     queryset = ProductStocks.objects.all().order_by('stock_id')
