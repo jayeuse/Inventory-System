@@ -35,6 +35,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
         tbody.appendChild(row);
       })
+
+      attachActionButtonListeners();
     } catch (error) {
       console.error('Error fetching Suppliers:', error);
     }
