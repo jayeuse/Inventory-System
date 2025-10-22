@@ -324,7 +324,12 @@ function attachActionButtonListeners() {
           document.getElementById("editSupplierAddress").value = row.querySelector("td:nth-child(4)").textContent.trim();
           document.getElementById("editSupplierEmail").value = row.querySelector("td:nth-child(5)").textContent.trim();
           document.getElementById("editSupplierPhoneNumber").value = row.querySelector("td:nth-child(6)").textContent.trim();
-          document.getElementById("editSupplierProduct").value = row.querySelector("td:nth-child(7)").textContent.trim();
+          
+          // Get product ID from data attribute instead of text content
+          const productCell = row.querySelector("td:nth-child(7)");
+          const productId = productCell.getAttribute("data-product-id");
+          document.getElementById("editSupplierProduct").value = productId;
+          
           document.getElementById("editSupplierStatus").value = row.querySelector("td:nth-child(8)").textContent.trim().toLowerCase();
 
           editSupplierModal.style.display = "flex";
