@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
       if (response.ok){
         alert('Category added Succesfully!');
-        // DI KO ULET ALAM PANO AUTO-LOAD
+        await loadCategories();
       } else {
         const errorData = await response.json();
         alert('Error: ' + JSON.stringify(errorData))
@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
       if (response.ok){
         alert("Subcategory added Successfully!")
-        // DI KO ALAM PANO MAG AUTO-LOAD
+        await loadSubCategories();
       } else {
         const errorData = await response.json();
         alert('Error: ' + JSON.stringify(errorData))
@@ -178,7 +178,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
       if (response.ok){
         alert("Category updated Successfully!")
-        // DI KO ALAM PANO MAG AUTO LOAD BRAHHHH
+        await loadCategories();
       } else {
         const errorData = await response.json();
         console.error("Error: " + JSON.stringify(errorData))

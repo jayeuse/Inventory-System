@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", function() {
   // Fetching Suppliers Data
 
   async function loadSuppliers() {
+    console.log("Reloading Suppliers...");
     try {
       const response = await fetch('/api/suppliers/');
       const data = await response.json();
@@ -19,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function() {
           <td>${supplier.address}</td>
           <td>${supplier.email}</td>
           <td>${supplier.phone_number}</td>
-          <td>${supplier.product_name}</td>
+          <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
           <td>${supplier.status}</td>
           <td>
             <div class="op-buttons">
@@ -108,7 +109,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (response.ok){
         alert('Supplier Added Successfully!')
         document.getElementById('addSupplierModal').style.display = 'none';
-        // DI KO MA AUTO-LOAD YUNG SUPPLIER TABLE PAG SUCCESSFUL YUNG ADD SUPPLIER -cj
+        await loadSuppliers();
       } else {
         const errorData = await response.json();
         alert('Error: ' + JSON.stringify(errorData))
@@ -155,8 +156,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
       if (response.ok){
         alert("Supplier updated Successfully!")
+        document.getElementById('editSupplierModal').style.display = 'none';
         currentEditSupplierId = null;
-        // DI KO ALAM PANO MAG AUTO-LOAD
+        await loadSuppliers();
       } else {
         const errorData = await response.json()
         console.error("Error: " + JSON.stringify(errorData))
