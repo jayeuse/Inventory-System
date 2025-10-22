@@ -267,28 +267,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // add change handler to filter rows in the appropriate table
         sel.addEventListener('change', function () {
-          const val = this.value;
+          // When category changes, reapply all filters
           if (this.id === 'categoryFilter') {
-            // filter active table rows
-            const rows = tableBody ? Array.from(tableBody.querySelectorAll('tr')) : [];
-            rows.forEach(r => {
-              const catName = (r.dataset.categoryName || r.children[3]?.textContent || '').trim();
-              if (val === 'all' || !val) {
-                r.style.display = '';
-              } else {
-                r.style.display = (catName === val) ? '' : 'none';
-              }
-            });
+            applyCurrentFilters(tableBody, activeSearchInput);
           } else if (this.id === 'archivedCategoryFilter') {
-            const rows = archivedBody ? Array.from(archivedBody.querySelectorAll('tr')) : [];
-            rows.forEach(r => {
-              const catName = (r.dataset.categoryName || r.children[3]?.textContent || '').trim();
-              if (val === 'all' || !val) {
-                r.style.display = '';
-              } else {
-                r.style.display = (catName === val) ? '' : 'none';
-              }
-            });
+            applyCurrentFilters(archivedBody, archivedSearchInput);
           }
         });
       });
@@ -500,6 +483,60 @@ document.addEventListener('DOMContentLoaded', function () {
     if (unarchiveModal) unarchiveModal.style.display = 'none';
     if (unarchiveModal) delete unarchiveModal.dataset.targetApi;
   });
+
+  // Search functionality
+  let activeSearchTimeout = null;
+  let archivedSearchTimeout = null;
+  const activeSearchInput = document.getElementById('activeSearchInput');
+  const archivedSearchInput = document.getElementById('archivedSearchInput');
+
+  // Helper function to reapply all current filters
+  function applyCurrentFilters(targetTableBody, searchInput) {
+    const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    filterProducts(targetTableBody, searchQuery);
+  }
+
+  if (activeSearchInput) {
+    activeSearchInput.addEventListener('input', function() {
+      clearTimeout(activeSearchTimeout);
+      activeSearchTimeout = setTimeout(() => {
+        applyCurrentFilters(tableBody, this);
+      }, 300);
+    });
+  }
+
+  if (archivedSearchInput) {
+    archivedSearchInput.addEventListener('input', function() {
+      clearTimeout(archivedSearchTimeout);
+      archivedSearchTimeout = setTimeout(() => {
+        applyCurrentFilters(archivedBody, this);
+      }, 300);
+    });
+  }
+
+  function filterProducts(targetTableBody, searchQuery) {
+    if (!targetTableBody) return;
+    
+    // Get the current category filter value for active or archived table
+    const isArchivedTable = targetTableBody.id === 'archivedTableBody';
+    const categoryFilter = document.getElementById(isArchivedTable ? 'archivedCategoryFilter' : 'categoryFilter');
+    const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
+    
+    const rows = Array.from(targetTableBody.querySelectorAll('tr'));
+    rows.forEach(row => {
+      const productId = (row.cells[0]?.textContent || '').toLowerCase();
+      const brandName = (row.cells[1]?.textContent || '').toLowerCase();
+      const genericName = (row.cells[2]?.textContent || '').toLowerCase();
+      const categoryName = (row.cells[3]?.textContent || '').toLowerCase();
+      
+      // Check if the row matches both search query and category filter
+      const matchesSearch = !searchQuery || [productId, brandName, genericName].some(field => field.includes(searchQuery));
+      const matchesCategory = selectedCategory === 'all' || categoryName === selectedCategory.toLowerCase();
+      
+      // Only show the row if it matches both conditions
+      row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+    });
+  }
 
   // Initialize
   (async function init() {
