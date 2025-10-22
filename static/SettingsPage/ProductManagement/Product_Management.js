@@ -51,6 +51,19 @@ document.addEventListener('DOMContentLoaded', function () {
       console.debug('loadProductsList: activeProducts count=', activeProducts.length, 'archivedProducts count=', archivedProducts.length);
       console.debug('archivedBody element found:', !!archivedBody);
 
+      // Add active products counter
+      let activeCountEl = container.querySelector('#activeCount');
+      if (!activeCountEl) {
+        const activeTabHeader = document.querySelector('.product-tab[data-product-tab="active"]');
+        if (activeTabHeader) {
+          activeCountEl = document.createElement('span');
+          activeCountEl.id = 'activeCount';
+          activeCountEl.style.marginLeft = '8px';
+          activeCountEl.style.fontSize = '0.9em';
+          activeTabHeader.appendChild(activeCountEl);
+        }
+      }
+
       // Ensure archived count element exists in the archived tab header area
       if (!archivedCountEl) {
         const archivedTabHeader = document.querySelector('.product-tab[data-product-tab="archived"]');
@@ -63,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
 
+      if (activeCountEl) activeCountEl.textContent = `(${activeProducts.length})`;
       if (archivedCountEl) archivedCountEl.textContent = `(${archivedProducts.length})`;
 
       // Helper to populate edit modal
@@ -457,8 +471,6 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('Unarchiving product with URL:', apiUrl);
     if (!apiUrl) return alert('No unarchive target');
 
-    unarchiveModal.style.display = 'none';
-
     try {
       console.log('Sending unarchive request to:', apiUrl);
       const response = await fetch(apiUrl, {
@@ -468,6 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
       if (response.ok) {
+        unarchiveModal.style.display = 'none';  // Close modal after successful response
         alert('Record unarchived!');
         await loadProductsList();
       } else {
