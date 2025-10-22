@@ -76,6 +76,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'unit_of_measurement',
             'expiry_threshold_days',
             'low_stock_threshold',
+            'status',
         ]
         extra_kwargs = {
             'category': {'write_only': True},
