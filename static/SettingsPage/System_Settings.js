@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
   tabs.forEach((tab) => {
     tab.addEventListener("click", function () {
       const tabId = this.getAttribute("data-tab");
+      console.log('Main tab clicked:', tabId);
 
       // Remove active class from all tabs and contents
       tabs.forEach((t) => t.classList.remove("active"));
@@ -50,12 +51,17 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Product Management Tabs
+  console.log('Setting up product management tabs...');
   const productTabs = document.querySelectorAll(".product-tab");
   const productTabContents = document.querySelectorAll(".product-tab-content");
+  
+  console.log('Found product tabs:', productTabs.length);
+  console.log('Found product tab contents:', productTabContents.length);
 
   productTabs.forEach((tab) => {
     tab.addEventListener("click", function () {
       const tabId = this.getAttribute("data-product-tab");
+      console.log('Product tab clicked:', tabId, 'Target content:', `${tabId}ProductsContent`);
 
       // Remove active class from all tabs and contents
       productTabs.forEach((t) => t.classList.remove("active"));
