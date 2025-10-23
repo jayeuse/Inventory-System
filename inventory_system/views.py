@@ -38,7 +38,7 @@ def dashboard_view(request):
     return serve_static_html(request, 'DashboardPage/dashboard.html')
 
 def products_view(request):
-    return serve_static_html(request, 'ProductPage/ProductsPos.html')
+    return serve_static_html(request, 'ProductPage/ProductPage.html')
 
 def inventory_view(request):
     return serve_static_html(request, 'InventoryPage/InventoryPage.html')
