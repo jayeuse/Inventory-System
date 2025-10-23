@@ -2,16 +2,10 @@ from rest_framework import viewsets
 from django.shortcuts import render
 from django.conf import settings
 from django.http import HttpResponse
-from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework import status
 import os
 
-from .models import ArchiveLog, Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction
+from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction
 from .serializers import (
-    ArchiveLogSerializer,
     CategorySerializer, 
     SubcategorySerializer,
     SupplierSerializer, 
@@ -48,27 +42,7 @@ def transactions_view(request):
 
 def settings_view(request):
     return serve_static_html(request, 'SettingsPage/System_Settings.html')
-
-class ArchiveLogViewSet(viewsets.ModelViewSet):
-    queryset = ArchiveLog.objects.all().order_by('-archived_at')
-    serializer_class = ArchiveLogSerializer
-    lookup_field = 'archive_id'
-
-class ArchiveLoggingMixin:
-    def _create_archive_log(self, instance, reason=None, user=None, snapshot=None):
-        try:
-            print("Creating ArchiveLog for:", instance)
-            ArchiveLog.objects.create(
-                content_type = ContentType.objects.get_for_model(type(instance)),
-                object_id = str(instance.pk),
-                archived_by = user if getattr(user, 'is_authenticated', False) else None,
-                reason = reason or '',
-                snapshot = snapshot or {}
-            )
-            print("ArchiveLog created successfully.")
-        except Exception as e:
-            print("Error creating ArchiveLog:", e)
-class CategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
+class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'category_id'
@@ -80,7 +54,7 @@ class CategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
 
-class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
+class SubcategoryViewSet(viewsets.ModelViewSet):
     queryset = Subcategory.objects.all()
     serializer_class = SubcategorySerializer
     lookup_field = 'subcategory_id'
@@ -92,7 +66,7 @@ class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
 
-class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
+class SupplierViewSet(viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
     lookup_field = 'supplier_id'
@@ -104,7 +78,11 @@ class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
 
-class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status
+
+class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = 'product_id'

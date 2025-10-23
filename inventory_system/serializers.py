@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db import models
-from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog
+from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction
 
 class CategorySerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
@@ -13,12 +13,7 @@ class CategorySerializer(serializers.ModelSerializer):
             'category_description', 
             'product_count',
             'status',
-            'archived_at',
-            'archive_reason',
-            'archived_by',
         ]
-
-        read_only_fields = ['archived_at', 'archived_by',]
 
     def get_product_count(self, obj):
         return obj.products.count()  # Fixed: using correct related_name
@@ -34,12 +29,7 @@ class SubcategorySerializer(serializers.ModelSerializer):
             'category',
             'product_count',
             'status',
-            'archived_at',
-            'archive_reason',
-            'archived_by',
         ]
-
-        read_only_fields = ['archived_at', 'archived_by',]
 
     def get_product_count(self, obj):
         return obj.products.count();
@@ -61,12 +51,7 @@ class SupplierSerializer(serializers.ModelSerializer):
             'product_id',
             'product_name',
             'status',
-            'archived_at',
-            'archive_reason',
-            'archived_by',
         ]
-
-        read_only_fields = ['archived_at', 'archived_by',]
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.category_name', read_only=True)
@@ -92,32 +77,12 @@ class ProductSerializer(serializers.ModelSerializer):
             'expiry_threshold_days',
             'low_stock_threshold',
             'status',
-            'archived_at',
-            'archive_reason',
-            'archived_by',
         ]
         extra_kwargs = {
             'category': {'write_only': True},
             'subcategory': {'write_only': True},
             'product_name': {'read_only': True},
         }
-        read_only_fields = ['archived_at', 'archived_by',]
-
-class ArchiveLogSerializer(serializers.ModelSerializer):
-    content_type = serializers.StringRelatedField()
-
-    class Meta:
-        model = ArchiveLog
-        fields = [
-            'archive_id',
-            'content_type',
-            'object_id',
-            'archived_by',
-            'archived_at',
-            'reason',
-            'snapshot',
-        ]
-        read_only_fields = ['archive_id', 'content_type', 'archived_by', 'archived_at', 'snapshot']
 
 class ProductStocksSerializer(serializers.ModelSerializer):
     brand_name = serializers.CharField(source='product.brand_name', read_only=True)
