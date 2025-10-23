@@ -172,4 +172,63 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('editSupplierModal').style.display = 'none';
     currentEditSupplierId = null;
   })
+
+  // Archiving Suppliers
+  document.getElementById('supplierConfirmArchiveBtn').addEventListener('click', async function(){
+    if (!archiveTarget) return;
+    
+    document.getElementById('supplierArchiveModal').style.display = 'none';
+    
+    try {
+      const response = await fetch(archiveTarget.apiUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Archived' })
+      });
+      
+      if (response.ok) {
+        alert("Supplier Archived Successfully!");
+        await loadSuppliers();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+    
+    archiveTarget = null;
+  })
+
+  document.getElementById('supplierCancelArchiveBtn').addEventListener('click', function(){
+    document.getElementById('supplierArchiveModal').style.display = 'none';
+    console.log("Cancel Archive Button");
+    archiveTarget = null;
+  })
+
+  document.getElementById('supplierConfirmUnarchiveBtn').addEventListener('click', async function(){
+    if (!archiveTarget) return;
+    
+    document.getElementById('supplierUnarchiveModal').style.display = 'none';
+    
+    try {
+      const response = await fetch(archiveTarget.apiUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Active' })
+      });
+      
+      if (response.ok) {
+        alert("Supplier Unarchived Successfully!");
+        await loadSuppliers();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+    
+    archiveTarget = null;
+  })
+
+  document.getElementById('supplierCancelUnarchiveBtn').addEventListener('click', function(){
+    document.getElementById('supplierUnarchiveModal').style.display = 'none';
+    archiveTarget = null;
+  })
+
 })
