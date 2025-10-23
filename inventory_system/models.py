@@ -1,6 +1,9 @@
 import uuid
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -34,6 +37,11 @@ class Category(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
 
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archive_reason = models.TextField(null=True, blank=True)
+    archived_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    
+
     def save(self, *args, **kwargs):
         if not self.category_id:
             self.category_id = generate_code(Category, 'category_id', 'CAT-')
@@ -66,6 +74,10 @@ class Subcategory(models.Model):
     ]
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
+
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archive_reason = models.TextField(null=True, blank=True)
+    archived_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
         if not self.subcategory_id:
@@ -116,6 +128,10 @@ class Product(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
 
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archive_reason = models.TextField(null=True, blank=True)
+    archived_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+
     def save(self, *args, **kwargs):
         self.product_name = f"{self.brand_name} - {self.generic_name}"
         if not self.product_id:
@@ -152,6 +168,9 @@ class Supplier(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
     
+    archived_at = models.DateTimeField(null=True, blank=True)
+    archive_reason = models.TextField(null=True, blank=True)
+    archived_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
         if not self.supplier_id:
@@ -163,6 +182,30 @@ class Supplier(models.Model):
 
     class Meta:
         db_table = 'supplier'
+
+class ArchiveLog(models.Model):
+
+    archive_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='archive_code')
+    archive_id = models.CharField(max_length=30, unique=True, editable=False, db_column='archive_id')
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.CharField(max_length=50)
+    content_object = GenericForeignKey('content_type', 'object_id')
+    archived_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, db_column='archived_by')
+    archived_at = models.DateTimeField(auto_now_add=True, db_column='archived_at')
+    reason = models.TextField(null=True, blank=True, db_column='reason')
+    snapshot = models.JSONField(null=True, blank=True, db_column='snapshot')
+
+    class Meta:
+        ordering = ['-archived_at']
+
+    def save(self, *args, **kwargs):
+        if not self.archive_id:
+            self.archive_id = generate_code(ArchiveLog, 'archive_id', 'ARC-')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'Archive Log: {self.content_type.app_label}.{self.content_type.model} {self.object_id} at {self.archived_at}'
 
 class SupplierProduct(models.Model):
     supplier_product_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='supplier_product_code')

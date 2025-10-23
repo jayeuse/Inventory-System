@@ -16,6 +16,7 @@ router.register(r'orders', views.OrderViewSet)
 router.register(r'order-items', views.OrderItemViewSet)
 router.register(r'receive-orders', views.ReceiveOrderViewSet)
 router.register(r'transactions', views.TransactionViewSet)
+router.register(r'archive_logs', views.ArchiveLogViewSet)
 
 
 urlpatterns = [
