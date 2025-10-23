@@ -116,6 +116,24 @@ class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
 
+    @action(detail=False, methods=['post'])
+    def unarchive(self, request):
+        try:
+            product_id = request.query_params.get('id')
+            if not product_id:
+                return Response({'error': 'Product ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            product = Product.objects.filter(product_id=product_id, status='Archived').first()
+            if not product:
+                return Response({'error': 'Archived product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            product.status = 'Active'
+            product.save()
+
+            return Response({'message': 'Product unarchived successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ProductStocksViewSet(viewsets.ModelViewSet):
     queryset = ProductStocks.objects.all().order_by('stock_id')
     serializer_class = ProductStocksSerializer
