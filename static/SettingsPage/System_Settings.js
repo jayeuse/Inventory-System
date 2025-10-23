@@ -166,6 +166,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const editCategoryModal = document.getElementById("editCategoryModal");
   const editSubcategoryModal = document.getElementById("editSubcategoryModal");
 
+  const supplierArchiveModal = document.getElementById("supplierArchiveModal");
+  const supplierUnarchiveModal = document.getElementById("supplierUnarchiveModal");
+  const categoryArchiveModal = document.getElementById("categoryArchiveModal");
+  const categoryUnarchiveModal = document.getElementById("categoryUnarchiveModal");
+
   // Close buttons for new modals
   const cancelEditBtn = document.getElementById("cancelEditBtn");
   const cancelArchiveBtn = document.getElementById("cancelArchiveBtn");
@@ -179,6 +184,16 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   const closeEditModalBtn = document.getElementById("closeEditModalBtn");
 
+  // const supplierCancelArchiveBtn = document.getElementById("supplierCancelArchiveBtn");
+  // const supplierConfirmArchiveBtn = document.getElementById("supplierConfirmArchiveBtn");
+  // const supplierCancelUnarchiveBtn = document.getElementById("supplierCancelUnarchiveBtn")
+  // const supplierConfirmUnarchiveBtn = document.getElementById("supplierConfirmUnarchiveBtn");
+
+  // const categoryCancelArchiveBtn = document.getElementById("categoryCancelArchiveBtn");
+  // const categoryConfirmArchiveBtn = document.getElementById("categoryConfirmArchiveBtn");
+  // const categoryCancelUnarchiveBtn = document.getElementById("categoryCancelUnarchiveBtn");
+  // const categoryConfirmUnarchiveBtn = document.getElementById("categoryConfirmUnarchiveBtn");
+
   // Edit buttons functionality
   document.querySelectorAll(".edit-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
@@ -188,17 +203,17 @@ document.addEventListener("DOMContentLoaded", function () {
           // Supplier edit
           editSupplierModal.style.display = "flex";
         } else if (
-          row.querySelector("td:nth-child(1)").textContent.includes("PRD")
+          row.querySelector("td:nth-child(1)").textContent.includes("PROD")
         ) {
           // Product edit
           editProductModal.style.display = "flex";
         } else if (
-          row.querySelector("td:nth-child(1)").textContent.includes("PHARM")
+          row.querySelector("td:nth-child(1)").textContent.includes("CAT")
         ) {
           // Category edit
           editCategoryModal.style.display = "flex";
         } else if (
-          row.querySelector("td:nth-child(1)").textContent.includes("SUB")
+          row.querySelector("td:nth-child(1)").textContent.includes("SUBCAT")
         ) {
           // Subcategory edit
           editSubcategoryModal.style.display = "flex";
@@ -210,14 +225,54 @@ document.addEventListener("DOMContentLoaded", function () {
   // Archive buttons functionality
   document.querySelectorAll(".archive-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
-      archiveModal.style.display = "flex";
+
+      const row = this.closest("tr");
+      if (!row){
+        return;
+      }
+
+      const idCell = row.querySelector("td:nth-child(1)");
+      if (!idCell){
+        return;
+      }
+
+      const id = idCell.textContent.trim();
+
+      if(id.startsWith('SUP')){
+        supplierArchiveModal.style.display = 'flex';
+        archiveTarget = {apiUrl: `/api/suppliers/${id}/`, id}
+      }
+      if(id.startsWith('CAT')){
+        categoryArchiveModal.style.display = 'flex';
+        archiveTarget = {apiUrl: `/api/categories/${id}/`, id}
+      }
     });
   });
 
   // Unarchive buttons functionality
   document.querySelectorAll(".unarchive-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
-      unarchiveModal.style.display = "flex";
+
+      const row = this.closest("tr");
+      if (!row){
+        return;
+      }
+
+      const idCell = row.querySelector("td:nth-child(1)");
+      if (!idCell){
+        return;
+      }
+
+      const id = idCell.textContent.trim();
+
+      if(id.startsWith('SUP')){
+        supplierUnarchiveModal.style.display = 'flex';
+        archiveTarget = {apiUrl: `/api/suppliers/${id}/`, id}
+      }
+      if(id.startsWith('CAT')){
+        categoryUnarchiveModal.style.display = 'flex';
+        archiveTarget = {apiUrl: `/api/categories/${id}/`, id}
+      }
     });
   });
 
@@ -275,39 +330,41 @@ document.addEventListener("DOMContentLoaded", function () {
   window.onclick = (e) => {
     if (e.target === supplierModal) supplierModal.style.display = "none";
     if (e.target === productModal) productModal.style.display = "none";
-    if (e.target === editSupplierModal)
-      editSupplierModal.style.display = "none";
+    if (e.target === editSupplierModal) editSupplierModal.style.display = "none";
     if (e.target === archiveModal) archiveModal.style.display = "none";
     if (e.target === unarchiveModal) unarchiveModal.style.display = "none";
     if (e.target === editProductModal) editProductModal.style.display = "none";
-    if (e.target === editCategoryModal)
-      editCategoryModal.style.display = "none";
-    if (e.target === editSubcategoryModal)
-      editSubcategoryModal.style.display = "none";
+    if (e.target === editCategoryModal) editCategoryModal.style.display = "none";
+    if (e.target === editSubcategoryModal) editSubcategoryModal.style.display = "none";
+    if (e.target === supplierArchiveModal) supplierArchiveModal.style.display = "none";
+    if (e.target === supplierUnarchiveModal) supplierUnarchiveModal.style.display = "none";
+    if (e.target === categoryArchiveModal) categoryArchiveModal.style.display = "none";
+    if (e.target === categoryUnarchiveModal) categoryUnarchiveModal.style.display = "none";
   };
   // ========== END OF NEW MODAL FUNCTIONALITY ==========
 
 });
 
-function toggleSubcategories(button) {
-  const row = button.closest("tr");
-  const subcategoryRow = row.nextElementSibling;
 
-  // Toggle the visibility of the subcategory row
-  subcategoryRow.classList.toggle("hidden");
+let archiveTarget = null;
 
-  // Update button text and icon based on state
-  if (subcategoryRow.classList.contains("hidden")) {
-    button.innerHTML = '<i class="bi bi-eye"></i> View';
-  } else {
-    const categoryId = row.children[0].textContent;
-    const subcatTbody = subcategoryRow.querySelector('.subcategory-table-body');
-    button.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
-    loadSubCategories(categoryId, subcatTbody);
+function getEntityType(id){
+  if (id.startsWith('CAT')){
+    return 'categories';
+  } 
+  if (id.startsWith('SUBCAT')){
+    return 'subcategories';
+  } 
+  if (id.startsWith('SUP')){
+    return 'suppliers';
+  }
+  if (id.startsWith('PROD')){
+    return 'products';
   }
 
+  return 'entities';
 }
-let archiveTarget = null;
+
 let currentEditSupplierId = null;
 let currentEditCategoryId = null;
 
@@ -350,71 +407,73 @@ function attachActionButtonListeners() {
   });
 
   document.querySelectorAll(".archive-btn").forEach((btn) => {
-    btn.addEventListener("click", async function () {
+    btn.addEventListener("click", function () {
+
       const row = this.closest("tr");
-      if (!row) return;
-      const idCell = row.querySelector("td:nth-child(1)");
-      if (!idCell) return;
-      const id = idCell ? idCell.textContent.trim() : null;
-
-      if (!id) return;
-
-      // Determine the type based on the ID prefix
-      let apiUrl = '';
-      if (id.startsWith('CAT')) {
-        apiUrl = `/api/categories/${id}/`;
-      } else if (id.startsWith('SUBCAT')) {
-        apiUrl = `/api/subcategories/${id}/`;
-      } else if (id.startsWith('SUP')) {
-        apiUrl = `/api/suppliers/${id}/`;
-      } else if (id.startsWith('PROD')) {
-        apiUrl = `/api/products/${id}/`;
-      } else {
+      if (!row){
         return;
       }
 
-      archiveTarget = { apiUrl, id }; // Store for confirmation
+      const idCell = row.querySelector("td:nth-child(1)");
+      if (!idCell){
+        return;
+      }
 
-      document.getElementById('archiveModal').style.display = 'flex';
+      const id = idCell.textContent.trim();
+
+      if(id.startsWith('SUP')){
+        supplierArchiveModal.style.display = 'flex';
+        archiveTarget = {apiUrl: `/api/suppliers/${id}/`, id}
+      }
+      if(id.startsWith('CAT')){
+        categoryArchiveModal.style.display = 'flex';
+        archiveTarget = {apiUrl: `/api/categories/${id}/`, id}
+      }
     });
   });
 
   document.querySelectorAll(".unarchive-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
-      unarchiveModal.style.display = "flex";
+
+      const row = this.closest("tr");
+      if (!row){
+        return;
+      }
+
+      const idCell = row.querySelector("td:nth-child(1)");
+      if (!idCell){
+        return;
+      }
+
+      const id = idCell.textContent.trim();
+
+      if(id.startsWith('SUP')){
+        supplierUnarchiveModal.style.display = 'flex';
+        archiveTarget = {apiUrl: `/api/suppliers/${id}/`, id}
+      }
+      if(id.startsWith('CAT')){
+        categoryUnarchiveModal.style.display = 'flex';
+        archiveTarget = {apiUrl: `/api/categories/${id}/`, id}
+      }
     });
   });
 }
 
-// Confirm archive
-document.getElementById('confirmArchiveBtn').addEventListener('click', async function () {
-  if (!archiveTarget) return;
+function toggleSubcategories(button) {
+  const row = button.closest("tr");
+  const subcategoryRow = row.nextElementSibling;
 
-  document.getElementById('archiveModal').style.display = 'none';
+  // Toggle the visibility of the subcategory row
+  subcategoryRow.classList.toggle("hidden");
 
-  try {
-    const response = await fetch(archiveTarget.apiUrl, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'Archived' })
-    });
-
-    if (response.ok) {
-      alert('Record archived!');
-    } else {
-      alert('Failed to archive record.');
-    }
-  } catch (error) {
-    alert('Network error: ' + error);
+  // Update button text and icon based on state
+  if (subcategoryRow.classList.contains("hidden")) {
+    button.innerHTML = '<i class="bi bi-eye"></i> View';
+  } else {
+    const categoryId = row.children[0].textContent;
+    const subcatTbody = subcategoryRow.querySelector('.subcategory-table-body');
+    button.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
+    loadSubCategories(categoryId, subcatTbody);
   }
 
-  // Hide modal and reset
-  document.getElementById('archiveModal').style.display = 'none';
-  archiveTarget = null;
-});
-
-// Cancel archive
-document.getElementById('cancelArchiveBtn').addEventListener('click', function () {
-  document.getElementById('archiveModal').style.display = 'none';
-  archiveTarget = null;
-});
+}

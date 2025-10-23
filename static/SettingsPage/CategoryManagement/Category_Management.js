@@ -124,6 +124,7 @@ document.addEventListener("DOMContentLoaded", function(){
     }
   });
 
+  // Inserting Subcategories
   document.getElementById('addSubCategoryBtn').addEventListener('click', async function() {
     const subCategoryClassfication = document.getElementById('category-classification').value;
     const subCategoryName = document.getElementById('subcategory-name').value;
@@ -186,6 +187,64 @@ document.addEventListener("DOMContentLoaded", function(){
     } catch (error){
       console.error("Network Error: ", error)
     }
+  })
+
+  // Archiving Categories
+
+  document.getElementById('categoryConfirmArchiveBtn').addEventListener('click', async function(){
+    if (!archiveTarget) return;
+    
+    document.getElementById('categoryArchiveModal').style.display = 'none';
+    
+    try {
+      const response = await fetch(archiveTarget.apiUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Archived' })
+      });
+      
+      if (response.ok) {
+        alert("Category Archived Successfully!");
+        await loadCategories();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+    
+    archiveTarget = null;
+  })
+
+  document.getElementById('categoryCancelArchiveBtn').addEventListener('click', function(){
+    document.getElementById('categoryArchiveModal').style.display = 'none';
+    archiveTarget = null;
+  })
+
+  document.getElementById('categoryConfirmUnarchiveBtn').addEventListener('click', async function(){
+    if (!archiveTarget) return;
+    
+    document.getElementById('categoryUnarchiveModal').style.display = 'none';
+    
+    try {
+      const response = await fetch(archiveTarget.apiUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Active' })
+      });
+      
+      if (response.ok) {
+        alert("Category Unarchived Successfully!");
+        await loadCategories();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+    
+    archiveTarget = null;
+  })
+
+  document.getElementById('categoryCancelUnarchiveBtn').addEventListener('click', function(){
+    document.getElementById('categoryUnarchiveModal').style.display = 'none';
+    archiveTarget = null;
   })
 })
 
