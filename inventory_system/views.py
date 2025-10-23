@@ -73,12 +73,12 @@ class CategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     lookup_field = 'category_id'
 
-    # def get_queryset(self):
-    #     show_archived = self.request.query_params.get('show_archived')
-    #     queryset = Category.objects.all().order_by('category_id')
-    #     if show_archived == 'true':
-    #         return queryset.filter(status = 'Archived')
-    #     return queryset.exclude(status = 'Archived')
+    def get_queryset(self):
+        show_archived = self.request.query_params.get('show_archived')
+        queryset = Category.objects.all().order_by('category_id')
+        if show_archived == 'true':
+            return queryset.filter(status = 'Archived')
+        return queryset.exclude(status = 'Archived')
 
 class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Subcategory.objects.all()
@@ -97,12 +97,12 @@ class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     serializer_class = SupplierSerializer
     lookup_field = 'supplier_id'
 
-    # def get_queryset(self):
-    #     show_archived = self.request.query_params.get('show_archived')
-    #     queryset = Supplier.objects.all().order_by('supplier_id')
-    #     if show_archived == 'true':
-    #         return queryset.filter(status = 'Archived')
-    #     return queryset.exclude(status = 'Archived')
+    def get_queryset(self):
+        show_archived = self.request.query_params.get('show_archived')
+        queryset = Supplier.objects.all().order_by('supplier_id')
+        if show_archived == 'true':
+            return queryset.filter(status = 'Archived')
+        return queryset.exclude(status = 'Archived')
 
 class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Product.objects.all()
