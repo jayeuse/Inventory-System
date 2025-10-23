@@ -41,7 +41,7 @@ def products_view(request):
     return serve_static_html(request, 'ProductPage/ProductsPos.html')
 
 def inventory_view(request):
-    return serve_static_html(request, 'InventoryPage/StocksOrder.html')
+    return serve_static_html(request, 'InventoryPage/InventoryPage.html')
 
 def transactions_view(request):
     return serve_static_html(request, 'TransactionPage/transactions.html')
