@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 from ..models import ProductBatch, Product, ProductStocks
+from django.db.models import Case, When, IntegerField, Min
 
 
 class InventoryService:
@@ -82,16 +83,29 @@ class InventoryService:
         """
         Update ProductStocks status based on total_on_hand and thresholds
         """
-        product = product_stock.product
-        total = product_stock.total_on_hand
-        
-        if total == 0:
+        batches = ProductBatch.objects.filter(
+        product_stock=product_stock
+        ).annotate(
+            priority=Case(
+                When(status='Expired', then=1),
+                When(status='Out of Stock', then=2),
+                When(status='Near Expiry', then=3),
+                When(status='Low Stock', then=4),
+                When(status='Normal', then=5),
+                default=999,
+                output_field=IntegerField()
+            )
+        ).order_by('priority')
+    
+        # Get the most critical batch
+        most_critical_batch = batches.first()
+    
+        if not most_critical_batch:
             new_status = 'Out of Stock'
-        elif total <= product.low_stock_threshold:
-            new_status = 'Low Stock'
         else:
-            new_status = 'Normal'
+            new_status = most_critical_batch.status
         
+        # Update if changed
         if product_stock.status != new_status:
             product_stock.status = new_status
             product_stock.save(update_fields=['status'])

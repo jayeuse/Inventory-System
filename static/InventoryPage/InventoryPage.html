@@ -62,6 +62,7 @@
               </p>
             </div>
 
+            <!-- Stock Table -->
             <table>
               <thead>
                 <tr>
@@ -73,7 +74,7 @@
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody id="stockslist_tableBody">
+              <tbody id="stocks-table-body">
                 <!-- Stock Item 1 -->
                 <tr class="stock-row">
                   <td>
@@ -114,7 +115,7 @@
                             <th>Action</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody id ="batches-table-body">
                           <tr>
                             <td>STK-001-BTH001</td>
                             <td>80 units</td>
@@ -159,117 +160,7 @@
                   </td>
                 </tr>
 
-                <!-- Stock Item 2 -->
-                <tr class="stock-row">
-                  <td>
-                    <button
-                      class="expand-btn"
-                      onclick="toggleBatches('STK-002')"
-                    >
-                      <i
-                        class="fas fa-chevron-right"
-                        id="stockslist_icon-STK-002"
-                      ></i>
-                    </button>
-                  </td>
-                  <td>STK-002</td>
-                  <td>PRD002</td>
-                  <td>Solmux (Carbocisteine)</td>
-                  <td>45 units</td>
-                  <td>
-                    <span class="status-badge status-out-of-stock"
-                      >Out of Stock</span
-                    >
-                  </td>
-                </tr>
-                <tr class="stock-row">
-                  <td>
-                    <button
-                      class="expand-btn"
-                      onclick="toggleBatches('STK-002')"
-                    >
-                      <i
-                        class="fas fa-chevron-right"
-                        id="stockslist_icon-STK-002"
-                      ></i>
-                    </button>
-                  </td>
-                  <td>STK-002</td>
-                  <td>PRD002</td>
-                  <td>Solmux (Carbocisteine)</td>
-                  <td>45 units</td>
-                  <td>
-                    <span class="status-badge status-out-of-stock"
-                      >Out of Stock</span
-                    >
-                  </td>
-                </tr>
-                <tr class="stock-row">
-                  <td>
-                    <button
-                      class="expand-btn"
-                      onclick="toggleBatches('STK-002')"
-                    >
-                      <i
-                        class="fas fa-chevron-right"
-                        id="stockslist_icon-STK-002"
-                      ></i>
-                    </button>
-                  </td>
-                  <td>STK-002</td>
-                  <td>PRD002</td>
-                  <td>Solmux (Carbocisteine)</td>
-                  <td>45 units</td>
-                  <td>
-                    <span class="status-badge status-out-of-stock"
-                      >Out of Stock</span
-                    >
-                  </td>
-                </tr>
-                <tr class="stock-row">
-                  <td>
-                    <button
-                      class="expand-btn"
-                      onclick="toggleBatches('STK-002')"
-                    >
-                      <i
-                        class="fas fa-chevron-right"
-                        id="stockslist_icon-STK-002"
-                      ></i>
-                    </button>
-                  </td>
-                  <td>STK-002</td>
-                  <td>PRD002</td>
-                  <td>Solmux (Carbocisteine)</td>
-                  <td>45 units</td>
-                  <td>
-                    <span class="status-badge status-out-of-stock"
-                      >Out of Stock</span
-                    >
-                  </td>
-                </tr>
-                <tr class="stock-row">
-                  <td>
-                    <button
-                      class="expand-btn"
-                      onclick="toggleBatches('STK-002')"
-                    >
-                      <i
-                        class="fas fa-chevron-right"
-                        id="stockslist_icon-STK-002"
-                      ></i>
-                    </button>
-                  </td>
-                  <td>STK-002</td>
-                  <td>PRD002</td>
-                  <td>Solmux (Carbocisteine)</td>
-                  <td>45 units</td>
-                  <td>
-                    <span class="status-badge status-out-of-stock"
-                      >Out of Stock</span
-                    >
-                  </td>
-                </tr>
+                <!-- Stock Item 2 (single entry kept) -->
                 <tr class="stock-row">
                   <td>
                     <button
@@ -454,7 +345,7 @@
           >
             Cancel
           </button>
-          <button class="btn-primary" onclick="stockslist_saveBatchEdit()">
+          <button class="btn-primary" id="stockslist_saveBachEditBtn">
             Save Changes
           </button>
         </div>
@@ -493,20 +384,20 @@
           let activeItem = null;
 
           if (
-            currentUrl.includes("/static/settingspage/system_settings.html") ||
-            currentUrl.includes("system_settings")
+            currentUrl.includes("/static/inventorypage/inventorypage.html") ||
+            currentUrl.includes("inventory")
           ) {
-            activeItem = "settings";
+            activeItem = "inventory";
           } else if (
             currentUrl.includes("/static/productpage/productsPos.html#products") ||
             currentUrl.includes("product_management")
           ) {
             activeItem = "products";
           } else if (
-            currentUrl.includes("/static/inventorypage/inventory_management.html") ||
-            currentUrl.includes("stocksorder")
+            currentUrl.includes("/static/settingspage/system_settings.html") ||
+            currentUrl.includes("system_settings")
           ) {
-            activeItem = "inventory";
+            activeItem = "settings";
           } else if (
             currentUrl.includes("/static/transactionpage/transactions.html") ||
             currentUrl.includes("transactions")
@@ -659,5 +550,6 @@
       });
     </script>
     <script src="/static/InventoryPage/InventoryPage.js"></script>
+    <script src="/static/InventoryPage/StocksManagement/Stocks_Management.js"></script>
   </body>
 </html>

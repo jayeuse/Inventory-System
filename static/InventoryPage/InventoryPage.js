@@ -45,6 +45,7 @@ function toggleBatches(stockId) {
   if (batchRow.style.display === "none" || batchRow.style.display === "") {
     batchRow.style.display = "table-row";
     expandBtn.classList.add("expanded");
+    loadBatches(stockId);
   } else {
     batchRow.style.display = "none";
     expandBtn.classList.remove("expanded");
@@ -79,7 +80,7 @@ function stockslist_closeEditBatchModal() {
   document.getElementById("stockslist_edit_remarks").value = "";
 }
 
-// Save Batch Edit
+// Save Batch Edit (unused)
 function stockslist_saveBatchEdit() {
   const batchId = document.getElementById("stockslist_edit_batchId").value;
   const onHand = document.getElementById("stockslist_edit_onHand").value;

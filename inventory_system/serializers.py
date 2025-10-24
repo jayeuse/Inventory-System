@@ -129,6 +129,7 @@ class ProductStocksSerializer(serializers.ModelSerializer):
         model = ProductStocks
         fields = [
             'stock_id',
+            'product',
             'product_id',
             'product_name',
             'brand_name',
