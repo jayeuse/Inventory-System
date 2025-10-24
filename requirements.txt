@@ -16,3 +16,5 @@ drf-spectacular
 
 # CORS headers (if you need frontend integration)
 django-cors-headers
+
+django-filter
