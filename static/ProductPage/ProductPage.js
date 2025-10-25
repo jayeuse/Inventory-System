@@ -196,7 +196,7 @@ document.addEventListener("DOMContentLoaded", function () {
           <td>${p.category_name || ''}</td>
           <td>${p.subcategory_name || ''}</td>
           <td>₱${(p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : ''} / ${p.unit_of_measurement || ''}</td>
-          <td>-</td>
+          <td>${p.last_updated}</td>
         `;
         tableBody.appendChild(tr);
       }

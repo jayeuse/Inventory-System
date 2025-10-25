@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from django.db import models
+from django.utils.timezone import localtime
 from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog
 
 class CategorySerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
+    archived_at = serializers.SerializerMethodField()
     
     class Meta:
         model = Category
@@ -22,9 +24,17 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def get_product_count(self, obj):
         return obj.products.count()  # Fixed: using correct related_name
+    
+    def get_archived_at(self, obj):
+        if obj.archived_at:
+            local_time = localtime(obj.archived_at)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None
 
 class SubcategorySerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
+    archived_at = serializers.SerializerMethodField()
+
     class Meta:
         model = Subcategory
         fields = [
@@ -44,9 +54,16 @@ class SubcategorySerializer(serializers.ModelSerializer):
     def get_product_count(self, obj):
         return obj.products.count();
 
+    def get_archived_at(self, obj):
+        if obj.archived_at:
+            local_time = localtime(obj.archived_at)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None
+
 class SupplierSerializer(serializers.ModelSerializer):
     product_id = serializers.CharField(source='product.product_id', read_only=True)
     product_name = serializers.CharField(source='product.product_name', read_only=True)
+    archived_at = serializers.SerializerMethodField()
     
     class Meta:
         model = Supplier
@@ -68,11 +85,19 @@ class SupplierSerializer(serializers.ModelSerializer):
 
         read_only_fields = ['archived_at', 'archived_by',]
 
+    def get_archived_at(self, obj):
+        if obj.archived_at:
+            local_time = localtime(obj.archived_at)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None
+
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.category_name', read_only=True)
     category_id = serializers.CharField(source='category.category_id', read_only=True)
     subcategory_name = serializers.CharField(source='subcategory.subcategory_name', read_only=True)
     subcategory_id = serializers.CharField(source='subcategory.subcategory_id', read_only=True)
+    last_updated = serializers.SerializerMethodField()
+    archived_at = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
@@ -92,6 +117,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'expiry_threshold_days',
             'low_stock_threshold',
             'status',
+            'last_updated',
             'archived_at',
             'archive_reason',
             'archived_by',
@@ -102,6 +128,18 @@ class ProductSerializer(serializers.ModelSerializer):
             'product_name': {'read_only': True},
         }
         read_only_fields = ['archived_at', 'archived_by',]
+
+    def get_last_updated(self, obj):
+        if obj.last_updated:
+            local_time = localtime(obj.last_updated)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return ''
+    
+    def get_archived_at(self, obj):
+        if obj.archived_at:
+            local_time = localtime(obj.archived_at)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None
 
 class ArchiveLogSerializer(serializers.ModelSerializer):
     content_type = serializers.StringRelatedField()
@@ -118,6 +156,12 @@ class ArchiveLogSerializer(serializers.ModelSerializer):
             'snapshot',
         ]
         read_only_fields = ['archive_id', 'content_type', 'archived_by', 'archived_at', 'snapshot']
+
+    def get_archived_at(self, obj):
+        if obj.archived_at:
+            local_time = localtime(obj.archived_at)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None
 
 class ProductStocksSerializer(serializers.ModelSerializer):
     brand_name = serializers.CharField(source='product.brand_name', read_only=True)

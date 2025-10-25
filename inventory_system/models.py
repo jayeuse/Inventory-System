@@ -128,6 +128,8 @@ class Product(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Active', db_column='status')
 
+    last_updated = models.DateTimeField(auto_now=True, db_column='last_updated')
+
     archived_at = models.DateTimeField(null=True, blank=True)
     archive_reason = models.TextField(null=True, blank=True)
     archived_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)

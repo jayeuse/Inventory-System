@@ -79,6 +79,17 @@ class CategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         if show_archived == 'true':
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
+    
+    def perform_update(self, serializer):
+        """Set archived_at when archiving"""
+        instance = serializer.instance
+        
+        if serializer.validated_data.get('status') == 'Archived':
+            serializer.save(archived_at=timezone.now())
+        elif instance.status == 'Archived' and serializer.validated_data.get('status') != 'Archived':
+            serializer.save(archived_at=None)
+        else:
+            serializer.save()
 
 class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Subcategory.objects.all()
@@ -91,6 +102,17 @@ class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         if show_archived == 'true':
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
+    
+    def perform_update(self, serializer):
+        """Set archived_at when archiving"""
+        instance = serializer.instance
+        
+        if serializer.validated_data.get('status') == 'Archived':
+            serializer.save(archived_at=timezone.now())
+        elif instance.status == 'Archived' and serializer.validated_data.get('status') != 'Archived':
+            serializer.save(archived_at=None)
+        else:
+            serializer.save()
 
 class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
@@ -103,6 +125,17 @@ class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         if show_archived == 'true':
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
+    
+    def perform_update(self, serializer):
+        """Set archived_at when archiving"""
+        instance = serializer.instance
+        
+        if serializer.validated_data.get('status') == 'Archived':
+            serializer.save(archived_at=timezone.now())
+        elif instance.status == 'Archived' and serializer.validated_data.get('status') != 'Archived':
+            serializer.save(archived_at=None)
+        else:
+            serializer.save()
 
 class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -115,6 +148,17 @@ class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         if show_archived == 'true':
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
+    
+    def perform_update(self, serializer):
+        """Set archived_at when archiving"""
+        instance = serializer.instance
+        
+        if serializer.validated_data.get('status') == 'Archived':
+            serializer.save(archived_at=timezone.now())
+        elif instance.status == 'Archived' and serializer.validated_data.get('status') != 'Archived':
+            serializer.save(archived_at=None)
+        else:
+            serializer.save()
 
     @action(detail=False, methods=['post'])
     def unarchive(self, request):
@@ -143,6 +187,15 @@ class ProductBatchViewSet(viewsets.ModelViewSet):
     queryset = ProductBatch.objects.all().order_by('batch_id')
     serializer_class = ProductBatchSerializer
     lookup_field = 'batch_id'
+
+    def get_queryset(self):
+        queryset = ProductBatch.objects.all().order_by('batch_id')
+        stock_id = self.request.query_params.get('stock_id', None)
+        
+        if stock_id:
+            queryset = queryset.filter(product_stock__stock_id=stock_id)
+        
+        return queryset
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-date_ordered')
