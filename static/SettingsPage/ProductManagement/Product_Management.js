@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <td>₱${(p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : ''} / ${p.unit_of_measurement || ''}</td>
           <td>${p.low_stock_threshold || ''} units</td>
           <td>${p.expiry_threshold_days || ''} days</td>
-          <td>-</td>
+          <td>${p.last_updated}</td>
           <td>
             <div class="op-buttons">
               <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
           </td>
         `;
-
+        // last_updated is not working
         row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
 
         row.querySelector('.archive-btn')?.addEventListener('click', function () {
