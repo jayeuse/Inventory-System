@@ -176,6 +176,13 @@ document.addEventListener("DOMContentLoaded", function() {
   // Archiving Suppliers
   document.getElementById('supplierConfirmArchiveBtn').addEventListener('click', async function(){
     if (!archiveTarget) return;
+
+    const archiveReason = document.getElementById('supplierArchiveReason').value;
+
+    if (!archiveReason){
+      alert("Please provide a reason for archiving.");
+      return;
+    }
     
     document.getElementById('supplierArchiveModal').style.display = 'none';
     
@@ -183,11 +190,12 @@ document.addEventListener("DOMContentLoaded", function() {
       const response = await fetch(archiveTarget.apiUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Archived' })
+        body: JSON.stringify({ status: 'Archived', archive_reason: archiveReason })
       });
       
       if (response.ok) {
         alert("Supplier Archived Successfully!");
+        document.getElementById('supplierArchiveReason').value = '';
         await loadSuppliers();
       }
     } catch (error) {
@@ -200,11 +208,19 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById('supplierCancelArchiveBtn').addEventListener('click', function(){
     document.getElementById('supplierArchiveModal').style.display = 'none';
     console.log("Cancel Archive Button");
+    document.getElementById('supplierArchiveReason').value = '';
     archiveTarget = null;
   })
 
   document.getElementById('supplierConfirmUnarchiveBtn').addEventListener('click', async function(){
     if (!archiveTarget) return;
+
+    const unarchiveReason = document.getElementById('supplierUnarchiveReason').value;
+
+    if (!unarchiveReason){
+      alert("Please provide a reason for unarchiving.");
+      return;
+    }
     
     document.getElementById('supplierUnarchiveModal').style.display = 'none';
     
@@ -212,7 +228,7 @@ document.addEventListener("DOMContentLoaded", function() {
       const response = await fetch(archiveTarget.apiUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Active' })
+        body: JSON.stringify({ status: 'Active', unarchive_reason: unarchiveReason })
       });
       
       if (response.ok) {
@@ -228,6 +244,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   document.getElementById('supplierCancelUnarchiveBtn').addEventListener('click', function(){
     document.getElementById('supplierUnarchiveModal').style.display = 'none';
+    document.getElementById('supplierUnarchiveReason').value = '';
     archiveTarget = null;
   })
 
