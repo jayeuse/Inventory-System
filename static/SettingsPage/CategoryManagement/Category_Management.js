@@ -193,6 +193,13 @@ document.addEventListener("DOMContentLoaded", function(){
 
   document.getElementById('categoryConfirmArchiveBtn').addEventListener('click', async function(){
     if (!archiveTarget) return;
+
+    const archiveReason = document.getElementById('categoryArchiveReason').value;
+
+    if (!archiveReason){
+      alert("Please provide a reason for archiving.");
+      return;
+    }
     
     document.getElementById('categoryArchiveModal').style.display = 'none';
     
@@ -200,11 +207,12 @@ document.addEventListener("DOMContentLoaded", function(){
       const response = await fetch(archiveTarget.apiUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Archived' })
+        body: JSON.stringify({ status: 'Archived', archive_reason: archiveReason })
       });
       
       if (response.ok) {
         alert("Category Archived Successfully!");
+        document.getElementById('categoryArchiveReason').value = '';
         await loadCategories();
       }
     } catch (error) {
@@ -216,6 +224,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
   document.getElementById('categoryCancelArchiveBtn').addEventListener('click', function(){
     document.getElementById('categoryArchiveModal').style.display = 'none';
+    document.getElementById('categoryArchiveReason').value = '';
     archiveTarget = null;
   })
 
@@ -223,16 +232,24 @@ document.addEventListener("DOMContentLoaded", function(){
     if (!archiveTarget) return;
     
     document.getElementById('categoryUnarchiveModal').style.display = 'none';
+
+    const unarchiveReason = document.getElementById('categoryUnarchiveReason').value;
+
+    if (!unarchiveReason){
+      alert("Please provide a reason for unarchiving.");
+      return;
+    }
     
     try {
       const response = await fetch(archiveTarget.apiUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Active' })
+        body: JSON.stringify({ status: 'Active', unarchive_reason: unarchiveReason })
       });
       
       if (response.ok) {
         alert("Category Unarchived Successfully!");
+        document.getElementById('categoryUnarchiveReason').value = '';
         await loadCategories();
       }
     } catch (error) {
@@ -244,6 +261,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
   document.getElementById('categoryCancelUnarchiveBtn').addEventListener('click', function(){
     document.getElementById('categoryUnarchiveModal').style.display = 'none';
+    document.getElementById('categoryUnarchiveReason').value = '';
     archiveTarget = null;
   })
 })
