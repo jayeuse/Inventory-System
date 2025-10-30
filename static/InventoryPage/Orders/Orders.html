@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="Orders.css">
+</head>
+<body>
+     <main class="main">
+        <div class="tabs">
+            <div class="tab active" data-tab="orders">Orders</div>
+        </div>
+
+        <div id="orders-content" class="tab-content active">
+            <div class="card">
+                <div class="search-row">
+                    <div class="search-controls">
+                        <input
+                            class="input search-input"
+                            placeholder="Search Order ID or Ordered By"
+                            id="orderSearchInput"
+                        />
+                        <select class="input" id="orderStatusFilter">
+                            <option value="all">Filter by Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="received">Received</option>
+                            <option value="partial">Partially Received</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline" id="addOrderBtn">
+                        <i class="fas fa-plus"></i> Add Order
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-section">
+                        <div class="table-wrapper">
+                            <table class="orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Ordered By</th>
+                                        <th>Date Ordered</th>
+                                        <th>Status</th>
+                                        <th>Date Received</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orderTableBody">
+                                    <tr>
+                                        <td>ORD-001</td>
+                                        <td>John Smith</td>
+                                        <td>2023-10-15</td>
+                                        <td><span class="order-status pending">Pending</span></td>
+                                        <td>-</td>
+                                        <td>
+                                            <div class="op-buttons">
+                                                <button class="action-btn view-btn" onclick="toggleOrderItems(this)">
+                                                    <i class="bi bi-eye"></i> View
+                                                </button>
+                                                <button class="action-btn receive-btn" onclick="openReceiveOrderModal('ORD-001')">
+                                                    <i class="fas fa-truck-loading"></i> Receive Order
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-items-row hidden">
+                                        <td colspan="6">
+                                            <table class="order-items-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Order Item ID</th>
+                                                        <th>Product ID</th>
+                                                        <th>Product Name</th>
+                                                        <th>Quantity Ordered</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>OI-001-1</td>
+                                                        <td>PROD-001</td>
+                                                        <td>Biogesic (Paracetamol)</td>
+                                                        <td>100</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>OI-001-2</td>
+                                                        <td>PROD-002</td>
+                                                        <td>Solmux (Carbocisteine)</td>
+                                                        <td>50</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>OI-001-3</td>
+                                                        <td>PROD-003</td>
+                                                        <td>Allerkid (Cetirizine)</td>
+                                                        <td>75</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>ORD-002</td>
+                                        <td>Maria Garcia</td>
+                                        <td>2023-10-18</td>
+                                        <td><span class="order-status received">Received</span></td>
+                                        <td>2023-10-25</td>
+                                        <td>
+                                            <div class="op-buttons">
+                                                <button class="action-btn view-btn" onclick="toggleOrderItems(this)">
+                                                    <i class="bi bi-eye"></i> View
+                                                </button>
+                                                <button class="action-btn receive-btn" onclick="openReceiveOrderModal('ORD-002')">
+                                                    <i class="fas fa-truck-loading"></i> Receive Order
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-items-row hidden">
+                                        <td colspan="6">
+                                            <table class="order-items-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Order Item ID</th>
+                                                        <th>Product ID</th>
+                                                        <th>Product Name</th>
+                                                        <th>Quantity Ordered</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>OI-002-1</td>
+                                                        <td>PROD-004</td>
+                                                        <td>MediCare Face Mask</td>
+                                                        <td>200</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>OI-002-2</td>
+                                                        <td>PROD-005</td>
+                                                        <td>Green Cross Alcohol</td>
+                                                        <td>150</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>ORD-003</td>
+                                        <td>Robert Johnson</td>
+                                        <td>2023-10-20</td>
+                                        <td><span class="order-status partial">Partially Received</span></td>
+                                        <td>2023-10-28</td>
+                                        <td>
+                                            <div class="op-buttons">
+                                                <button class="action-btn view-btn" onclick="toggleOrderItems(this)">
+                                                    <i class="bi bi-eye"></i> View
+                                                </button>
+                                                <button class="action-btn receive-btn" onclick="openReceiveOrderModal('ORD-003')">
+                                                    <i class="fas fa-truck-loading"></i> Receive Order
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-items-row hidden">
+                                        <td colspan="6">
+                                            <table class="order-items-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Order Item ID</th>
+                                                        <th>Product ID</th>
+                                                        <th>Product Name</th>
+                                                        <th>Quantity Ordered</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>OI-003-1</td>
+                                                        <td>PROD-006</td>
+                                                        <td>Betadine Solution</td>
+                                                        <td>80</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>OI-003-2</td>
+                                                        <td>PROD-007</td>
+                                                        <td>Band-Aid Adhesive</td>
+                                                        <td>120</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>OI-003-3</td>
+                                                        <td>PROD-008</td>
+                                                        <td>Vicks Inhaler</td>
+                                                        <td>60</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>ORD-004</td>
+                                        <td>Sarah Williams</td>
+                                        <td>2023-10-22</td>
+                                        <td><span class="order-status cancelled">Cancelled</span></td>
+                                        <td>-</td>
+                                        <td>
+                                            <div class="op-buttons">
+                                                <button class="action-btn view-btn" onclick="toggleOrderItems(this)">
+                                                    <i class="bi bi-eye"></i> View
+                                                </button>
+                                                <button class="action-btn receive-btn" onclick="openReceiveOrderModal('ORD-004')">
+                                                    <i class="fas fa-truck-loading"></i> Receive Order
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="order-items-row hidden">
+                                        <td colspan="6">
+                                            <table class="order-items-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Order Item ID</th>
+                                                        <th>Product ID</th>
+                                                        <th>Product Name</th>
+                                                        <th>Quantity Ordered</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>OI-004-1</td>
+                                                        <td>PROD-009</td>
+                                                        <td>Babyflo Cotton Buds</td>
+                                                        <td>100</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+
+                                    <tr class="empty-row">
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr class="empty-row">
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr class="empty-row">
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr class="empty-row">
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="pagination">
+                            <button class="pagination-btn" id="orderPrevBtn">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </button>
+                            <button class="pagination-btn" id="orderNextBtn">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="massive-summary-card">
+                            <div class="massive-summary-header">
+                                <h2 class="massive-summary-title">Today's Summary</h2>
+                                <div class="massive-summary-date" id="currentDate">October 30, 2025</div>
+                            </div>
+                            
+                            <div class="massive-summary-stats">
+                                <div class="massive-stat-item">
+                                    <div class="massive-stat-value" id="pendingOrdersCount">02</div>
+                                    <div class="massive-stat-label">Pending Orders</div>
+                                </div>
+                                
+                                <div class="massive-stat-item">
+                                    <div class="massive-stat-value" id="receivedOrdersCount">01</div>
+                                    <div class="massive-stat-label">Received Orders</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="addOrderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Order</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="productId">Product ID</label>
+                        <input
+                            type="text"
+                            id="productId"
+                            class="input"
+                            placeholder="Enter Product ID"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="productName">Product Name</label>
+                        <select id="productName" class="input">
+                            <option value="">Brandname & Generic name</option>
+                            <option value="PROD-001">Biogesic (Paracetamol)</option>
+                            <option value="PROD-002">Solmux (Carbocisteine)</option>
+                            <option value="PROD-003">Allerkid (Cetirizine)</option>
+                            <option value="PROD-004">MediCare Face Mask</option>
+                            <option value="PROD-005">Green Cross Alcohol</option>
+                            <option value="PROD-006">Betadine Solution</option>
+                            <option value="PROD-007">Band-Aid Adhesive</option>
+                            <option value="PROD-008">Vicks Inhaler</option>
+                            <option value="PROD-009">Babyflo Cotton Buds</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="orderQuantity">Quantity Ordering</label>
+                        <input
+                            type="number"
+                            id="orderQuantity"
+                            class="input"
+                            placeholder="Enter quantity"
+                            min="1"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="purchasingPrice">Purchasing Price</label>
+                        <input
+                            type="number"
+                            id="purchasingPrice"
+                            class="input"
+                            placeholder="Enter purchasing price"
+                            min="0"
+                            step="0.01"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="orderedBy">Ordered By</label>
+                        <input
+                            type="text"
+                            id="orderedBy"
+                            class="input"
+                            placeholder="Enter name"
+                        />
+                    </div>
+                </div>
+                
+                <div class="orders-section">
+                    <!-- Multiple Orders Card -->
+                    <div class="multiple-orders-card">
+                        <div class="multiple-orders-header">
+                            <h3 class="multiple-orders-title">My Orders</h3>
+                            <div class="multiple-orders-count" id="ordersCount">0</div>
+                        </div>
+                        <div class="orders-list" id="multipleOrdersList">
+                            <div class="empty-orders-message">
+                                <i class="fas fa-shopping-cart" style="font-size: 40px; margin-bottom: 10px;"></i>
+                                <p>No orders added yet</p>
+                                <p style="font-size: 12px;">Orders will appear here automatically</p>
+                            </div>
+                        </div>
+                        <button class="place-all-orders-btn" id="placeAllOrdersBtn" disabled>
+                            <i class="fas fa-paper-plane"></i> Place All Orders
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelOrderBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="receiveOrderModal" class="modal receipt-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>RECEIVE ORDER</h2>
+            </div>
+            <div class="modal-body">
+                <div id="receiveOrderContent">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelReceiveBtn">Cancel</button>
+                <button class="btn" id="confirmReceiveBtn">
+                    <i class="fas fa-check"></i> Complete Receiving
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="Orders.js"></script>
+</body>
+</html>
