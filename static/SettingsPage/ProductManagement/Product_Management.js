@@ -418,18 +418,30 @@ document.addEventListener('DOMContentLoaded', function () {
     const apiUrl = archiveModal.dataset.targetApi;
     if (!apiUrl) return alert('No archive target');
 
+    const archiveReason = document.getElementById('archiveReason')?.value.trim();
+    if (!archiveReason) {
+      alert('Please provide a reason for archiving');
+      return;
+    }
+
     archiveModal.style.display = 'none';
 
     try {
       const response = await fetch(apiUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Archived' })
+        body: JSON.stringify({ 
+          status: 'Archived',
+          archive_reason: archiveReason
+        })
       });
 
       if (response.ok) {
         alert('Record archived!');
         await loadProductsList();
+        // Clear the archive reason field after successful archive
+        const archiveReasonField = document.getElementById('archiveReason');
+        if (archiveReasonField) archiveReasonField.value = '';
       } else {
         alert('Failed to archive record.');
       }
@@ -442,8 +454,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Cancel archive
   document.getElementById('cancelArchiveBtn')?.addEventListener('click', function () {
-    if (archiveModal) archiveModal.style.display = 'none';
-    if (archiveModal) delete archiveModal.dataset.targetApi;
+    if (archiveModal) {
+      archiveModal.style.display = 'none';
+      delete archiveModal.dataset.targetApi;
+      // Clear the archive reason field
+      const archiveReasonField = document.getElementById('archiveReason');
+      if (archiveReasonField) archiveReasonField.value = '';
+    }
   });
 
   // Confirm unarchive button handling (shared unarchive modal in page)
