@@ -150,13 +150,18 @@ class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         return queryset.exclude(status = 'Archived')
     
     def perform_update(self, serializer):
-        """Set archived_at when archiving"""
+        """Set archived_at and archive_reason when archiving"""
         instance = serializer.instance
+        data = serializer.validated_data
         
-        if serializer.validated_data.get('status') == 'Archived':
-            serializer.save(archived_at=timezone.now())
-        elif instance.status == 'Archived' and serializer.validated_data.get('status') != 'Archived':
-            serializer.save(archived_at=None)
+        if data.get('status') == 'Archived':
+            serializer.save(
+                status='Archived',
+                archived_at=timezone.now(),
+                archive_reason=data.get('archive_reason')
+            )
+        elif instance.status == 'Archived' and data.get('status') != 'Archived':
+            serializer.save(status='Active', archived_at=None, archive_reason=None)
         else:
             serializer.save()
 
