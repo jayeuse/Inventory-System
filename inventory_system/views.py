@@ -24,6 +24,7 @@ from .serializers import (
     ReceiveOrderSerializer,
     TransactionSerializer
 )
+from .services.order_service import OrderService
 
 def serve_static_html(request, file_path):
     full_path = os.path.join(settings.BASE_DIR, 'static', file_path)
@@ -315,10 +316,39 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     serializer_class = OrderItemSerializer
     lookup_field = 'order_item_id'
 
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        new_quantity = serializer.validated_data.get('quantity_ordered')
+
+        if new_quantity is not None:
+            OrderService.validate_order_quantity_update(instance, new_quantity)
+
+        serializer.save()
+
 class ReceiveOrderViewSet(viewsets.ModelViewSet):
     queryset = ReceiveOrder.objects.all().order_by('-date_received')
     serializer_class = ReceiveOrderSerializer
     lookup_field = 'receive_order_id'
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        new_quantity = serializer.validated_data.get('quantity_received')
+
+        if new_quantity is not None:
+            OrderService.validate_receive_quantity_update(instance, new_quantity)
+
+        serializer.save()
+
+    def perform_create(self, serializer):
+        order_item = serializer.validated_data.get('order_item')
+        quantity_received = serializer.validated_data.get('quantity_received')
+
+        if not order_item:
+            raise ValidationError("Order Item is Required")
+        
+        OrderService.validate_receive_quantity_create(order_item, quantity_received)
+
+        serializer.save()
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date_of_transaction')

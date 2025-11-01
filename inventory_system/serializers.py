@@ -164,27 +164,6 @@ class ArchiveLogSerializer(serializers.ModelSerializer):
             return local_time.strftime('%b %d, %Y %I:%M %p')
         return None
 
-class ProductStocksSerializer(serializers.ModelSerializer):
-    brand_name = serializers.CharField(source='product.brand_name', read_only=True)
-    generic_name = serializers.CharField(source='product.generic_name', read_only=True)
-    product_id = serializers.CharField(source='product.product_id', read_only=True)
-    product_name = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = ProductStocks
-        fields = [
-            'stock_id',
-            'product',
-            'product_id',
-            'product_name',
-            'brand_name',
-            'generic_name',
-            'total_on_hand',
-            'status',
-        ]
-    
-    def get_product_name(self, obj):
-        return f"{obj.product.brand_name} {obj.product.generic_name}"
 class ProductBatchSerializer(serializers.ModelSerializer):
     stock_id = serializers.CharField(source='product_stock.stock_id', read_only=True)
     product_name = serializers.SerializerMethodField()
@@ -206,6 +185,32 @@ class ProductBatchSerializer(serializers.ModelSerializer):
     
     def get_product_name(self, obj):
         return f"{obj.product_stock.product.brand_name} {obj.product_stock.product.generic_name}"
+    
+
+class ProductStocksSerializer(serializers.ModelSerializer):
+    brand_name = serializers.CharField(source='product.brand_name', read_only=True)
+    generic_name = serializers.CharField(source='product.generic_name', read_only=True)
+    product_id = serializers.CharField(source='product.product_id', read_only=True)
+    product_name = serializers.SerializerMethodField()
+
+    batches = ProductBatchSerializer(many = True, read_only = True, source = 'productbatch_set')
+    
+    class Meta:
+        model = ProductStocks
+        fields = [
+            'stock_id',
+            'product',
+            'product_id',
+            'product_name',
+            'brand_name',
+            'generic_name',
+            'total_on_hand',
+            'status',
+            'batches',
+        ]
+    
+    def get_product_name(self, obj):
+        return f"{obj.product.brand_name} {obj.product.generic_name}"
 
 class OrderItemSerializer(serializers.ModelSerializer):
     # Read-only display fields
