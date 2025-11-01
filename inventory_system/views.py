@@ -55,14 +55,14 @@ class ArchiveLogViewSet(viewsets.ModelViewSet):
     lookup_field = 'archive_id'
 
 class ArchiveLoggingMixin:
-    def _create_archive_log(self, instance, reason=None, user=None, snapshot=None):
+    def _create_archive_log(self, instance, reason=None, user=None, snapshot=None, action='Archived'):
         try:
-            print("Creating ArchiveLog for:", instance)
+            print(f"Creating ArchiveLog for:{action}: {instance}")
             ArchiveLog.objects.create(
                 content_type = ContentType.objects.get_for_model(type(instance)),
                 object_id = str(instance.pk),
                 archived_by = user if getattr(user, 'is_authenticated', False) else None,
-                reason = reason or '',
+                reason = reason or f'Record {action}',
                 snapshot = snapshot or {}
             )
             print("ArchiveLog created successfully.")
@@ -83,11 +83,30 @@ class CategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     def perform_update(self, serializer):
         """Set archived_at when archiving"""
         instance = serializer.instance
-        
-        if serializer.validated_data.get('status') == 'Archived':
-            serializer.save(archived_at=timezone.now())
-        elif instance.status == 'Archived' and serializer.validated_data.get('status') != 'Archived':
-            serializer.save(archived_at=None)
+        old_status = instance.status
+        new_status = serializer.validated_data.get('status')
+
+        if old_status != 'Archived' and new_status == 'Archived':
+            updated = serializer.save(archived_at = timezone.now())
+
+            self._create_archive_log(
+                updated,
+                reason = serializer.validated_data.get('archive_reason', 'Category Archived'),
+                user = self.request.user,
+                snapshot = CategorySerializer(updated).data,
+                action = 'Archived'
+            )
+
+        elif old_status == 'Archived' and new_status != 'Archived':
+            updated = serializer.save(archived_at = None, archive_reason = None)
+
+            self._create_archive_log(
+                updated,
+                reason = 'Category Unarchived',
+                user = self.request.user,
+                snapshot = CategorySerializer(updated).data,
+                action = 'Unarchived'
+            )
         else:
             serializer.save()
 
@@ -106,11 +125,27 @@ class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     def perform_update(self, serializer):
         """Set archived_at when archiving"""
         instance = serializer.instance
-        
-        if serializer.validated_data.get('status') == 'Archived':
-            serializer.save(archived_at=timezone.now())
-        elif instance.status == 'Archived' and serializer.validated_data.get('status') != 'Archived':
-            serializer.save(archived_at=None)
+        old_status = instance.status
+        new_status = serializer.validated_data.get('status')
+
+        if old_status != 'Archived' and new_status == 'Archived':
+            updated = serializer.save(archived_at = timezone.now())
+            self._create_archive_log(
+                updated,
+                reason = serializer.validated_data.get('archive_reason', 'Subcategory Archived'),
+                user = self.request.user,
+                snapshot = SubcategorySerializer(updated).data,
+                action = 'Archived'
+            )
+        elif old_status == 'Archived' and new_status != 'Archived':
+            updated = serializer.save(archived_at = None, archive_reason = None)
+            self._create_archive_log(
+                updated,
+                reason = 'Subcategory Unarchived',
+                user = self.request.user(),
+                snapshot = SubcategorySerializer(updated).data,
+                action = 'Unarchived'
+            )
         else:
             serializer.save()
 
@@ -129,11 +164,27 @@ class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     def perform_update(self, serializer):
         """Set archived_at when archiving"""
         instance = serializer.instance
-        
-        if serializer.validated_data.get('status') == 'Archived':
-            serializer.save(archived_at=timezone.now())
-        elif instance.status == 'Archived' and serializer.validated_data.get('status') != 'Archived':
-            serializer.save(archived_at=None)
+        old_status = instance.status
+        new_status = serializer.validated_data.get('status')
+
+        if old_status != 'Archived' and new_status == 'Archived':
+            updated = serializer.save(archived_at = timezone.now())
+            self._create_archive_log(
+                updated,
+                reason = serializer.validated_data.get('archive_reason', 'Supplier Archived'),
+                user = self.request.user,
+                snapshot = SupplierSerializer(updated).data,
+                action = 'Archived'
+            )
+        elif old_status == 'Archived' and new_status != 'Archived':
+            updated = serializer.save(archived_at = None, archive_reason = None)
+            self._create_archive_log(
+                updated,
+                reason = 'Supplier Unarchived',
+                user = self.request.user(),
+                snapshot = SupplierSerializer(updated).data,
+                action = 'Unarchived'
+            )
         else:
             serializer.save()
 

@@ -143,6 +143,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class ArchiveLogSerializer(serializers.ModelSerializer):
     content_type = serializers.StringRelatedField()
+    archived_at = serializers.SerializerMethodField()
 
     class Meta:
         model = ArchiveLog
