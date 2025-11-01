@@ -443,7 +443,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const archiveReasonField = document.getElementById('archiveReason');
         if (archiveReasonField) archiveReasonField.value = '';
       } else {
-        alert('Failed to archive record.');
+        const errorData = await response.json();
+        alert('Error: ' + JSON.stringify(errorData))
       }
     } catch (error) {
       alert('Network error: ' + error);

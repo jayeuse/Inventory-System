@@ -1,3 +1,4 @@
+from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets
 from django.shortcuts import render
 from django.conf import settings
@@ -87,6 +88,10 @@ class CategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         new_status = serializer.validated_data.get('status')
 
         if old_status != 'Archived' and new_status == 'Archived':
+
+            if Product.objects.filter(category = instance).exclude(status = 'Archived').exists():
+                raise ValidationError("Cannot archive Category: It has existing products.")
+            
             updated = serializer.save(archived_at = timezone.now())
 
             self._create_archive_log(
@@ -129,6 +134,9 @@ class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         new_status = serializer.validated_data.get('status')
 
         if old_status != 'Archived' and new_status == 'Archived':
+            if Product.objects.filter(subcategory = instance).exclude(status = 'Archived').exists():
+                raise ValidationError("Cannot archive Subcategory: It has existing products.")
+            
             updated = serializer.save(archived_at = timezone.now())
             self._create_archive_log(
                 updated,
@@ -142,7 +150,7 @@ class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
             self._create_archive_log(
                 updated,
                 reason = 'Subcategory Unarchived',
-                user = self.request.user(),
+                user = self.request.user,
                 snapshot = SubcategorySerializer(updated).data,
                 action = 'Unarchived'
             )
@@ -168,6 +176,10 @@ class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         new_status = serializer.validated_data.get('status')
 
         if old_status != 'Archived' and new_status == 'Archived':
+
+            if OrderItem.objects.filter(supplier = instance).exists():
+                raise ValidationError("Cannot archive Supplier: It is referenced in Orders.")
+            
             updated = serializer.save(archived_at = timezone.now())
             self._create_archive_log(
                 updated,
@@ -181,7 +193,7 @@ class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
             self._create_archive_log(
                 updated,
                 reason = 'Supplier Unarchived',
-                user = self.request.user(),
+                user = self.request.user,
                 snapshot = SupplierSerializer(updated).data,
                 action = 'Unarchived'
             )
@@ -204,6 +216,46 @@ class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         """Set archived_at and archive_reason when archiving"""
         instance = serializer.instance
         data = serializer.validated_data
+        old_status = instance.status
+        new_status = data.get('status')
+
+        if old_status != 'Archived' and new_status == 'Archived':
+            
+            if ProductStocks.objects.filter(product = instance).exists():
+                raise ValidationError("Cannot archive Product: It has existing stock record/s!")
+            
+            if ProductBatch.objects.filter(product_stock__product = instance).exists():
+                raise ValidationError("Cannot archive Product: It has existing batch record/s!")
+            
+            if OrderItem.objects.filter(product = instance).exists():
+                raise ValidationError("Cannot archive Product: It is referenced in order/s!")
+            
+            updated = serializer.save(
+                status = 'Archived',
+                archived_at = timezone.now(),
+                archive_reason = data.get('archive_reason')
+            )
+
+            self._create_archive_log(
+                updated,
+                reason = data.get('archive_reason', 'Product Archived'),
+                user = self.request.user,
+                snapshot = ProductSerializer(updated).data,
+                action = 'Archived'
+            )
+
+        elif old_status == 'Archived' and new_status != 'Archived':
+            updated.serializer.save(status = 'Active', archived_at = None, archive_reason = None)
+
+            self._create_archive_log(
+                updated,
+                reason = 'Product Unarchived',
+                user = self.request.user,
+                snapshot = ProductSerializer(updated).data,
+                action = 'Unarchived'
+            )
+        else:
+            serializer.save()
         
         if data.get('status') == 'Archived':
             serializer.save(
