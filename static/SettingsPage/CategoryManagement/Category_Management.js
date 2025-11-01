@@ -214,6 +214,9 @@ document.addEventListener("DOMContentLoaded", function(){
         alert("Category Archived Successfully!");
         document.getElementById('categoryArchiveReason').value = '';
         await loadCategories();
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + JSON.stringify(errorData))
       }
     } catch (error) {
       console.error("Error:", error);
