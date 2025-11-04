@@ -24,6 +24,9 @@
   </head>
   <body>
     <div class="d-flex">
+      <!-- Sidebar Container -->
+      <div id="sidebar-container"></div>
+
       <main class="main flex-grow-1 p-4">
         <div class="tabs">
           <div class="tab active" data-tab="history">Transaction History</div>
@@ -91,6 +94,167 @@
         </div>
       </main>
     </div>
+
+    <!-- Sidebar Initialization Script -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Load sidebar component
+        fetch("/static/Sidebar/Sidebar.html")
+          .then((response) => response.text())
+          .then((data) => {
+            document.getElementById("sidebar-container").innerHTML = data;
+            initializeSidebar();
+          })
+          .catch((error) => {
+            console.error("Error loading sidebar:", error);
+          });
+
+        function initializeSidebar() {
+          const navIcons = document.querySelectorAll(
+            ".sidebar-component .nav-icon"
+          );
+          const navLabels = document.querySelectorAll(
+            ".sidebar-component .nav-label"
+          );
+
+          // Get current page URL
+          const currentUrl = window.location.href.toLowerCase();
+          console.log("Current URL:", currentUrl);
+
+          // Remove active class from all items first
+          navIcons.forEach((icon) => icon.classList.remove("active"));
+          navLabels.forEach((label) => label.classList.remove("active"));
+
+          // Set active item for transactions page
+          let activeItem = null;
+
+          if (currentUrl.includes("/transactions")) {
+            activeItem = "transactions";
+          } else if (currentUrl.includes("/settings")) {
+            activeItem = "settings";
+          } else if (currentUrl.includes("/products")) {
+            activeItem = "products";
+          } else if (currentUrl.includes("/inventory")) {
+            activeItem = "inventory";
+          } else {
+            activeItem = "dashboard";
+          }
+
+          console.log("Detected active item:", activeItem);
+
+          // Set active state
+          if (activeItem) {
+            const activeIcon = document.querySelector(
+              `.sidebar-component .nav-icon[data-item="${activeItem}"]`
+            );
+            const activeLabel = document.querySelector(
+              `.sidebar-component .nav-label[data-item="${activeItem}"]`
+            );
+
+            if (activeIcon) {
+              activeIcon.classList.add("active");
+            }
+            if (activeLabel) {
+              activeLabel.classList.add("active");
+            }
+          }
+
+          // Add click handlers for navigation
+          navIcons.forEach((icon) => {
+            icon.addEventListener("click", function () {
+              const path = this.getAttribute("data-path");
+              const item = this.getAttribute("data-item");
+
+              if (path && item !== "logout") {
+                window.location.href = path;
+              }
+            });
+          });
+
+          navLabels.forEach((label) => {
+            label.addEventListener("click", function () {
+              const path = this.getAttribute("data-path");
+              const item = this.getAttribute("data-item");
+
+              if (path && item !== "logout") {
+                window.location.href = path;
+              }
+            });
+          });
+
+          // Logout handlers
+          const logoutIcon = document.querySelector(
+            ".sidebar-component .logout-icon"
+          );
+          const logoutLabel = document.querySelector(
+            ".sidebar-component .logout-label"
+          );
+
+          if (logoutIcon) {
+            logoutIcon.addEventListener("click", function () {
+              console.log("Logout clicked");
+              // Add your logout logic here
+            });
+          }
+
+          if (logoutLabel) {
+            logoutLabel.addEventListener("click", function () {
+              console.log("Logout clicked");
+              // Add your logout logic here
+            });
+          }
+
+          // Sync hover states
+          navIcons.forEach((icon) => {
+            const item = icon.getAttribute("data-item");
+
+            icon.addEventListener("mouseenter", function () {
+              const label = document.querySelector(
+                `.sidebar-component .nav-label[data-item="${item}"]`
+              );
+              if (label && !label.classList.contains("active")) {
+                label.style.backgroundColor = "var(--white)";
+                label.style.color = "var(--violet-medium)";
+              }
+            });
+
+            icon.addEventListener("mouseleave", function () {
+              const label = document.querySelector(
+                `.sidebar-component .nav-label[data-item="${item}"]`
+              );
+              if (label && !label.classList.contains("active")) {
+                label.style.backgroundColor = "";
+                label.style.color = "";
+              }
+            });
+          });
+
+          navLabels.forEach((label) => {
+            const item = label.getAttribute("data-item");
+
+            label.addEventListener("mouseenter", function () {
+              const icon = document.querySelector(
+                `.sidebar-component .nav-icon[data-item="${item}"]`
+              );
+              if (icon && !icon.classList.contains("active")) {
+                icon.style.backgroundColor = "var(--white)";
+                icon.style.color = "var(--violet-darker)";
+              }
+            });
+
+            label.addEventListener("mouseleave", function () {
+              const icon = document.querySelector(
+                `.sidebar-component .nav-icon[data-item="${item}"]`
+              );
+              if (icon && !icon.classList.contains("active")) {
+                icon.style.backgroundColor = "";
+                icon.style.color = "";
+              }
+            });
+          });
+        }
+      });
+    </script>
 
     <script src="/static/TransactionPage/TransactionPage.js"></script>
     <script src="/static/TransactionPage/TransactionManagement/TransactionManagement.js"></script>
