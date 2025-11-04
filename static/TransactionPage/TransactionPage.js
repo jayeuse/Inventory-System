@@ -20,22 +20,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const tableBody = document.getElementById('transactions_tableBody');
   const pageSize = 8;
 
-  function getTypeBadgeClass(type) {
-    const lowerType = (type || '').toLowerCase();
-    if (lowerType === 'in' || lowerType === 'stock in') return 'type-badge type-badge-in';
-    if (lowerType === 'out' || lowerType === 'stock out') return 'type-badge type-badge-out';
-    if (lowerType === 'adjust' || lowerType === 'adjustment') return 'type-badge type-badge-adjust';
-    return 'type-badge';
-  }
-
-  function getTypeBadgeText(type) {
-    const lowerType = (type || '').toLowerCase();
-    if (lowerType === 'in' || lowerType === 'stock in') return 'Stock In';
-    if (lowerType === 'out' || lowerType === 'stock out') return 'Stock Out';
-    if (lowerType === 'adjust' || lowerType === 'adjustment') return 'Adjust';
-    return type;
-  }
-
   function renderTransactions(transactions = []) {
     if (!tableBody) return;
     tableBody.innerHTML = '';
@@ -52,7 +36,6 @@ document.addEventListener("DOMContentLoaded", function () {
         tr.innerHTML = `
           <td>${t.transaction_id}</td>
           <td><span class="${typeBadgeClass}">${typeBadgeText}</span></td>
-          <td>${t.product_id}</td>
           <td>${t.product_name}</td>
           <td>${t.batch_id}</td>
           <td>${t.quantity_change}</td>
@@ -73,7 +56,6 @@ document.addEventListener("DOMContentLoaded", function () {
           <td>-</td>
           <td>-</td>
           <td>-</td>
-          <td>-</td>
         `;
         tr.style.opacity = '0.4';
       }
@@ -85,3 +67,19 @@ document.addEventListener("DOMContentLoaded", function () {
   // Render sample data on page load
   renderTransactions(sampleTransactions);
 });
+
+function getTypeBadgeClass(type) {
+  const lowerType = (type || '').toLowerCase();
+  if (lowerType === 'in' || lowerType === 'stock in') return 'type-badge type-badge-in';
+  if (lowerType === 'out' || lowerType === 'stock out') return 'type-badge type-badge-out';
+  if (lowerType === 'adjust' || lowerType === 'adjustment') return 'type-badge type-badge-adjust';
+  return 'type-badge';
+}
+
+function getTypeBadgeText(type) {
+  const lowerType = (type || '').toLowerCase();
+  if (lowerType === 'in' || lowerType === 'stock in') return 'Stock In';
+  if (lowerType === 'out' || lowerType === 'stock out') return 'Stock Out';
+  if (lowerType === 'adjust' || lowerType === 'adjustment') return 'Adjust';
+  return type;
+}

@@ -327,6 +327,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
     batch_id = serializers.CharField(source='batch.batch_id', read_only=True, allow_null=True)
     quantity_change = serializers.SerializerMethodField()
+    date_of_transaction = serializers.SerializerMethodField()
     
     class Meta:
         model = Transaction
@@ -352,3 +353,10 @@ class TransactionSerializer(serializers.ModelSerializer):
             return f"+{obj.quantity_change}"
         else:
             return str(obj.quantity_change)
+        
+    def get_date_of_transaction(self, obj):
+
+        if obj.date_of_transaction:
+            local_time = localtime(obj.date_of_transaction)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None
