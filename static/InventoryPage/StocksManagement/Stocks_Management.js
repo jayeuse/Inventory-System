@@ -11,60 +11,89 @@ document.addEventListener("DOMContentLoaded", function(){
         const tbody = document.getElementById("stocks-table-body");
         tbody.innerHTML = ``;
 
-        data.forEach(stock =>{
+        const pageSize = 8; // Display exactly 8 rows
+
+        // If no stocks at all, show message
+        if (data.length === 0) {
           const row = document.createElement("tr");
-
-          row.innerHTML = `
-            <td>
-              <button class="expand-btn" onclick="toggleBatches('${stock.stock_id}')">
-                <i class="fas fa-chevron-right" id="stockslist_icon-${stock.stock_id}"></i>
-              </button>
-            </td>
-            <td>${stock.stock_id}</td>
-            <td>${stock.product_id}</td>
-            <td>${stock.product_name}</td>
-            <td>${stock.total_on_hand}</td>
-            <td>
-              <span class="${getStockStatusClass(stock.status)}">${stock.status}</span>
-            </td>
-          `;
-
+          row.innerHTML = `<td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">No stocks found.</td>`;
           tbody.appendChild(row);
+        } else {
+          // Render exactly 8 rows (actual data + placeholders)
+          for (let i = 0; i < pageSize; i++) {
+            if (i < data.length) {
+              // Actual stock data
+              const stock = data[i];
+              const row = document.createElement("tr");
+              row.classList.add("stock-row");
 
-          const batchRow = document.createElement("tr");
-          batchRow.classList.add("batch-details");
-          batchRow.id = `stockslist_batches-${stock.stock_id}`;
-          batchRow.style.display = 'none';
+              row.innerHTML = `
+                <td>
+                  <button class="expand-btn" onclick="toggleBatches('${stock.stock_id}')">
+                    <i class="fas fa-chevron-right" id="stockslist_icon-${stock.stock_id}"></i>
+                  </button>
+                </td>
+                <td>${stock.stock_id}</td>
+                <td>${stock.product_id}</td>
+                <td>${stock.product_name}</td>
+                <td>${stock.total_on_hand}</td>
+                <td>
+                  <span class="${getStockStatusClass(stock.status)}">${stock.status}</span>
+                </td>
+              `;
 
-          batchRow.innerHTML = `
-            <td colspan="6">
-              <div class="batch-container">
-                <h4>Batch Details for ${stock.stock_id}</h4>
-                <table class="batch-table">
-                  <thead>
-                    <tr>
-                      <th>Batch ID</th>
-                      <th>On Hand (per batch)</th>
-                      <th>SKU</th>
-                      <th>Expiry Date</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id ="batches-table-body">
-                  <tr>
-                    <td colspan="6">
-                    <em>No batch data loaded.</em>
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </td>
-          `;
+              tbody.appendChild(row);
 
-          tbody.appendChild(batchRow);
-        })
+              const batchRow = document.createElement("tr");
+              batchRow.classList.add("batch-details");
+              batchRow.id = `stockslist_batches-${stock.stock_id}`;
+              batchRow.style.display = 'none';
+
+              batchRow.innerHTML = `
+                <td colspan="6">
+                  <div class="batch-container">
+                    <h4>Batch Details for ${stock.stock_id}</h4>
+                    <table class="batch-table">
+                      <thead>
+                        <tr>
+                          <th>Batch ID</th>
+                          <th>On Hand (per batch)</th>
+                          <th>SKU</th>
+                          <th>Expiry Date</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id ="batches-table-body">
+                      <tr>
+                        <td colspan="6">
+                        <em>No batch data loaded.</em>
+                        </td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              `;
+
+              tbody.appendChild(batchRow);
+            } else {
+              // Empty placeholder row
+              const row = document.createElement("tr");
+              row.classList.add("stock-row");
+              row.innerHTML = `
+                <td></td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+              `;
+              row.style.opacity = '0.4';
+              tbody.appendChild(row);
+            }
+          }
+        }
       } catch (error){
         console.error("Network Error: ", error)
       }

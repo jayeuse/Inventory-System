@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const nextBtn = document.getElementById("productslist_nextBtn");
   // Client-side pagination and filtering state
   let currentPage = 1;
-  let pageSize = 10;
+  let pageSize = 8;
   let totalPages = 1;
   let productsCache = []; // full list from API
   let lastQuery = '';
@@ -178,26 +178,46 @@ document.addEventListener("DOMContentLoaded", function () {
     const start = (currentPage - 1) * pageSize;
     const pageItems = filtered.slice(start, start + pageSize);
 
-    // Render
+    // Render - Always show exactly 8 rows (as per pageSize), or show "No products found" if filtered list is empty
     if (!tableBody) return;
     tableBody.innerHTML = '';
 
-    if (pageItems.length === 0) {
+    // If no products at all after filtering, show message
+    if (filtered.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="7">No products found.</td>`;
+      tr.innerHTML = `<td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">No products found.</td>`;
       tableBody.appendChild(tr);
     } else {
-      for (const p of pageItems) {
+      // Fill with actual data or placeholders to maintain 8 rows
+      for (let i = 0; i < pageSize; i++) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${p.product_id || ''}</td>
-          <td>${p.brand_name || ''}</td>
-          <td>${p.generic_name || ''}</td>
-          <td>${p.category_name || ''}</td>
-          <td>${p.subcategory_name || ''}</td>
-          <td>₱${(p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : ''} / ${p.unit_of_measurement || ''}</td>
-          <td>${p.last_updated}</td>
-        `;
+        
+        if (i < pageItems.length) {
+          // Actual product data
+          const p = pageItems[i];
+          tr.innerHTML = `
+            <td>${p.product_id || '-'}</td>
+            <td>${p.brand_name || '-'}</td>
+            <td>${p.generic_name || '-'}</td>
+            <td>${p.category_name || '-'}</td>
+            <td>${p.subcategory_name || '-'}</td>
+            <td>${(p.price_per_unit !== undefined && p.price_per_unit !== null) ? '₱' + Number(p.price_per_unit).toFixed(2) + ' / ' + (p.unit_of_measurement || '') : '-'}</td>
+            <td>${p.last_updated || '-'}</td>
+          `;
+        } else {
+          // Empty placeholder row
+          tr.innerHTML = `
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          `;
+          tr.style.opacity = '0.4';
+        }
+        
         tableBody.appendChild(tr);
       }
     }

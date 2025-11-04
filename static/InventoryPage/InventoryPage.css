@@ -360,58 +360,81 @@ tbody tr.batch-details td {
   display: inline-block;
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-align: center;
+  width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-normal {
   background: var(--status-active);
   color: var(--status-active-text);
+  border: 1px solid var(--status-active-text);
 }
 
 .status-low-stock {
   background: #fff4e6;
   color: #92400e;
+  border: 1px solid #92400e;
 }
 
 .status-near-expiry {
   background: #fef3c7;
   color: #92400e;
+  border: 1px solid #92400e;
 }
 
 .status-out-of-stock {
   background: var(--status-inactive);
   color: var(--status-inactive-text);
+  border: 1px solid var(--status-inactive-text);
 }
 
 .status-expired {
   background: #fee2e2;
   color: #991b1b;
-}
+  border: 1px solid #991b1b;
+} 
 
 /* Batch Status Badges */
 .batch-status {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 15px;
-  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
   font-weight: 600;
+  text-align: center;
+  width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .batch-status.status-normal {
   background: var(--status-active);
   color: var(--status-active-text);
+  border: 1px solid var(--status-active-text);
 }
 
 .batch-status.status-near-expiry {
   background: #fef3c7;
   color: #92400e;
+  border: 1px solid #92400e;
 }
 
 .batch-status.status-expired {
   background: #fee2e2;
   color: #991b1b;
+  border: 1px solid #991b1b;
+}
+
+.batch-status.status-low-stock {
+  background: #fff4e6;
+  color: #92400e;
+  border: 1px solid #92400e;
 }
 
 /* Action Buttons in Batch Table */
