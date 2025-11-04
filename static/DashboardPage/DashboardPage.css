@@ -320,20 +320,27 @@ body {
 
 .activity-badge {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
   font-weight: 600;
+  text-align: center;
+  width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .activity-badge.badge-in {
   background: var(--success-light);
   color: var(--status-active-text);
+  border: 1px solid var(--status-active-text);
 }
 
 .activity-badge.badge-out {
   background: var(--info-light);
   color: #1e40af;
+  border: 1px solid #1e40af;
 }
 
 /* Responsive Design */

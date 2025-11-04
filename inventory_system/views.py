@@ -37,7 +37,7 @@ def serve_static_html(request, file_path):
         return HttpResponse("File not found", status = 404)
 
 def dashboard_view(request):
-    return serve_static_html(request, 'DashboardPage/dashboard.html')
+    return serve_static_html(request, 'DashboardPage/DashboardPage.html')
 
 def products_view(request):
     return serve_static_html(request, 'ProductPage/ProductPage.html')
@@ -46,7 +46,7 @@ def inventory_view(request):
     return serve_static_html(request, 'InventoryPage/InventoryPage.html')
 
 def transactions_view(request):
-    return serve_static_html(request, 'TransactionPage/transactions.html')
+    return serve_static_html(request, 'TransactionPage/TransactionPage.html')
 
 def settings_view(request):
     return serve_static_html(request, 'SettingsPage/System_Settings.html')
