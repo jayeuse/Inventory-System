@@ -81,7 +81,7 @@ class Subcategory(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.subcategory_id:
-            self.subcategory_id = generate_code(Subcategory, 'subcategory_id', 'SUBCAT-')
+            self.subcategory_id = generate_code(Subcategory, 'subcategory_id', 'SC-')
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -137,7 +137,7 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         self.product_name = f"{self.brand_name} - {self.generic_name}"
         if not self.product_id:
-            self.product_id = generate_code(Product, "product_id", "PROD-")
+            self.product_id = generate_code(Product, "product_id", "PRD-")
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -275,7 +275,7 @@ class ProductStocks(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.stock_id:
-            prefix = f"{self.product.product_id}-STOCK-"
+            prefix = f"{self.product.product_id}-STK-"
             last_obj = ProductStocks.objects.filter(
                 product=self.product,
                 stock_id__startswith=prefix
@@ -324,7 +324,7 @@ class ProductBatch(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.batch_id:
-            prefix = f"{self.product_stock.product.product_id}-BATCH-"
+            prefix = f"{self.product_stock.product.product_id}-BAT-"
             last_obj = ProductBatch.objects.filter(
                 product_stock__product=self.product_stock.product,
                 batch_id__startswith=prefix
@@ -416,25 +416,8 @@ class OrderItem(models.Model):
     quantity_ordered = models.PositiveIntegerField(db_column='quantity_ordered')
 
     def save(self, *args, **kwargs):
-        
         if not self.order_item_id:
-            prefix = f"{self.order.order_id}-ITEM-"
-            last_obj = OrderItem.objects.filter(
-                order=self.order,
-                order_item_id__startswith=prefix
-            ).order_by("-order_item_id").first()
-
-            if not last_obj:
-                new_number = 1
-            else:
-                last_id = last_obj.order_item_id.replace(prefix, "")
-                try:
-                    new_number = int(last_id) + 1
-                except ValueError:
-                    new_number = 1
-
-            self.order_item_id = f"{prefix}{str(new_number).zfill(5)}"
-
+            self.order_item_id = generate_code(OrderItem, 'order_item_id', 'ITM-')
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -469,23 +452,7 @@ class ReceiveOrder(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.receive_order_id:
-            prefix = f"{self.order.order_id}-RCV-"
-            last_obj = ReceiveOrder.objects.filter(
-                order=self.order,
-                receive_order_id__startswith=prefix
-            ).order_by("-receive_order_id").first()
-
-            if not last_obj:
-                new_number = 1
-            else:
-                last_id = last_obj.receive_order_id.replace(prefix, "")
-                try:
-                    new_number = int(last_id) + 1
-                except ValueError:
-                    new_number = 1
-
-            self.receive_order_id = f"{prefix}{str(new_number).zfill(5)}"
-        
+            self.receive_order_id = generate_code(ReceiveOrder, 'receive_order_id', 'RCV-')
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -526,7 +493,21 @@ class Transaction(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.transaction_id:
-            self.transaction_id = generate_code(Transaction, "transaction_id", "TXN-")
+            year = timezone.now().year
+            prefix = f"TXN-{year}-"
+            last_entry = Transaction.objects.filter(transaction_id__startswith=prefix).order_by("-transaction_id").first()
+
+            if not last_entry:
+                new_number = 1
+            else:
+                last_id = last_entry.transaction_id
+                try:
+                    last_number = int(last_id.replace(prefix, ""))
+                    new_number = last_number + 1
+                except ValueError:
+                    new_number = 1
+
+            self.transaction_id = f"{prefix}{str(new_number).zfill(5)}"
         super().save(*args, **kwargs)
 
     def __str__(self):

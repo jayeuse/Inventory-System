@@ -255,6 +255,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     total_items = serializers.SerializerMethodField()
+    date_ordered = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
@@ -270,6 +271,13 @@ class OrderSerializer(serializers.ModelSerializer):
     
     def get_total_items(self, obj):
         return obj.items.count()
+    
+    def get_date_ordered(self, obj):
+        """Format date_ordered to readable format"""
+        if obj.date_ordered:
+            local_time = localtime(obj.date_ordered)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None
 
 class ReceiveOrderSerializer(serializers.ModelSerializer):
     order_id = serializers.CharField(source='order.order_id', read_only=True)
@@ -327,6 +335,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
     batch_id = serializers.CharField(source='batch.batch_id', read_only=True, allow_null=True)
     quantity_change = serializers.SerializerMethodField()
+    date_of_transaction = serializers.SerializerMethodField()
     
     class Meta:
         model = Transaction
@@ -352,3 +361,10 @@ class TransactionSerializer(serializers.ModelSerializer):
             return f"+{obj.quantity_change}"
         else:
             return str(obj.quantity_change)
+        
+    def get_date_of_transaction(self, obj):
+
+        if obj.date_of_transaction:
+            local_time = localtime(obj.date_of_transaction)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None

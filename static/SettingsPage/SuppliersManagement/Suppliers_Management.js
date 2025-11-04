@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
 
         tbody.appendChild(row);
-      })
+      });
 
       attachActionButtonListeners();
     } catch (error) {
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function() {
           <option value="${product.product_id}">${product.product_name}</option>
         `;
       })
-    } catch (errpr){
+    } catch (error){
       console.error('Error loading products: ', error)
     }
   }
