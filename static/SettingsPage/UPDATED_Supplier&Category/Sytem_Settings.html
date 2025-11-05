@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="System_Settings.css">
+</head>
+<body>
+    <main class="main">
+        <div class="tabs">
+            <div class="tab active" data-tab="settings">System Settings</div>
+            <div class="tab" data-tab="suppliers">Suppliers Management</div>
+            <div class="tab" data-tab="categories">Category Management</div>
+        </div>
+        <div id="settings-content" class="tab-content active">
+            <div class="settings-grid">
+                <div class="card-4">
+                    <h3 class="card-title">
+                        <i class="bi bi-palette-fill"></i> System Theme
+                    </h3>
+                    <div class="theme-options">
+                        <div class="theme-option active">
+                            <div class="theme-icon"><i class="bi bi-sun-fill"></i></div>
+                            <div class="theme-name">Light Mode</div>
+                        </div>
+                        <div class="theme-option">
+                            <div class="theme-icon"><i class="bi bi-moon-fill"></i></div>
+                            <div class="theme-name">Dark Mode</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-2">
+                    <h3 class="card-title">
+                        <i class="bi bi-clock-fill"></i> Timezone
+                    </h3>
+                    <div class="setting-group">
+                        <div class="select-wrapper">
+                            <select>
+                                <option>UTC+8 Philippine Time</option>
+                                <option>UTC-5 Eastern Time</option>
+                                <option>UTC+0 Greenwich Mean Time</option>
+                                <option>UTC+1 Central European Time</option>
+                                <option>UTC+9 Japan Standard Time</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-3">
+                    <h3 class="card-title">
+                        <i class="bi bi-currency-dollar"></i> Currency
+                    </h3>
+                    <div class="setting-group">
+                        <div class="select-wrapper">
+                            <select>
+                                <option>PHP - Philippine Peso</option>
+                                <option>USD - US Dollar</option>
+                                <option>EUR - Euro</option>
+                                <option>GBP - British Pound</option>
+                                <option>JPY - Japanese Yen</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-2">
+                    <h3 class="card-title">
+                        <i class="bi bi-hdd-fill"></i> Data Management
+                    </h3>
+                    <div class="backup-section">
+                        <div class="backup-content">
+                            <div class="backup-icon"><i class="bi bi-hdd-fill"></i></div>
+                            <p class="backup-text">Create a backup of your system data to prevent data loss</p>
+                        </div>
+                        <button class="btn btn-primary">Create Backup Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="suppliers-content" class="tab-content">
+            <div class="card">
+                <div class="toggle-container" id="supplierToggle">
+                    <div class="toggle-option active" data-type="active">Active Suppliers</div>
+                    <div class="toggle-option" data-type="archived">Archived Suppliers</div>
+                </div>
+                
+                <div class="search-row">
+                    <div class="search-controls">
+                        <input
+                            class="input search-input"
+                            placeholder="Search Supplier Name"
+                            id="searchInput"
+                        />
+                        <select class="input" id="statusFilter">
+                            <option value="all">Filter by Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline" id="addSupplierBtn">
+                        <i class="fas fa-plus"></i> Add Supplier
+                    </button>
+                </div>
+                <table id="activeSuppliersTable">
+                    <thead>
+                        <tr>
+                            <th>Supplier ID</th>
+                            <th>Supplier Name</th>
+                            <th>Contact Person</th>
+                            <th>Email</th>
+                            <th>Number</th>
+                            <th>Status</th>
+                            <th>Supply</th>
+                            <th style="text-align: right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activeSupplierTableBody">
+                    </tbody>
+                </table>
+                <table id="archivedSuppliersTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Supplier ID</th>
+                            <th>Supplier Name</th>
+                            <th>Contact Person</th>
+                            <th>Email</th>
+                            <th>Number</th>
+                            <th>Status</th>
+                            <th>Supply</th>
+                            <th>Archive Reason</th>
+                            <th>Archive Date</th>
+                            <th style="text-align: right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archivedSupplierTableBody">
+                    </tbody>
+                </table>
+
+                <div class="pagination">
+                    <button class="pagination-btn" id="prevBtn">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <button class="pagination-btn" id="nextBtn">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="categories-content" class="tab-content">
+            <div class="card">
+                <div class="toggle-container" id="categoryToggle">
+                    <div class="toggle-option active" data-type="active">Active Categories</div>
+                    <div class="toggle-option" data-type="archived">Archived Categories</div>
+                </div>
+                
+                <div class="search-row">
+                    <div class="search-controls">
+                        <input type="text" class="input search-input" placeholder="Search categories...">
+                        <select class="input">
+                            <option>All Categories</option>
+                            <option>Medicine</option>
+                            <option>Non-Medicine</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline" id="categoryModalBtn">
+                        <i class="fas fa-plus"></i> Add Category & Subcategory
+                    </button>
+                </div>
+
+                <div class="layout">
+                    <div class="table-section">
+                        <table id="activeCategoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>Category ID</th>
+                                    <th>Category Name</th>
+                                    <th>Description</th>
+                                    <th>Products</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activeCategoriesTableBody">
+                            </tbody>
+                        </table>
+
+                
+                        <table id="archivedCategoriesTable" style="display: none;">
+                            <thead>
+                                <tr>
+                                    <th>Category ID</th>
+                                    <th>Category Name</th>
+                                    <th>Description</th>
+                                    <th>Products</th>
+                                    <th>Archive Reason</th>
+                                    <th>Archive Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="archivedCategoriesTableBody">
+                                <!-- Data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+
+                        <div class="pagination">
+                            <button class="pagination-btn"><i class="bi bi-chevron-left"></i> Previous</button>
+                            <button class="pagination-btn">Next <i class="bi bi-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="addSupplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Supplier</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="supplierName">Supplier Name</label>
+                    <input
+                        type="text"
+                        id="supplierName"
+                        class="input"
+                        placeholder="Enter supplier name"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="contactPerson">Contact Person</label>
+                    <input
+                        type="text"
+                        id="contactPerson"
+                        class="input"
+                        placeholder="Enter contact person"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="emailAddress">Email Address</label>
+                    <input
+                        type="email"
+                        id="emailAddress"
+                        class="input"
+                        placeholder="Enter email"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="phoneNumber">Phone Number</label>
+                    <input
+                        type="tel"
+                        id="phoneNumber"
+                        class="input"
+                        placeholder="Enter phone number"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="statusSelect">Status</label>
+                    <select id="statusSelect" class="input">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button class="btn">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Category & Subcategory</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-content">
+                    <div>
+                        <h3>Add Category</h3>
+                        <div class="form-fields">
+                            <div class="form-group">
+                                <label for="category-name">Category Name</label>
+                                <input type="text" class="input" id="category-name" placeholder="Enter category name">
+                            </div>
+                            <div class="form-group">
+                                <label for="category-description">Description</label>
+                                <textarea class="input" id="category-description" placeholder="Enter description"></textarea>
+                            </div>
+                        </div>
+                        <div class="button-container">
+                            <button type="button" class="btn btn-secondary" id="clearCategoryBtn">Clear</button>
+                            <button type="button" class="btn btn-outline" id="addCategoryBtn">Add Category</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3>Add Subcategory</h3>
+                        <div class="form-fields">
+                            <div class="form-group">
+                                <label for="category-classification">Category Classification</label>
+                                <select class="input" id="category-classification">
+                                    <option value="">Select Classification</option>
+                                    <option value="Medicine">Medicine</option>
+                                    <option value="Non-Medicine">Non-Medicine</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="subcategory-name">Subcategory Name</label>
+                                <input type="text" class="input" id="subcategory-name" placeholder="Enter subcategory name">
+                            </div>
+                            <div class="form-group">
+                                <label for="subcategory-description">Description</label>
+                                <textarea class="input" id="subcategory-description" placeholder="Enter description"></textarea>
+                            </div>
+                        </div>
+                        <div class="button-container">
+                            <button type="button" class="btn btn-secondary" id="clearSubcategoryBtn">Clear</button>
+                            <button type="button" class="btn btn-outline" id="addSubcategoryBtn">Add Subcategory</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelCategoryModalBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="archiveModal" class="modal archive-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Archive Confirmation</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <p id="archiveMessage">Are you sure you want to archive this item?</p>
+                </div>
+                <div class="form-group">
+                    <label for="archiveReason">Archive Reason</label>
+                    <textarea
+                        id="archiveReason"
+                        class="input"
+                        placeholder="Please provide a reason for archiving this item..."
+                    ></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelArchiveBtn">Cancel</button>
+                <button class="btn archive-btn" id="confirmArchiveBtn">
+                    <i class="fas fa-archive"></i> Confirm Archive
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="System_Settings.js"></script>
+</body>
+</html>
