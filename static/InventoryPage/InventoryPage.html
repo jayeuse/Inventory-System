@@ -21,6 +21,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <link rel="stylesheet" href="/static/InventoryPage/InventoryPage.css" />
+    <link rel="stylesheet" href="/static/InventoryPage/Orders/Orders.css">
   </head>
   <body>
     <div class="d-flex">
@@ -547,7 +548,47 @@
             });
           });
         }
+
+      fetch("/static/InventoryPage/Orders/Orders.html")
+        .then((response) => response.text())
+        .then((data) => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(data, 'text/html');
+          
+          // Get the orders content
+          const ordersContentDiv = doc.querySelector('#orders-content');
+          
+          if (ordersContentDiv) {
+            document.getElementById("orders-content").innerHTML = ordersContentDiv.innerHTML;
+            
+            // Also get and append the modals
+            const addOrderModal = doc.querySelector('#addOrderModal');
+            const receiveOrderModal = doc.querySelector('#receiveOrderModal');
+            
+            if (addOrderModal) {
+              document.body.appendChild(addOrderModal);
+            }
+            
+            if (receiveOrderModal) {
+              document.body.appendChild(receiveOrderModal);
+            }
+            
+            // Load the Orders.js script
+            const script = document.createElement('script');
+            script.src = '/static/InventoryPage/Orders/Orders.js';
+            script.onload = function() {
+              if (typeof initializeOrders === 'function') {
+                initializeOrders();
+              }
+            };
+            document.body.appendChild(script);
+          }
+        })
+        .catch((error) => {
+          console.error("Error loading orders content:", error);
+        });
       });
+
     </script>
     <script src="/static/InventoryPage/InventoryPage.js"></script>
     <script src="/static/InventoryPage/StocksManagement/Stocks_Management.js"></script>
