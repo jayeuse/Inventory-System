@@ -1,26 +1,36 @@
+function truncateText(text, maxLength = 50) {
+  if (!text) return '-';
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
+
 document.addEventListener("DOMContentLoaded", function(){
   // Fetching Categories + Subcategories Data
 
   async function loadCategories(){
     try {
+      // Fetch active categories (default endpoint)
       const response = await fetch('/api/categories/');
-      const data = await response.json();
+      const activeCategories = await response.json();
 
+      // Fetch all categories including archived
+      const archivedResponse = await fetch('/api/categories/?show_archived=true');
+      const allCategories = await archivedResponse.json();
+      const archivedCategories = allCategories.filter(c => c.status === 'Archived');
+
+      // Populate active categories table
       const tbody = document.getElementById('category-table-body');
+      tbody.innerHTML = '';
 
-      tbody.innerHTML = ``;
-
-      data.forEach(category => {
+      activeCategories.forEach(category => {
         const row = document.createElement('tr');
 
         row.innerHTML = `
           <td>${category.category_id}</td>
           <td>${category.category_name}</td>
-          <td>${category.category_description}</td>
+          <td title="${category.category_description || ''}">${truncateText(category.category_description)}</td>
           <td>${category.product_count}</td>
           <td class="op-buttons">
-            <button
-              class="action-btn view-btn">
+            <button class="action-btn view-btn">
               <i class="bi bi-eye"></i> View
             </button>
             <button class="action-btn edit-btn">
@@ -57,15 +67,76 @@ document.addEventListener("DOMContentLoaded", function(){
         tbody.appendChild(subcatRow);
       });
 
+      // Populate archived categories table
+      const archivedTbody = document.getElementById('archivedCategoriesTableBody');
+      if (archivedTbody) {
+        archivedTbody.innerHTML = '';
+
+        archivedCategories.forEach(category => {
+          const row = document.createElement('tr');
+
+          row.innerHTML = `
+            <td>${category.category_id}</td>
+            <td>${category.category_name}</td>
+             <td title="${category.category_description || ''}">${truncateText(category.category_description)}</td>
+            <td>${category.product_count}</td>
+            <td title="${category.archive_reason || ''}">${truncateText(category.archive_reason, 30)}</td>
+            <td>${category.archived_at || '-'}</td>
+            <td class="op-buttons">
+              <button class="action-btn view-btn">
+                <i class="bi bi-eye"></i> View
+              </button>
+              <button class="action-btn unarchive-btn">
+                <i class="fas fa-undo"></i> Unarchive
+              </button>
+            </td>
+          `;
+
+          archivedTbody.appendChild(row);
+
+          // Subcategory row for archived categories (hidden by default)
+          const subcatRow = document.createElement('tr');
+          subcatRow.className = 'subcategory-row hidden';
+          subcatRow.innerHTML = `
+            <td colspan="7">
+              <table class="subcategory-table">
+                <thead>
+                  <tr>
+                    <th>Subcategory ID</th>
+                    <th>Subcategory Name</th>
+                    <th>Description</th>
+                    <th>Product Count</th>
+                  </tr>
+                </thead>
+                <tbody class="subcategory-table-body" data-category-id="${category.category_id}">
+                  <!-- Subcategories will be loaded here -->
+                </tbody>
+              </table>
+            </td>
+          `;
+          archivedTbody.appendChild(subcatRow);
+        });
+      }
+
+      // Add event listeners for view buttons in active table
       tbody.querySelectorAll('.view-btn').forEach(btn => {
         btn.addEventListener('click', function(){
           toggleSubcategories(this);
-        })
-      })
+        });
+      });
+
+      // Add event listeners for view buttons in archived table
+      if (archivedTbody) {
+        archivedTbody.querySelectorAll('.view-btn').forEach(btn => {
+          btn.addEventListener('click', function(){
+            toggleSubcategories(this);
+          });
+        });
+      }
 
       attachActionButtonListeners();
     } catch (error) {
-      console.error('Error fetching Categories: ', error)
+      console.error('Error fetching Categories: ', error);
     }
   }
 
@@ -233,8 +304,6 @@ document.addEventListener("DOMContentLoaded", function(){
 
   document.getElementById('categoryConfirmUnarchiveBtn').addEventListener('click', async function(){
     if (!archiveTarget) return;
-    
-    document.getElementById('categoryUnarchiveModal').style.display = 'none';
 
     const unarchiveReason = document.getElementById('categoryUnarchiveReason').value;
 
@@ -243,8 +312,10 @@ document.addEventListener("DOMContentLoaded", function(){
       return;
     }
     
+    document.getElementById('categoryUnarchiveModal').style.display = 'none';
+    
     try {
-      const response = await fetch(archiveTarget.apiUrl, {
+      const response = await fetch(`${archiveTarget.apiUrl}?show_archived=true`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Active', unarchive_reason: unarchiveReason })
@@ -254,6 +325,9 @@ document.addEventListener("DOMContentLoaded", function(){
         alert("Category Unarchived Successfully!");
         document.getElementById('categoryUnarchiveReason').value = '';
         await loadCategories();
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + JSON.stringify(errorData));
       }
     } catch (error) {
       console.error("Error:", error);
@@ -288,7 +362,7 @@ async function loadSubCategories(categoryId, tbody) {
       row.innerHTML = `
         <td>${subcategory.subcategory_id}</td>
         <td>${subcategory.subcategory_name}</td>
-        <td>${subcategory.subcategory_description}</td>
+        <td title="${subcategory.subcategory_description || ''}">${truncateText(subcategory.subcategory_description)}</td>
         <td>${subcategory.product_count}</td>
       `;
 

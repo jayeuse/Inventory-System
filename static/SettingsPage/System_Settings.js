@@ -343,6 +343,67 @@ document.addEventListener("DOMContentLoaded", function () {
   };
   // ========== END OF NEW MODAL FUNCTIONALITY ==========
 
+  // ...existing code...
+
+  // Supplier toggle functionality
+  const supplierToggle = document.getElementById('supplierToggle');
+  if (supplierToggle) {
+    const supplierToggleOptions = supplierToggle.querySelectorAll('.toggle-option');
+    const activeSuppliersTable = document.getElementById('activeSuppliersTable');
+    const archivedSuppliersTable = document.getElementById('archivedSuppliersTable');
+    const addSupplierBtn = document.getElementById('addSupplierBtn');
+
+    supplierToggleOptions.forEach(option => {
+      option.addEventListener('click', function() {
+        supplierToggleOptions.forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+
+        const type = this.getAttribute('data-type');
+        if (type === 'active') {
+          activeSuppliersTable.style.display = 'table';
+          archivedSuppliersTable.style.display = 'none';
+          addSupplierBtn.style.display = 'inline-flex'; // Show button
+        } else {
+          activeSuppliersTable.style.display = 'none';
+          archivedSuppliersTable.style.display = 'table';
+          addSupplierBtn.style.display = 'none'; // Hide button
+        }
+      });
+    });
+  }
+
+  // Category toggle functionality
+  const categoryToggle = document.getElementById('categoryToggle');
+  if (categoryToggle) {
+    const categoryToggleOptions = categoryToggle.querySelectorAll('.toggle-option');
+    const activeCategoriesTable = document.getElementById('activeCategoriesTable');
+    const archivedCategoriesTable = document.getElementById('archivedCategoriesTable');
+    const formSection = document.querySelector('#categories-content .form-section');
+
+    // Set initial state - show form section and active table
+    if (formSection) formSection.style.display = 'block';
+    if (activeCategoriesTable) activeCategoriesTable.style.display = 'table';
+    if (archivedCategoriesTable) archivedCategoriesTable.style.display = 'none';
+
+    categoryToggleOptions.forEach(option => {
+      option.addEventListener('click', function() {
+        categoryToggleOptions.forEach(opt => opt.classList.remove('active'));
+        this.classList.add('active');
+
+        const type = this.getAttribute('data-type');
+        if (type === 'active') {
+          activeCategoriesTable.style.display = 'table';
+          archivedCategoriesTable.style.display = 'none';
+          if (formSection) formSection.style.display = 'block'; // Show form section
+        } else {
+          activeCategoriesTable.style.display = 'none';
+          archivedCategoriesTable.style.display = 'table';
+          if (formSection) formSection.style.display = 'none'; // Hide form section when viewing archives
+        }
+      });
+    });
+  }
+
 });
 
 

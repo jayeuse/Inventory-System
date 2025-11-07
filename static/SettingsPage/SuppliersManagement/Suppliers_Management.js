@@ -4,13 +4,20 @@ document.addEventListener("DOMContentLoaded", function() {
   async function loadSuppliers() {
     console.log("Reloading Suppliers...");
     try {
+      // Fetch active suppliers
       const response = await fetch('/api/suppliers/');
-      const data = await response.json();
+      const activeSuppliers = await response.json();
 
+      // Fetch archived suppliers
+      const archivedResponse = await fetch('/api/suppliers/?show_archived=true');
+      const allSuppliers = await archivedResponse.json();
+      const archivedSuppliers = allSuppliers.filter(s => s.status === 'Archived');
+
+      // Populate active suppliers table
       const tbody = document.getElementById('suppliers-table-body');
       tbody.innerHTML = '';
 
-      data.forEach(supplier => {
+      activeSuppliers.forEach(supplier => {
         const row = document.createElement('tr');
 
         row.innerHTML = `
@@ -20,8 +27,8 @@ document.addEventListener("DOMContentLoaded", function() {
           <td>${supplier.address}</td>
           <td>${supplier.email}</td>
           <td>${supplier.phone_number}</td>
-          <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
           <td>${supplier.status}</td>
+          <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
           <td>
             <div class="op-buttons">
               <button class="action-btn edit-btn">
@@ -36,6 +43,38 @@ document.addEventListener("DOMContentLoaded", function() {
 
         tbody.appendChild(row);
       });
+
+      // Populate archived suppliers table
+      const archivedTbody = document.getElementById('archivedSupplierTableBody');
+      if (archivedTbody) {
+        archivedTbody.innerHTML = '';
+
+        archivedSuppliers.forEach(supplier => {
+          const row = document.createElement('tr');
+
+          row.innerHTML = `
+            <td>${supplier.supplier_id}</td>
+            <td>${supplier.supplier_name}</td>
+            <td>${supplier.contact_person}</td>
+            <td>${supplier.address}</td>
+            <td>${supplier.email}</td>
+            <td>${supplier.phone_number}</td>
+            <td>${supplier.status}</td>
+            <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
+            <td>${supplier.archive_reason || '-'}</td>
+            <td>${supplier.archived_at || '-'}</td>
+            <td>
+              <div class="op-buttons">
+                <button class="action-btn unarchive-btn">
+                  <i class="fas fa-undo"></i> Unarchive
+                </button>
+              </div>
+            </td>
+          `;
+
+          archivedTbody.appendChild(row);
+        });
+      }
 
       attachActionButtonListeners();
     } catch (error) {
@@ -197,6 +236,9 @@ document.addEventListener("DOMContentLoaded", function() {
         alert("Supplier Archived Successfully!");
         document.getElementById('supplierArchiveReason').value = '';
         await loadSuppliers();
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + JSON.stringify(errorData))
       }
     } catch (error) {
       console.error("Error:", error);
@@ -225,7 +267,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('supplierUnarchiveModal').style.display = 'none';
     
     try {
-      const response = await fetch(archiveTarget.apiUrl, {
+      const response = await fetch(`${archiveTarget.apiUrl}?show_archived=true`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Active', unarchive_reason: unarchiveReason })
@@ -233,7 +275,11 @@ document.addEventListener("DOMContentLoaded", function() {
       
       if (response.ok) {
         alert("Supplier Unarchived Successfully!");
+        document.getElementById('supplierUnarchiveReason').value = '';
         await loadSuppliers();
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + JSON.stringify(errorData));
       }
     } catch (error) {
       console.error("Error:", error);
