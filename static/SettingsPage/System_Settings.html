@@ -21,6 +21,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <link rel="stylesheet" href="/static/SettingsPage/System_Settings.css" />
+    <link rel="stylesheet" href="/static/SettingsPage/ArchiveList/ArchiveList.css" />
   </head>
   <body>
     <div class="d-flex">
@@ -108,6 +109,12 @@
         <!-- Suppliers Management Content -->
         <div id="suppliers-content" class="tab-content">
           <div class="card">
+
+            <div class="toggle-container" id="supplierToggle">
+              <div class="toggle-option active" data-type="active">Active Suppliers</div>
+              <div class="toggle-option" data-type="archived">Archived Suppliers</div>
+            </div>
+
             <div class="search-row">
               <div class="search-controls">
                 <input
@@ -126,7 +133,7 @@
               </button>
             </div>
 
-            <table>
+            <table id="activeSuppliersTable">
               <thead>
                 <tr>
                   <th>Supplier ID</th>
@@ -141,6 +148,26 @@
                 </tr>
               </thead>
               <tbody id = "suppliers-table-body">
+              </tbody>
+            </table>
+
+            <table id="archivedSuppliersTable" style="display: none;">
+              <thead>
+                <tr>
+                  <th>Supplier ID</th>
+                  <th>Supplier Name</th>
+                  <th>Contact Person</th>
+                  <th>Address</th>
+                  <th>Email</th>
+                  <th>Number</th>
+                  <th>Status</th>
+                  <th>Supply</th>
+                  <th>Archive Reason</th>
+                  <th>Archive Date</th>
+                  <th style="text-align: right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="archivedSupplierTableBody">
               </tbody>
             </table>
 
@@ -265,6 +292,12 @@
         <!-- Category Management Content -->
         <div id="categories-content" class="tab-content">
           <div class="card">
+
+            <div class="toggle-container" id="categoryToggle">
+              <div class="toggle-option active" data-type="active">Active Categories</div>
+              <div class="toggle-option" data-type="archived">Archived Categories</div>
+            </div>
+
             <div class="search-row">
               <div class="search-controls">
                 <input
@@ -282,7 +315,7 @@
 
             <div class="layout">
               <div class="table-section">
-                <table>
+                <table id="activeCategoriesTable">
                   <thead>
                     <tr>
                       <th>Category ID</th>
@@ -308,6 +341,22 @@
                           </tbody>
                         </table>
                       </td>
+                  </tbody>
+                </table>
+
+                <table id="archivedCategoriesTable" style="display: none;">
+                  <thead>
+                    <tr>
+                      <th>Category ID</th>
+                      <th>Category Name</th>
+                      <th>Description</th>
+                      <th>Products</th>
+                      <th>Archive Reason</th>
+                      <th>Archive Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="archivedCategoriesTableBody">
                   </tbody>
                 </table>
 
