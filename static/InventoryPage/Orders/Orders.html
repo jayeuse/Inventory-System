@@ -8,14 +8,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link rel="stylesheet" href="Orders.css">
+    <link rel="stylesheet" href="/static/InventoryPage/Orders/Orders.css">
 </head>
 <body>
-     <main class="main">
+    <main class="main">
         <div class="tabs">
             <div class="tab active" data-tab="orders">Orders</div>
         </div>
 
+        <!-- Orders Tab Content -->
         <div id="orders-content" class="tab-content active">
             <div class="card">
                 <div class="search-row">
@@ -53,6 +54,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="orderTableBody">
+                                    <!-- Order 1 -->
                                     <tr>
                                         <td>ORD-001</td>
                                         <td>John Smith</td>
@@ -105,6 +107,7 @@
                                         </td>
                                     </tr>
                                     
+                                    <!-- Order 2 -->
                                     <tr>
                                         <td>ORD-002</td>
                                         <td>Maria Garcia</td>
@@ -151,6 +154,7 @@
                                         </td>
                                     </tr>
                                     
+                                    <!-- Order 3 -->
                                     <tr>
                                         <td>ORD-003</td>
                                         <td>Robert Johnson</td>
@@ -203,6 +207,7 @@
                                         </td>
                                     </tr>
                                     
+                                    <!-- Order 4 -->
                                     <tr>
                                         <td>ORD-004</td>
                                         <td>Sarah Williams</td>
@@ -243,6 +248,7 @@
                                         </td>
                                     </tr>
 
+                                    <!-- Empty Rows -->
                                     <tr class="empty-row">
                                         <td>-</td>
                                         <td>-</td>
@@ -290,6 +296,7 @@
                     </div>
 
                     <div class="summary-section">
+                        <!-- MASSIVE TEXT Summary Card with Maximum Spacing -->
                         <div class="massive-summary-card">
                             <div class="massive-summary-header">
                                 <h2 class="massive-summary-title">Today's Summary</h2>
@@ -314,6 +321,7 @@
         </div>
     </main>
 
+    <!-- Add Order Modal -->
     <div id="addOrderModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -402,7 +410,8 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Receive Order Modal -->
     <div id="receiveOrderModal" class="modal receipt-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -410,6 +419,7 @@
             </div>
             <div class="modal-body">
                 <div id="receiveOrderContent">
+                    <!-- Content will be dynamically populated -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -420,6 +430,7 @@
             </div>
         </div>
     </div>
-    <script src="Orders.js"></script>
+
+    <script src="/static/InventoryPage/Orders/Orders.js"></script>
 </body>
 </html>
