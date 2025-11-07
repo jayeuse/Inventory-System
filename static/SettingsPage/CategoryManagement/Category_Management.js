@@ -4,24 +4,66 @@ function truncateText(text, maxLength = 50) {
 }
 
 document.addEventListener("DOMContentLoaded", function(){
-  // Fetching Categories + Subcategories Data
 
+  let allActiveCategories = [];
+  let allArchivedCategories = [];
+  let currentPage = 1;
+  let archivedCurrentPage = 1;
+  const recordsPerPage = 8;
+
+  // Fetching Categories + Subcategories Data
   async function loadCategories(){
     try {
       // Fetch active categories (default endpoint)
       const response = await fetch('/api/categories/');
-      const activeCategories = await response.json();
+      allActiveCategories = await response.json();
 
       // Fetch all categories including archived
       const archivedResponse = await fetch('/api/categories/?show_archived=true');
       const allCategories = await archivedResponse.json();
-      const archivedCategories = allCategories.filter(c => c.status === 'Archived');
+      allArchivedCategories = allCategories.filter(c => c.status === 'Archived');
 
-      // Populate active categories table
-      const tbody = document.getElementById('category-table-body');
-      tbody.innerHTML = '';
+      currentPage = 1;
+      archivedCurrentPage = 1;
+      displayCategories();
+      displayArchivedCategories();
+      attachActionButtonListeners();
+    } catch (error) {
+      console.error('Error fetching Categories: ', error);
+    }
+  }
 
-      activeCategories.forEach(category => {
+  // Display active categories with pagination, search, and filter
+  function displayCategories() {
+    const searchTerm = document.getElementById('categorySearchInput')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('categoryStatusFilter')?.value || 'all';
+
+    // Filter categories
+    let filteredCategories = allActiveCategories.filter(category => {
+      const matchesSearch = 
+        category.category_name.toLowerCase().includes(searchTerm) ||
+        category.category_id.toLowerCase().includes(searchTerm) ||
+        (category.category_description && category.category_description.toLowerCase().includes(searchTerm));
+      
+      const matchesStatus = statusFilter === 'all' || category.status.toLowerCase() === statusFilter.toLowerCase();
+
+      return matchesSearch && matchesStatus;
+    });
+
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredCategories.length / recordsPerPage);
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedCategories = filteredCategories.slice(startIndex, endIndex);
+
+    // Populate active categories table
+    const tbody = document.getElementById('category-table-body');
+    tbody.innerHTML = '';
+
+    if (paginatedCategories.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No categories found</td></tr>';
+    } else {
+      paginatedCategories.forEach(category => {
         const row = document.createElement('tr');
 
         row.innerHTML = `
@@ -67,18 +109,39 @@ document.addEventListener("DOMContentLoaded", function(){
         tbody.appendChild(subcatRow);
       });
 
-      // Populate archived categories table
-      const archivedTbody = document.getElementById('archivedCategoriesTableBody');
-      if (archivedTbody) {
-        archivedTbody.innerHTML = '';
+      // Add event listeners for view buttons
+      tbody.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+          toggleSubcategories(this);
+        });
+      });
+    }
 
-        archivedCategories.forEach(category => {
+    // Update pagination buttons
+    updatePaginationButtons(currentPage, totalPages, false);
+  }
+
+  // Display archived categories with pagination
+  function displayArchivedCategories() {
+    const totalPages = Math.ceil(allArchivedCategories.length / recordsPerPage);
+    const startIndex = (archivedCurrentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedCategories = allArchivedCategories.slice(startIndex, endIndex);
+
+    const archivedTbody = document.getElementById('archivedCategoriesTableBody');
+    if (archivedTbody) {
+      archivedTbody.innerHTML = '';
+
+      if (paginatedCategories.length === 0) {
+        archivedTbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No archived categories</td></tr>';
+      } else {
+        paginatedCategories.forEach(category => {
           const row = document.createElement('tr');
 
           row.innerHTML = `
             <td>${category.category_id}</td>
             <td>${category.category_name}</td>
-             <td title="${category.category_description || ''}">${truncateText(category.category_description)}</td>
+            <td title="${category.category_description || ''}">${truncateText(category.category_description)}</td>
             <td>${category.product_count}</td>
             <td title="${category.archive_reason || ''}">${truncateText(category.archive_reason, 30)}</td>
             <td>${category.archived_at || '-'}</td>
@@ -94,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
           archivedTbody.appendChild(row);
 
-          // Subcategory row for archived categories (hidden by default)
+          // Subcategory row for archived categories
           const subcatRow = document.createElement('tr');
           subcatRow.className = 'subcategory-row hidden';
           subcatRow.innerHTML = `
@@ -116,29 +179,119 @@ document.addEventListener("DOMContentLoaded", function(){
           `;
           archivedTbody.appendChild(subcatRow);
         });
-      }
 
-      // Add event listeners for view buttons in active table
-      tbody.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function(){
-          toggleSubcategories(this);
-        });
-      });
-
-      // Add event listeners for view buttons in archived table
-      if (archivedTbody) {
+        // Add event listeners for view buttons
         archivedTbody.querySelectorAll('.view-btn').forEach(btn => {
           btn.addEventListener('click', function(){
             toggleSubcategories(this);
           });
         });
       }
-
-      attachActionButtonListeners();
-    } catch (error) {
-      console.error('Error fetching Categories: ', error);
     }
+
+    updatePaginationButtons(archivedCurrentPage, totalPages, true);
   }
+
+  // Update pagination buttons
+function updatePaginationButtons(current, total, isArchived) {
+  // For now, use the same pagination buttons for both active and archived
+  // Since your HTML doesn't have separate archived pagination buttons yet
+  const paginationContainer = document.querySelector('#categories-content .pagination');
+  if (!paginationContainer) return;
+
+  const prevBtn = paginationContainer.querySelector('.pagination-btn:first-child');
+  const nextBtn = paginationContainer.querySelector('.pagination-btn:last-child');
+
+  if (prevBtn && nextBtn) {
+    prevBtn.disabled = current === 1;
+    nextBtn.disabled = current === total || total === 0;
+
+    prevBtn.style.opacity = current === 1 ? '0.5' : '1';
+    nextBtn.style.opacity = (current === total || total === 0) ? '0.5' : '1';
+    prevBtn.style.cursor = current === 1 ? 'not-allowed' : 'pointer';
+    nextBtn.style.cursor = (current === total || total === 0) ? 'not-allowed' : 'pointer';
+  }
+}
+
+// Pagination event listeners
+const categoryPaginationContainer = document.querySelector('#categories-content .pagination');
+if (categoryPaginationContainer) {
+  const prevBtn = categoryPaginationContainer.querySelector('.pagination-btn:first-child');
+  const nextBtn = categoryPaginationContainer.querySelector('.pagination-btn:last-child');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function() {
+      // Check which table is currently visible
+      const activeCategoriesTable = document.getElementById('activeCategoriesTable');
+      const isActiveVisible = activeCategoriesTable && activeCategoriesTable.style.display !== 'none';
+
+      if (isActiveVisible) {
+        if (currentPage > 1) {
+          currentPage--;
+          displayCategories();
+          attachActionButtonListeners();
+        }
+      } else {
+        if (archivedCurrentPage > 1) {
+          archivedCurrentPage--;
+          displayArchivedCategories();
+          attachActionButtonListeners();
+        }
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function() {
+      // Check which table is currently visible
+      const activeCategoriesTable = document.getElementById('activeCategoriesTable');
+      const isActiveVisible = activeCategoriesTable && activeCategoriesTable.style.display !== 'none';
+
+      if (isActiveVisible) {
+        const searchTerm = document.getElementById('categorySearchInput')?.value.toLowerCase() || '';
+        const statusFilter = document.getElementById('categoryStatusFilter')?.value || 'all';
+        
+        let filteredCategories = allActiveCategories.filter(category => {
+          const matchesSearch = 
+            category.category_name.toLowerCase().includes(searchTerm) ||
+            category.category_id.toLowerCase().includes(searchTerm) ||
+            (category.category_description && category.category_description.toLowerCase().includes(searchTerm));
+          
+          const matchesStatus = statusFilter === 'all' || category.status.toLowerCase() === statusFilter.toLowerCase();
+
+          return matchesSearch && matchesStatus;
+        });
+
+        const totalPages = Math.ceil(filteredCategories.length / recordsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          displayCategories();
+          attachActionButtonListeners();
+        }
+      } else {
+        const totalPages = Math.ceil(allArchivedCategories.length / recordsPerPage);
+        if (archivedCurrentPage < totalPages) {
+          archivedCurrentPage++;
+          displayArchivedCategories();
+          attachActionButtonListeners();
+        }
+      }
+    });
+  }
+}
+
+  // Search and filter event listeners
+  document.getElementById('categorySearchInput')?.addEventListener('input', function() {
+    currentPage = 1;
+    displayCategories();
+    attachActionButtonListeners();
+  });
+
+  document.getElementById('categoryStatusFilter')?.addEventListener('change', function() {
+    currentPage = 1;
+    displayCategories();
+    attachActionButtonListeners();
+  });
 
   loadCategories();
 

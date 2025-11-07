@@ -1,25 +1,65 @@
 document.addEventListener("DOMContentLoaded", function() {
-  // Fetching Suppliers Data
 
+  let allActiveSuppliers = [];
+  let allArchivedSuppliers = [];
+  let currentPage = 1;
+  let archivedCurrentPage = 1;
+  const recordsPerPage = 8;
+
+  // Fetching Suppliers Data
   async function loadSuppliers() {
     console.log("Reloading Suppliers...");
     try {
       // Fetch active suppliers
       const response = await fetch('/api/suppliers/');
-      const activeSuppliers = await response.json();
+      allActiveSuppliers = await response.json();
 
       // Fetch archived suppliers
       const archivedResponse = await fetch('/api/suppliers/?show_archived=true');
       const allSuppliers = await archivedResponse.json();
-      const archivedSuppliers = allSuppliers.filter(s => s.status === 'Archived');
+      allArchivedSuppliers = allSuppliers.filter(s => s.status === 'Archived');
 
-      // Populate active suppliers table
-      const tbody = document.getElementById('suppliers-table-body');
-      tbody.innerHTML = '';
+      currentPage = 1;
+      archivedCurrentPage = 1;
+      displaySuppliers();
+      displayArchivedSuppliers();
+      attachActionButtonListeners();
+    } catch (error) {
+      console.error('Error fetching Suppliers:', error);
+    }
+  }
 
-      activeSuppliers.forEach(supplier => {
+  function displaySuppliers() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    // Filter suppliers
+    let filteredSuppliers = allActiveSuppliers.filter(supplier => {
+      const matchesSearch = 
+        supplier.supplier_name.toLowerCase().includes(searchTerm) ||
+        supplier.supplier_id.toLowerCase().includes(searchTerm) ||
+        supplier.contact_person.toLowerCase().includes(searchTerm);
+      
+      const matchesStatus = statusFilter === 'all' || supplier.status.toLowerCase() === statusFilter.toLowerCase();
+
+      return matchesSearch && matchesStatus;
+    });
+
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredSuppliers.length / recordsPerPage);
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedSuppliers = filteredSuppliers.slice(startIndex, endIndex);
+
+    // Populate table
+    const tbody = document.getElementById('suppliers-table-body');
+    tbody.innerHTML = '';
+
+    if (paginatedSuppliers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No suppliers found</td></tr>';
+    } else {
+      paginatedSuppliers.forEach(supplier => {
         const row = document.createElement('tr');
-
         row.innerHTML = `
           <td>${supplier.supplier_id}</td>
           <td>${supplier.supplier_name}</td>
@@ -40,18 +80,30 @@ document.addEventListener("DOMContentLoaded", function() {
             </div>
           </td>
         `;
-
         tbody.appendChild(row);
       });
+    }
 
-      // Populate archived suppliers table
-      const archivedTbody = document.getElementById('archivedSupplierTableBody');
-      if (archivedTbody) {
-        archivedTbody.innerHTML = '';
+    // Update pagination buttons
+    updatePaginationButtons(currentPage, totalPages, false);
+  }
 
-        archivedSuppliers.forEach(supplier => {
+  // Display archived suppliers with pagination
+  function displayArchivedSuppliers() {
+    const totalPages = Math.ceil(allArchivedSuppliers.length / recordsPerPage);
+    const startIndex = (archivedCurrentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedSuppliers = allArchivedSuppliers.slice(startIndex, endIndex);
+
+    const archivedTbody = document.getElementById('archivedSupplierTableBody');
+    if (archivedTbody) {
+      archivedTbody.innerHTML = '';
+
+      if (paginatedSuppliers.length === 0) {
+        archivedTbody.innerHTML = '<tr><td colspan="11" style="text-align: center;">No archived suppliers</td></tr>';
+      } else {
+        paginatedSuppliers.forEach(supplier => {
           const row = document.createElement('tr');
-
           row.innerHTML = `
             <td>${supplier.supplier_id}</td>
             <td>${supplier.supplier_name}</td>
@@ -71,16 +123,58 @@ document.addEventListener("DOMContentLoaded", function() {
               </div>
             </td>
           `;
-
           archivedTbody.appendChild(row);
         });
       }
+    }
 
-      attachActionButtonListeners();
-    } catch (error) {
-      console.error('Error fetching Suppliers:', error);
+    updatePaginationButtons(archivedCurrentPage, totalPages, true);
+  }
+
+  // Update pagination buttons
+  function updatePaginationButtons(current, total, isArchived) {
+    const prevBtn = document.getElementById(isArchived ? 'archivedPrevBtn' : 'prevBtn');
+    const nextBtn = document.getElementById(isArchived ? 'archivedNextBtn' : 'nextBtn');
+
+    if (prevBtn && nextBtn) {
+      prevBtn.disabled = current === 1;
+      nextBtn.disabled = current === total || total === 0;
+
+      prevBtn.style.opacity = current === 1 ? '0.5' : '1';
+      nextBtn.style.opacity = (current === total || total === 0) ? '0.5' : '1';
     }
   }
+
+  // Pagination event listeners
+  document.getElementById('prevBtn')?.addEventListener('click', function() {
+    if (currentPage > 1) {
+      currentPage--;
+      displaySuppliers();
+      attachActionButtonListeners();
+    }
+  });
+
+  document.getElementById('nextBtn')?.addEventListener('click', function() {
+    const totalPages = Math.ceil(allActiveSuppliers.length / recordsPerPage);
+    if (currentPage < totalPages) {
+      currentPage++;
+      displaySuppliers();
+      attachActionButtonListeners();
+    }
+  });
+
+  // Search and filter event listeners
+  document.getElementById('searchInput')?.addEventListener('input', function() {
+    currentPage = 1;
+    displaySuppliers();
+    attachActionButtonListeners();
+  });
+
+  document.getElementById('statusFilter')?.addEventListener('change', function() {
+    currentPage = 1;
+    displaySuppliers();
+    attachActionButtonListeners();
+  });
 
   loadSuppliers();
   
