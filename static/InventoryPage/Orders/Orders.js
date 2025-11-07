@@ -4,6 +4,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 let ordersCache = [];
+let ordersNext = null;
+let ordersPrev = null;
+let filteredOrders = null;
+let pageSize = 5;
+let currentPage = 1;
 
 function initializeOrders() {
     // Set current date
@@ -35,10 +40,59 @@ function initializeOrders() {
     if (searchInput) searchInput.addEventListener('input', renderFilteredOrders);
     if (statusFilter) statusFilter.addEventListener('change', renderFilteredOrders);
 
-    // Load orders from API
+    // Load orders from API (5 per page)
     loadOrders();
     // Load products to populate Add Order modal select
     loadProducts();
+
+    // Make summary counts clickable to filter the list
+    const pendingEl = document.getElementById('pendingOrdersCount');
+    const receivedEl = document.getElementById('receivedOrdersCount');
+    const partialEl = document.getElementById('partialOrdersCount');
+    if (pendingEl) pendingEl.addEventListener('click', () => applySummaryFilter('pending'));
+    if (receivedEl) receivedEl.addEventListener('click', () => applySummaryFilter('received'));
+    if (partialEl) partialEl.addEventListener('click', () => applySummaryFilter('partial'));
+
+    // Also make the entire stat card clickable (not just the number)
+    try {
+        if (pendingEl) {
+            const pCard = pendingEl.closest('.massive-stat-item');
+            if (pCard) {
+                pCard.tabIndex = 0;
+                pCard.setAttribute('role', 'button');
+                pCard.addEventListener('click', () => applySummaryFilter('pending'));
+                pCard.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') applySummaryFilter('pending'); });
+            }
+        }
+        if (receivedEl) {
+            const rCard = receivedEl.closest('.massive-stat-item');
+            if (rCard) {
+                rCard.tabIndex = 0;
+                rCard.setAttribute('role', 'button');
+                rCard.addEventListener('click', () => applySummaryFilter('received'));
+                rCard.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') applySummaryFilter('received'); });
+            }
+        }
+        if (partialEl) {
+            const paCard = partialEl.closest('.massive-stat-item');
+            if (paCard) {
+                paCard.tabIndex = 0;
+                paCard.setAttribute('role', 'button');
+                paCard.addEventListener('click', () => applySummaryFilter('partial'));
+                paCard.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') applySummaryFilter('partial'); });
+            }
+        }
+    } catch (err) {
+        // defensive: if DOM shape differs, ignore
+        console.warn('Could not attach stat card handlers', err);
+    }
+
+    // Clicking the header restores default (no filter)
+    const summaryAll = document.getElementById('summaryAll');
+    if (summaryAll) {
+        summaryAll.addEventListener('click', () => applySummaryFilter('all'));
+        summaryAll.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') applySummaryFilter('all'); });
+    }
 }
 
 async function loadProducts() {
@@ -79,19 +133,36 @@ async function loadProducts() {
 }
 
 async function loadOrders() {
+    // Fetch all orders from the API by following paginated 'next' links.
     try {
-        const res = await fetch('/api/orders/');
-        if (!res.ok) {
-            console.error('Failed to fetch orders', res.status);
-            return;
+        let url = '/api/orders/';
+        let all = [];
+
+        while (url) {
+            const res = await fetch(url);
+            if (!res.ok) {
+                console.error('Failed to fetch orders', res.status);
+                return;
+            }
+
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                all = data;
+                url = null;
+            } else {
+                all = all.concat(data.results || []);
+                url = data.next || null;
+            }
         }
 
-        const data = await res.json();
-        // If API returns paginated results (results field) use it
-        ordersCache = Array.isArray(data) ? data : (data.results || []);
+        ordersCache = all;
+        filteredOrders = null;
+        currentPage = 1;
 
-        renderOrders(ordersCache);
         updateSummaryCounts(ordersCache);
+    renderPage();
+    // default highlight: show all
+    setActiveSummaryHighlight('all');
     } catch (err) {
         console.error('Error loading orders:', err);
     }
@@ -112,9 +183,8 @@ function getStatusBadgeClass(status) {
 
 function formatDateOnly(dateStr) {
     if (!dateStr) return '-';
-    // If ISO datetime
-    if (typeof dateStr === 'string' && dateStr.includes('T')) return dateStr.split('T')[0];
 
+    // Try parsing as a Date for most formats (ISO, locale strings, etc.)
     const d = new Date(dateStr);
     if (!isNaN(d)) {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -133,14 +203,15 @@ function renderFilteredOrders() {
     const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
     const status = statusFilter ? statusFilter.value : 'all';
 
-    const filtered = ordersCache.filter(o => {
+    filteredOrders = ordersCache.filter(o => {
         const matchesSearch = !q || (o.order_id && o.order_id.toLowerCase().includes(q)) || (o.ordered_by && o.ordered_by.toLowerCase().includes(q));
         const s = (o.status || '').toString().toLowerCase();
         const matchesStatus = status === 'all' || (status === 'partial' ? s.includes('partial') : s === status);
         return matchesSearch && matchesStatus;
     });
 
-    renderOrders(filtered);
+    currentPage = 1;
+    renderPage();
 }
 
 function renderOrders(orders) {
@@ -220,6 +291,21 @@ function renderOrders(orders) {
     });
 }
 
+function renderPage() {
+    const list = filteredOrders || ordersCache || [];
+    const total = list.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    if (currentPage < 1) currentPage = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * pageSize;
+    const pageItems = list.slice(start, start + pageSize);
+
+    renderOrders(pageItems);
+    updatePaginationControls(totalPages);
+}
+
 function toggleOrderItems(button) {
     const row = button.closest('tr');
     const orderItemsRow = row.nextElementSibling;
@@ -242,22 +328,72 @@ function updateSummaryCounts(orders) {
 
     const pending = (orders || []).filter(o => (o.status || '').toLowerCase() === 'pending').length;
     const received = (orders || []).filter(o => (o.status || '').toLowerCase() === 'received').length;
+    const partial = (orders || []).filter(o => (o.status || '').toString().toLowerCase().includes('partial')).length;
 
     if (pendingEl) pendingEl.textContent = String(pending).padStart(2, '0');
     if (receivedEl) receivedEl.textContent = String(received).padStart(2, '0');
+    const partialEl = document.getElementById('partialOrdersCount');
+    if (partialEl) partialEl.textContent = String(partial).padStart(2, '0');
 }
 
-function openReceiveOrderModal(orderId) {
-    const order = ordersCache.find(o => o.order_id === orderId);
-    if (!order) {
-        // try fetching single order
-        fetch(`/api/orders/${orderId}/`).then(r => r.json()).then(d => {
-            if (d) showReceiveModal(d);
-        }).catch(err => console.error('Failed to load order:', err));
+function applySummaryFilter(status) {
+    const searchInput = document.getElementById('orderSearchInput');
+    const statusFilter = document.getElementById('orderStatusFilter');
+    if (searchInput) searchInput.value = '';
+    if (statusFilter) statusFilter.value = status;
+    renderFilteredOrders();
+}
+
+// Enhance applySummaryFilter to also set visual active state
+const originalApplySummaryFilter = applySummaryFilter;
+applySummaryFilter = function(status) {
+    // call original behavior
+    originalApplySummaryFilter(status);
+    // set active highlight
+    setActiveSummaryHighlight(status);
+};
+
+function clearActiveSummaryHighlight() {
+    document.querySelectorAll('.massive-stat-item').forEach(el => el.classList.remove('active-summary'));
+    const header = document.getElementById('summaryAll');
+    if (header) header.classList.remove('active-summary');
+}
+
+function setActiveSummaryHighlight(status) {
+    clearActiveSummaryHighlight();
+    if (status === 'all') {
+        const header = document.getElementById('summaryAll');
+        if (header) header.classList.add('active-summary');
         return;
     }
 
-    showReceiveModal(order);
+    const idMap = {
+        'pending': 'pendingOrdersCount',
+        'received': 'receivedOrdersCount',
+        'partial': 'partialOrdersCount'
+    };
+    const el = document.getElementById(idMap[status]);
+    if (el) {
+        const parent = el.closest('.massive-stat-item');
+        if (parent) parent.classList.add('active-summary');
+    }
+}
+
+function openReceiveOrderModal(orderId) {
+    const list = filteredOrders || ordersCache || [];
+    const order = list.find(o => o.order_id === orderId) || ordersCache.find(o => o.order_id === orderId);
+    if (order) {
+        showReceiveModal(order);
+        return;
+    }
+
+    // fallback: fetch single order
+    fetch(`/api/orders/${orderId}/`).then(r => {
+        if (!r.ok) throw new Error('Failed to fetch order');
+        return r.json();
+    }).then(d => {
+        if (d) showReceiveModal(d);
+    }).catch(err => console.error('Failed to load order:', err));
 }
 
 function showReceiveModal(order) {
@@ -267,6 +403,13 @@ function showReceiveModal(order) {
     // items from serializer include order_item_id, product_name, quantity_ordered
     const items = order.items || [];
     const totalOrdered = items.reduce((sum, it) => sum + (it.quantity_ordered || 0), 0);
+    const dateReceivedDisplay = order.date_received ? formatDateOnly(order.date_received) : '-';
+    // Determine ISO value for date input (YYYY-MM-DD)
+    let dateReceivedInputVal = new Date().toISOString().split('T')[0];
+    if (order.date_received) {
+        const d = new Date(order.date_received);
+        if (!isNaN(d)) dateReceivedInputVal = d.toISOString().split('T')[0];
+    }
 
     let formHTML = `
         <div class="receipt-header">
@@ -334,7 +477,8 @@ function showReceiveModal(order) {
             </div>
             <div class="receipt-info-row">
                 <span class="receipt-info-label">Date Received:</span>
-                <span><input type="date" id="dateReceived" value="${new Date().toISOString().split('T')[0]}" style="border: none; border-bottom: 1px solid var(--border); width: 150px; text-align: right;"></span>
+                <span class="receipt-info-value">${dateReceivedDisplay}</span>
+                <span><input type="date" id="dateReceived" value="${dateReceivedInputVal}" style="border: none; border-bottom: 1px solid var(--border); width: 150px; text-align: right;"></span>
             </div>
         </div>
         <div class="receipt-footer">
@@ -343,4 +487,34 @@ function showReceiveModal(order) {
 
     receiveOrderContent.innerHTML = formHTML;
     document.getElementById('receiveOrderModal').style.display = 'flex';
+}
+
+function updatePaginationControls(totalPages) {
+    const prevBtn = document.getElementById('orderPrevBtn');
+    const nextBtn = document.getElementById('orderNextBtn');
+    const pageIndicator = document.getElementById('orderPageIndicator');
+
+    if (prevBtn) {
+        prevBtn.disabled = currentPage <= 1;
+        prevBtn.onclick = function () {
+            if (currentPage > 1) {
+                currentPage -= 1;
+                renderPage();
+            }
+        };
+    }
+
+    if (nextBtn) {
+        nextBtn.disabled = currentPage >= totalPages;
+        nextBtn.onclick = function () {
+            if (currentPage < totalPages) {
+                currentPage += 1;
+                renderPage();
+            }
+        };
+    }
+
+    if (pageIndicator) {
+        pageIndicator.textContent = `Page ${currentPage} / ${totalPages}`;
+    }
 }
