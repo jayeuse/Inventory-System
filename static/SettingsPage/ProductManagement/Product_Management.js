@@ -6,6 +6,13 @@ document.addEventListener('DOMContentLoaded', function () {
   // caches for categories/subcategories so other handlers can reuse them
   let categoriesCache = [];
   let subcategoriesCache = [];
+
+  // Pagination variables
+  let allActiveProducts = [];
+  let allArchivedProducts = [];
+  let activeCurrentPage = 1;
+  let archivedCurrentPage = 1;
+  const recordsPerPage = 8;
   
   console.log('Checking for products-content:', document.getElementById('products-content'));
   console.log('Checking for product tabs:', document.querySelectorAll('.product-tab').length);
@@ -23,10 +30,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const archiveModal = document.getElementById('archiveModal');
   const unarchiveModal = document.getElementById('unarchiveModal');
 
-  // Fetch and render products
+  // Fetch and render products (UPDATED)
   async function loadProductsList() {
     try {
-      // Fetch active (default) and archived lists in parallel
       const [activeRes, archivedRes] = await Promise.all([
         fetch('/api/products/'),
         fetch('/api/products/?show_archived=true')
@@ -38,20 +44,20 @@ document.addEventListener('DOMContentLoaded', function () {
       const activeData = await activeRes.json();
       const archivedData = await archivedRes.json();
 
-      const activeProducts = Array.isArray(activeData) ? activeData : (activeData.results || []);
-      const archivedProducts = Array.isArray(archivedData) ? archivedData : (archivedData.results || []);
+      allActiveProducts = Array.isArray(activeData) ? activeData : (activeData.results || []);
+      allArchivedProducts = Array.isArray(archivedData) ? archivedData : (archivedData.results || []);
 
-      if (tableBody) tableBody.innerHTML = '';
-      if (archivedBody) archivedBody.innerHTML = '';
-      
-      console.log('Active products:', activeProducts);
-      console.log('Archived products:', archivedProducts);
-      // Log product IDs specifically
-      console.log('Archived Product IDs:', archivedProducts.map(p => p.product_id));
-      console.debug('loadProductsList: activeProducts count=', activeProducts.length, 'archivedProducts count=', archivedProducts.length);
-      console.debug('archivedBody element found:', !!archivedBody);
+      // Reset to page 1
+      activeCurrentPage = 1;
+      archivedCurrentPage = 1;
 
-      // Add active products counter
+      // Display products with pagination
+      displayActiveProducts();
+      displayArchivedProducts();
+
+      console.debug('loadProductsList: activeProducts count=', allActiveProducts.length, 'archivedProducts count=', allArchivedProducts.length);
+
+      // Update counts
       let activeCountEl = container.querySelector('#activeCount');
       if (!activeCountEl) {
         const activeTabHeader = document.querySelector('.product-tab[data-product-tab="active"]');
@@ -64,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
 
-      // Ensure archived count element exists in the archived tab header area
+      let archivedCountEl = container.querySelector('#archivedCount');
       if (!archivedCountEl) {
         const archivedTabHeader = document.querySelector('.product-tab[data-product-tab="archived"]');
         if (archivedTabHeader) {
@@ -76,56 +82,60 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
 
-      if (activeCountEl) activeCountEl.textContent = `(${activeProducts.length})`;
-      if (archivedCountEl) archivedCountEl.textContent = `(${archivedProducts.length})`;
+      if (activeCountEl) activeCountEl.textContent = `(${allActiveProducts.length})`;
+      if (archivedCountEl) archivedCountEl.textContent = `(${allArchivedProducts.length})`;
 
-      // Helper to populate edit modal
-      const populateEditModal = (p) => {
-        currentEditProductId = p.product_id || p.productId || null;
-        const setIf = (selector, value) => {
-          const el = document.querySelector(selector);
-          if (el) el.value = value ?? '';
-        };
-        setIf('#editBrandName', p.brand_name || '');
-        setIf('#editGenericName', p.generic_name || '');
-        setIf('#editPrice', p.price_per_unit ?? '');
-        setIf('#editUnitOfMeasurement', p.unit_of_measurement || '');
-        setIf('#editLowStockThreshold', p.low_stock_threshold ?? '');
-        setIf('#editExpiryThreshold', p.expiry_threshold_days ?? '');
-        setIf('#editNotificationRecipient', p.notification_recipient || '');
+    } catch (err) {
+      console.error('Error loading products:', err);
+      if (tableBody) tableBody.innerHTML = '<tr><td colspan="10">Error loading products.</td></tr>';
+    }
+  }
 
-        const editCategory = document.getElementById('editCategory');
-        const editSubcategory = document.getElementById('editSubcategory');
-        const categoryVal = p.category_id || p.category || '';
-        const subcategoryVal = p.subcategory_id || p.subcategory || '';
+  // Display active products with pagination
+  function displayActiveProducts() {
+    const searchTerm = document.getElementById('activeSearchInput')?.value.trim().toLowerCase() || '';
+    const categoryFilter = document.getElementById('categoryFilter')?.value || 'all';
 
-        if (editCategory) {
-          editCategory.value = categoryVal;
-          populateSubSelectForCategory(editSubcategory, categoryVal);
-        }
+    // Filter products
+    let filteredProducts = allActiveProducts.filter(product => {
+      const matchesSearch = 
+        (product.product_id || '').toLowerCase().includes(searchTerm) ||
+        (product.brand_name || '').toLowerCase().includes(searchTerm) ||
+        (product.generic_name || '').toLowerCase().includes(searchTerm);
+      
+      const matchesCategory = categoryFilter === 'all' || (product.category_name || '').toLowerCase() === categoryFilter.toLowerCase();
 
-        if (editSubcategory) {
-          if (!categoryVal) editSubcategory.innerHTML = '<option value="">Select Subcategory</option>';
-          editSubcategory.value = subcategoryVal;
-        }
+      return matchesSearch && matchesCategory;
+    });
 
-        if (editProductModal) editProductModal.style.display = 'flex';
-      };
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredProducts.length / recordsPerPage);
+    const startIndex = (activeCurrentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-      // Render active products
-      activeProducts.forEach(p => {
-  const row = document.createElement('tr');
-  row.dataset.categoryName = p.category_name || '';
+    // Populate table
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
+
+    if (paginatedProducts.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">No products found</td></tr>';
+    } else {
+      paginatedProducts.forEach(p => {
+        const row = document.createElement('tr');
+        row.dataset.categoryName = p.category_name || '';
+        const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
+        
         row.innerHTML = `
           <td>${p.product_id || ''}</td>
           <td>${p.brand_name || ''}</td>
           <td>${p.generic_name || ''}</td>
           <td>${p.category_name || ''}</td>
           <td>${p.subcategory_name || ''}</td>
-          <td>₱${(p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : ''} / ${p.unit_of_measurement || ''}</td>
+          <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
           <td>${p.low_stock_threshold || ''} units</td>
           <td>${p.expiry_threshold_days || ''} days</td>
-          <td>${p.last_updated}</td>
+          <td>${p.last_updated || ''}</td>
           <td>
             <div class="op-buttons">
               <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
@@ -133,9 +143,41 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
           </td>
         `;
-        // last_updated is not working
-        row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
 
+        // Helper to populate edit modal
+        const populateEditModal = (product) => {
+          currentEditProductId = product.product_id || product.productId || null;
+          const setIf = (selector, value) => {
+            const el = document.querySelector(selector);
+            if (el) el.value = value ?? '';
+          };
+          setIf('#editBrandName', product.brand_name || '');
+          setIf('#editGenericName', product.generic_name || '');
+          setIf('#editPrice', product.price_per_unit ?? '');
+          setIf('#editUnitOfMeasurement', product.unit_of_measurement || '');
+          setIf('#editLowStockThreshold', product.low_stock_threshold ?? '');
+          setIf('#editExpiryThreshold', product.expiry_threshold_days ?? '');
+          setIf('#editNotificationRecipient', product.notification_recipient || '');
+
+          const editCategory = document.getElementById('editCategory');
+          const editSubcategory = document.getElementById('editSubcategory');
+          const categoryVal = product.category_id || product.category || '';
+          const subcategoryVal = product.subcategory_id || product.subcategory || '';
+
+          if (editCategory) {
+            editCategory.value = categoryVal;
+            populateSubSelectForCategory(editSubcategory, categoryVal);
+          }
+
+          if (editSubcategory) {
+            if (!categoryVal) editSubcategory.innerHTML = '<option value="">Select Subcategory</option>';
+            editSubcategory.value = subcategoryVal;
+          }
+
+          if (editProductModal) editProductModal.style.display = 'flex';
+        };
+
+        row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
         row.querySelector('.archive-btn')?.addEventListener('click', function () {
           const id = p.product_id || p.productId || null;
           if (!id) return alert('Product id missing');
@@ -145,66 +187,216 @@ document.addEventListener('DOMContentLoaded', function () {
           archiveModal.style.display = 'flex';
         });
 
-        tableBody?.appendChild(row);
+        tableBody.appendChild(row);
       });
+    }
 
-      // Render archived products (match archived table's 9 columns)
-      console.log('Starting to render archived products...');
-      archivedProducts.forEach(p => {
-        try {
-          console.log('Rendering archived product:', p);
-          const row = document.createElement('tr');
-          row.dataset.categoryName = p.category_name || '';
-          // archived table headers: Product ID, Brand, Generic, Category, Subcategory, Unit Price, Archive Reason, Archived Date, Action
-          const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
-          const archiveReason = p.archive_reason || p.reason || '';
-          const archivedDate = p.archived_at || p.archived_date || p.updated_at || p.date_archived || '';
-          console.log('Created row with data:', { unitPrice, archiveReason, archivedDate });
+    // Update pagination buttons
+    updatePaginationButtons(activeCurrentPage, totalPages, false);
+  }
 
-          row.innerHTML = `
-            <td>${p.product_id || ''}</td>
-            <td>${p.brand_name || ''}</td>
-            <td>${p.generic_name || ''}</td>
-            <td>${p.category_name || ''}</td>
-            <td>${p.subcategory_name || ''}</td>
-            <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
-            <td>${archiveReason}</td>
-            <td>${archivedDate}</td>
-            <td>
-              <div class="op-buttons">
-                <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
-                <button class="action-btn unarchive-btn"><i class="fas fa-box-open"></i> Unarchive</button>
-              </div>
-            </td>
-          `;
+  // Display archived products with pagination
+  function displayArchivedProducts() {
+    const searchTerm = document.getElementById('archivedSearchInput')?.value.trim().toLowerCase() || '';
+    const categoryFilter = document.getElementById('archivedCategoryFilter')?.value || 'all';
 
-          row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
+    // Filter products
+    let filteredProducts = allArchivedProducts.filter(product => {
+      const matchesSearch = 
+        (product.product_id || '').toLowerCase().includes(searchTerm) ||
+        (product.brand_name || '').toLowerCase().includes(searchTerm) ||
+        (product.generic_name || '').toLowerCase().includes(searchTerm);
+      
+      const matchesCategory = categoryFilter === 'all' || (product.category_name || '').toLowerCase() === categoryFilter.toLowerCase();
 
-          row.querySelector('.unarchive-btn')?.addEventListener('click', function () {
-            const id = p.product_id || p.productId || null;
-            if (!id) return alert('Product id missing');
-            if (!unarchiveModal) return alert('Unarchive modal not found');
-            // Use the unarchive action endpoint
-            unarchiveModal.dataset.targetApi = `/api/products/unarchive/?id=${id}`;
-            console.log('Setting unarchive URL:', unarchiveModal.dataset.targetApi);
-            console.log('Product ID for unarchive:', id);
-            unarchiveModal.style.display = 'flex';
-          });
+      return matchesSearch && matchesCategory;
+    });
 
-          if (archivedBody) {
-            archivedBody.appendChild(row);
-            console.log('Successfully appended row to archivedBody');
-          } else {
-            console.error('Failed to find archivedTableBody element');
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredProducts.length / recordsPerPage);
+    const startIndex = (archivedCurrentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+    // Populate table
+    if (!archivedBody) return;
+    archivedBody.innerHTML = '';
+
+    if (paginatedProducts.length === 0) {
+      archivedBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No archived products found</td></tr>';
+    } else {
+      paginatedProducts.forEach(p => {
+        const row = document.createElement('tr');
+        row.dataset.categoryName = p.category_name || '';
+        const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
+        const archiveReason = p.archive_reason || p.reason || '';
+        const archivedDate = p.archived_at || p.archived_date || p.updated_at || p.date_archived || '';
+
+        row.innerHTML = `
+          <td>${p.product_id || ''}</td>
+          <td>${p.brand_name || ''}</td>
+          <td>${p.generic_name || ''}</td>
+          <td>${p.category_name || ''}</td>
+          <td>${p.subcategory_name || ''}</td>
+          <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
+          <td>${archiveReason}</td>
+          <td>${archivedDate}</td>
+          <td>
+            <div class="op-buttons">
+              <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
+              <button class="action-btn unarchive-btn"><i class="fas fa-box-open"></i> Unarchive</button>
+            </div>
+          </td>
+        `;
+
+        const populateEditModal = (product) => {
+          currentEditProductId = product.product_id || product.productId || null;
+          const setIf = (selector, value) => {
+            const el = document.querySelector(selector);
+            if (el) el.value = value ?? '';
+          };
+          setIf('#editBrandName', product.brand_name || '');
+          setIf('#editGenericName', product.generic_name || '');
+          setIf('#editPrice', product.price_per_unit ?? '');
+          setIf('#editUnitOfMeasurement', product.unit_of_measurement || '');
+          setIf('#editLowStockThreshold', product.low_stock_threshold ?? '');
+          setIf('#editExpiryThreshold', product.expiry_threshold_days ?? '');
+          setIf('#editNotificationRecipient', product.notification_recipient || '');
+
+          const editCategory = document.getElementById('editCategory');
+          const editSubcategory = document.getElementById('editSubcategory');
+          const categoryVal = product.category_id || product.category || '';
+          const subcategoryVal = product.subcategory_id || product.subcategory || '';
+
+          if (editCategory) {
+            editCategory.value = categoryVal;
+            populateSubSelectForCategory(editSubcategory, categoryVal);
           }
-        } catch (errRow) {
-          console.error('Error rendering archived product row', p, errRow);
+
+          if (editSubcategory) {
+            if (!categoryVal) editSubcategory.innerHTML = '<option value="">Select Subcategory</option>';
+            editSubcategory.value = subcategoryVal;
+          }
+
+          if (editProductModal) editProductModal.style.display = 'flex';
+        };
+
+        row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
+        row.querySelector('.unarchive-btn')?.addEventListener('click', function () {
+          const id = p.product_id || p.productId || null;
+          if (!id) return alert('Product id missing');
+          if (!unarchiveModal) return alert('Unarchive modal not found');
+          unarchiveModal.dataset.targetApi = `/api/products/unarchive/?id=${id}`;
+          unarchiveModal.style.display = 'flex';
+        });
+
+        archivedBody.appendChild(row);
+      });
+    }
+
+    // Update pagination buttons
+    updatePaginationButtons(archivedCurrentPage, totalPages, true);
+  }
+
+  // Update pagination buttons
+  function updatePaginationButtons(current, total, isArchived) {
+    const paginationContainer = isArchived 
+      ? document.querySelector('#archivedProductsContent .pagination')
+      : document.querySelector('#activeProductsContent .pagination');
+    
+    if (!paginationContainer) return;
+
+    const prevBtn = paginationContainer.querySelector('.pagination-btn:first-child');
+    const nextBtn = paginationContainer.querySelector('.pagination-btn:last-child');
+
+    if (prevBtn && nextBtn) {
+      prevBtn.disabled = current === 1;
+      nextBtn.disabled = current === total || total === 0;
+
+      prevBtn.style.opacity = current === 1 ? '0.5' : '1';
+      nextBtn.style.opacity = (current === total || total === 0) ? '0.5' : '1';
+      prevBtn.style.cursor = current === 1 ? 'not-allowed' : 'pointer';
+      nextBtn.style.cursor = (current === total || total === 0) ? 'not-allowed' : 'pointer';
+    }
+  }
+
+  // Pagination event listeners for active products
+  const activePaginationContainer = document.querySelector('#activeProductsContent .pagination');
+  if (activePaginationContainer) {
+    const prevBtn = activePaginationContainer.querySelector('.pagination-btn:first-child');
+    const nextBtn = activePaginationContainer.querySelector('.pagination-btn:last-child');
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', function() {
+        if (activeCurrentPage > 1) {
+          activeCurrentPage--;
+          displayActiveProducts();
         }
       });
+    }
 
-    } catch (err) {
-      console.error('Error loading products:', err);
-      if (tableBody) tableBody.innerHTML = '<tr><td colspan="10">Error loading products.</td></tr>';
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function() {
+        const searchTerm = document.getElementById('activeSearchInput')?.value.trim().toLowerCase() || '';
+        const categoryFilter = document.getElementById('categoryFilter')?.value || 'all';
+        
+        let filteredProducts = allActiveProducts.filter(product => {
+          const matchesSearch = 
+            (product.product_id || '').toLowerCase().includes(searchTerm) ||
+            (product.brand_name || '').toLowerCase().includes(searchTerm) ||
+            (product.generic_name || '').toLowerCase().includes(searchTerm);
+          
+          const matchesCategory = categoryFilter === 'all' || (product.category_name || '').toLowerCase() === categoryFilter.toLowerCase();
+
+          return matchesSearch && matchesCategory;
+        });
+
+        const totalPages = Math.ceil(filteredProducts.length / recordsPerPage);
+        if (activeCurrentPage < totalPages) {
+          activeCurrentPage++;
+          displayActiveProducts();
+        }
+      });
+    }
+  }
+
+  // Pagination event listeners for archived products
+  const archivedPaginationContainer = document.querySelector('#archivedProductsContent .pagination');
+  if (archivedPaginationContainer) {
+    const prevBtn = archivedPaginationContainer.querySelector('.pagination-btn:first-child');
+    const nextBtn = archivedPaginationContainer.querySelector('.pagination-btn:last-child');
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', function() {
+        if (archivedCurrentPage > 1) {
+          archivedCurrentPage--;
+          displayArchivedProducts();
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function() {
+        const searchTerm = document.getElementById('archivedSearchInput')?.value.trim().toLowerCase() || '';
+        const categoryFilter = document.getElementById('archivedCategoryFilter')?.value || 'all';
+        
+        let filteredProducts = allArchivedProducts.filter(product => {
+          const matchesSearch = 
+            (product.product_id || '').toLowerCase().includes(searchTerm) ||
+            (product.brand_name || '').toLowerCase().includes(searchTerm) ||
+            (product.generic_name || '').toLowerCase().includes(searchTerm);
+          
+          const matchesCategory = categoryFilter === 'all' || (product.category_name || '').toLowerCase() === categoryFilter.toLowerCase();
+
+          return matchesSearch && matchesCategory;
+        });
+
+        const totalPages = Math.ceil(filteredProducts.length / recordsPerPage);
+        if (archivedCurrentPage < totalPages) {
+          archivedCurrentPage++;
+          displayArchivedProducts();
+        }
+      });
     }
   }
 
@@ -514,11 +706,13 @@ document.addEventListener('DOMContentLoaded', function () {
     filterProducts(targetTableBody, searchQuery);
   }
 
+  // Update search event listeners to reset to page 1 and redisplay
   if (activeSearchInput) {
     activeSearchInput.addEventListener('input', function() {
       clearTimeout(activeSearchTimeout);
       activeSearchTimeout = setTimeout(() => {
-        applyCurrentFilters(tableBody, this);
+        activeCurrentPage = 1;
+        displayActiveProducts();
       }, 300);
     });
   }
@@ -527,32 +721,27 @@ document.addEventListener('DOMContentLoaded', function () {
     archivedSearchInput.addEventListener('input', function() {
       clearTimeout(archivedSearchTimeout);
       archivedSearchTimeout = setTimeout(() => {
-        applyCurrentFilters(archivedBody, this);
+        archivedCurrentPage = 1;
+        displayArchivedProducts();
       }, 300);
     });
   }
 
-  function filterProducts(targetTableBody, searchQuery) {
-    if (!targetTableBody) return;
-    
-    // Get the current category filter value for active or archived table
-    const isArchivedTable = targetTableBody.id === 'archivedTableBody';
-    const categoryFilter = document.getElementById(isArchivedTable ? 'archivedCategoryFilter' : 'categoryFilter');
-    const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
-    
-    const rows = Array.from(targetTableBody.querySelectorAll('tr'));
-    rows.forEach(row => {
-      const productId = (row.cells[0]?.textContent || '').toLowerCase();
-      const brandName = (row.cells[1]?.textContent || '').toLowerCase();
-      const genericName = (row.cells[2]?.textContent || '').toLowerCase();
-      const categoryName = (row.cells[3]?.textContent || '').toLowerCase();
-      
-      // Check if the row matches both search query and category filter
-      const matchesSearch = !searchQuery || [productId, brandName, genericName].some(field => field.includes(searchQuery));
-      const matchesCategory = selectedCategory === 'all' || categoryName === selectedCategory.toLowerCase();
-      
-      // Only show the row if it matches both conditions
-      row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+  // Update category filter listeners
+  const categoryFilterEl = document.getElementById('categoryFilter');
+  const archivedCategoryFilterEl = document.getElementById('archivedCategoryFilter');
+
+  if (categoryFilterEl) {
+    categoryFilterEl.addEventListener('change', function() {
+      activeCurrentPage = 1;
+      displayActiveProducts();
+    });
+  }
+
+  if (archivedCategoryFilterEl) {
+    archivedCategoryFilterEl.addEventListener('change', function() {
+      archivedCurrentPage = 1;
+      displayArchivedProducts();
     });
   }
 
