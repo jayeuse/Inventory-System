@@ -6,6 +6,10 @@ document.addEventListener("DOMContentLoaded", function(){
   let currentPage = 1;
   const recordsPerPage = 8;
 
+  // Filter/Search variables
+  let currentSearchTerm = '';
+  let currentStatusFilter = 'all';
+
 
   async function loadStocks() {
     console.log("Reloading Stocks...");
@@ -27,14 +31,31 @@ document.addEventListener("DOMContentLoaded", function(){
     const tbody = document.getElementById("stocks-table-body");
     tbody.innerHTML = ``;
 
-    // Calculate pagination
-    const totalPages = Math.ceil(allStocks.length / recordsPerPage);
+    // Apply search and filter
+    let filteredStocks = allStocks.filter(stock => {
+      // Search filter
+      const matchesSearch = 
+        stock.stock_id.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+        stock.product_id.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+        stock.product_name.toLowerCase().includes(currentSearchTerm.toLowerCase());
+      
+      // Status filter - normalize both values to compare
+      const normalizedStockStatus = stock.status.toLowerCase().replace(/\s+/g, '-');
+      const normalizedFilterStatus = currentStatusFilter.toLowerCase();
+      const matchesStatus = currentStatusFilter === 'all' || 
+        normalizedStockStatus === normalizedFilterStatus;
+      
+      return matchesSearch && matchesStatus;
+    });
+
+    // Calculate pagination based on filtered results
+    const totalPages = Math.ceil(filteredStocks.length / recordsPerPage);
     const startIndex = (currentPage - 1) * recordsPerPage;
     const endIndex = startIndex + recordsPerPage;
-    const paginatedStocks = allStocks.slice(startIndex, endIndex);
+    const paginatedStocks = filteredStocks.slice(startIndex, endIndex);
 
-    // If no stocks at all, show message
-    if (allStocks.length === 0) {
+    // If no stocks match filter, show message
+    if (filteredStocks.length === 0) {
       const row = document.createElement("tr");
       row.innerHTML = `<td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">No stocks found.</td>`;
       tbody.appendChild(row);
@@ -146,6 +167,26 @@ document.addEventListener("DOMContentLoaded", function(){
   });
 
   loadStocks();
+
+  // Search functionality
+  const searchInput = document.getElementById('stockslist_searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      currentSearchTerm = this.value;
+      currentPage = 1; // Reset to first page
+      displayStocks();
+    });
+  }
+
+  // Status filter functionality
+  const statusFilter = document.getElementById('stockslist_statusFilter');
+  if (statusFilter) {
+    statusFilter.addEventListener('change', function() {
+      currentStatusFilter = this.value;
+      currentPage = 1; // Reset to first page
+      displayStocks();
+    });
+  }
 
   document.getElementById("stockslist_saveBachEditBtn").addEventListener('click', async function() {
     const batch_id = document.getElementById("stockslist_edit_batchId").value;

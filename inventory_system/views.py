@@ -77,7 +77,7 @@ class CategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         show_archived = self.request.query_params.get('show_archived')
-        queryset = Category.objects.all().order_by('category_id')
+        queryset = Category.objects.all().order_by('-category_id')
         if show_archived == 'true':
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
@@ -123,7 +123,7 @@ class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         show_archived = self.request.query_params.get('show_archived')
-        queryset = Subcategory.objects.all().order_by('subcategory_id')
+        queryset = Subcategory.objects.all().order_by('-subcategory_id')
         if show_archived == 'true':
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
@@ -165,7 +165,7 @@ class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         show_archived = self.request.query_params.get('show_archived')
-        queryset = Supplier.objects.all().order_by('supplier_id')
+        queryset = Supplier.objects.all().order_by('-supplier_id')
         if show_archived == 'true':
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
@@ -208,7 +208,7 @@ class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         show_archived = self.request.query_params.get('show_archived')
-        queryset = Product.objects.all().order_by('product_id')
+        queryset = Product.objects.all().order_by('-product_id')
         if show_archived == 'true':
             return queryset.filter(status = 'Archived')
         return queryset.exclude(status = 'Archived')
@@ -288,12 +288,12 @@ class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ProductStocksViewSet(viewsets.ModelViewSet):
-    queryset = ProductStocks.objects.all().order_by('stock_id')
+    queryset = ProductStocks.objects.all().order_by('-stock_id')
     serializer_class = ProductStocksSerializer
     lookup_field = 'stock_id'
 
 class ProductBatchViewSet(viewsets.ModelViewSet):
-    queryset = ProductBatch.objects.all().order_by('batch_id')
+    queryset = ProductBatch.objects.all().order_by('-batch_id')
     serializer_class = ProductBatchSerializer
     lookup_field = 'batch_id'
 
