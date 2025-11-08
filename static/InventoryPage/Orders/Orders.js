@@ -24,6 +24,11 @@ function initializeOrders() {
     const receiveOrderModal = document.getElementById("receiveOrderModal");
     const cancelReceiveBtn = document.getElementById("cancelReceiveBtn");
 
+    const confirmReceiveBtn = document.getElementById("confirmReceiveBtn");
+    if (confirmReceiveBtn) {
+        confirmReceiveBtn.addEventListener("click", handleReceiveOrder);
+    }
+
     if (addOrderBtn && addOrderModal) addOrderBtn.addEventListener("click", () => (addOrderModal.style.display = "flex"));
     if (cancelOrderBtn && addOrderModal) cancelOrderBtn.addEventListener("click", () => (addOrderModal.style.display = "none"));
     if (cancelReceiveBtn && receiveOrderModal) cancelReceiveBtn.addEventListener("click", () => (receiveOrderModal.style.display = "none"));
@@ -487,6 +492,178 @@ function showReceiveModal(order) {
 
     receiveOrderContent.innerHTML = formHTML;
     document.getElementById('receiveOrderModal').style.display = 'flex';
+}
+
+async function handleReceiveOrder() {
+    try {
+        const receiveOrderContent = document.getElementById('receiveOrderContent');
+        if (!receiveOrderContent) return;
+
+        // Get order information from the modal content
+        const orderIdMatch = receiveOrderContent.innerHTML.match(/Order ID:<\/span>\s*<span>([^<]+)<\/span>/);
+        if (!orderIdMatch) {
+            alert('Could not find order ID');
+            return;
+        }
+        const orderId = orderIdMatch[1].trim();
+
+        // Find the order in cache
+        const list = filteredOrders || ordersCache || [];
+        const order = list.find(o => o.order_id === orderId) || ordersCache.find(o => o.order_id === orderId);
+        if (!order || !order.items) {
+            alert('Order not found');
+            return;
+        }
+
+        // Get received quantities and validate
+        const receivedBy = document.getElementById('receivedBy')?.value?.trim();
+        const dateReceived = document.getElementById('dateReceived')?.value;
+
+        if (!receivedBy) {
+            alert('Please enter who received the order');
+            return;
+        }
+
+        if (!dateReceived) {
+            alert('Please enter the date received');
+            return;
+        }
+
+        // Collect all received items
+        const receiveRecords = [];
+        let hasAnyReceived = false;
+
+        order.items.forEach((item, index) => {
+            const receivedQtyInput = document.getElementById(`receivedQty${index}`);
+            if (!receivedQtyInput) return;
+
+            const receivedQty = parseInt(receivedQtyInput.value) || 0;
+            
+            if (receivedQty > 0) {
+                hasAnyReceived = true;
+                
+                // Validate quantity
+                if (receivedQty > item.quantity_ordered) {
+                    alert(`Cannot receive more than ordered for ${item.product_name}. Ordered: ${item.quantity_ordered}, Attempting: ${receivedQty}`);
+                    throw new Error('Invalid quantity');
+                }
+
+                receiveRecords.push({
+                    order: orderId,
+                    order_item: item.order_item_id,
+                    quantity_received: receivedQty,
+                    date_received: dateReceived,
+                    received_by: receivedBy
+                });
+            }
+        });
+
+        if (!hasAnyReceived) {
+            alert('Please enter at least one received quantity greater than 0');
+            return;
+        }
+
+        // Disable button to prevent double submission
+        const confirmBtn = document.getElementById('confirmReceiveBtn');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        }
+
+        console.log('Sending receive records:', receiveRecords);
+
+        // Send each receive record to the API
+        const promises = receiveRecords.map(record => 
+            fetch('/api/receive-orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(record)
+            })
+        );
+
+        const responses = await Promise.all(promises);
+        
+        // Check if all requests succeeded
+        const allSuccessful = responses.every(r => r.ok);
+        
+        if (!allSuccessful) {
+            const failedResponses = await Promise.all(
+                responses.filter(r => !r.ok).map(r => r.json().catch(() => ({ error: 'Unknown error' })))
+            );
+            console.error('Failed to receive some items:', failedResponses);
+            alert('Some items failed to be received. Please check the console for details.');
+            
+            // Re-enable button
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-check"></i> Complete Receiving';
+            }
+            return;
+        }
+
+        // Success - close modal and reload orders
+        alert(`Successfully received ${receiveRecords.length} item(s) for order ${orderId}`);
+        
+        document.getElementById('receiveOrderModal').style.display = 'none';
+        
+        // Re-enable button
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i> Complete Receiving';
+        }
+        
+        // Reload orders to reflect updated status
+        await loadOrders();
+
+    } catch (error) {
+        console.error('Error receiving order:', error);
+        alert('An error occurred while receiving the order. Please try again.');
+        
+        // Re-enable button
+        const confirmBtn = document.getElementById('confirmReceiveBtn');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check"></i> Complete Receiving';
+        }
+    }
+}
+
+// Remove or comment out the getCsrfToken function since we're not using it
+/*
+function getCsrfToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+*/
+
+// Helper function to get CSRF token
+function getCsrfToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 function updatePaginationControls(totalPages) {
