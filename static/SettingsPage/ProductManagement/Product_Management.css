@@ -1,0 +1,55 @@
+/* Fixed column widths for product management tables */
+#activeProductsContent table th:nth-child(1),
+#archivedProductsContent table th:nth-child(1) {
+  width: 7%; /* Product ID */
+}
+
+#activeProductsContent table th:nth-child(2),
+#archivedProductsContent table th:nth-child(2) {
+  width: 9%; /* Brand Name */
+}
+
+#activeProductsContent table th:nth-child(3),
+#archivedProductsContent table th:nth-child(3) {
+  width: 11%; /* Generic Name */
+}
+
+#activeProductsContent table th:nth-child(4),
+#archivedProductsContent table th:nth-child(4) {
+  width: 11%; /* Category */
+}
+
+#activeProductsContent table th:nth-child(5),
+#archivedProductsContent table th:nth-child(5) {
+  width: 13%; /* Subcategory */
+}
+
+#activeProductsContent table th:nth-child(6),
+#archivedProductsContent table th:nth-child(6) {
+  width: 10%; /* Unit Price */
+}
+
+#activeProductsContent table th:nth-child(7),
+#archivedProductsContent table th:nth-child(7) {
+  width: 8%; /* Low Stock/Archive Reason */
+}
+
+#activeProductsContent table th:nth-child(8),
+#archivedProductsContent table th:nth-child(8) {
+  width: 8%; /* Expiry/Archive Date */
+}
+
+#activeProductsContent table th:nth-child(9) {
+  width: 12%; /* Last Update */
+}
+
+#activeProductsContent table th:nth-child(10),
+#archivedProductsContent table th:nth-child(9) {
+  width: 15%; /* Action */
+}
+
+/* Ensure table uses fixed layout */
+#activeProductsContent table,
+#archivedProductsContent table {
+  table-layout: fixed;
+}

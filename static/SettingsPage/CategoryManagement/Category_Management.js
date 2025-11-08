@@ -60,61 +60,75 @@ document.addEventListener("DOMContentLoaded", function(){
     const tbody = document.getElementById('category-table-body');
     tbody.innerHTML = '';
 
-    if (paginatedCategories.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No categories found</td></tr>';
+    if (filteredCategories.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--muted);">No categories found</td></tr>';
     } else {
-      paginatedCategories.forEach(category => {
+      // Fill with actual data or placeholders to maintain 8 rows
+      for (let i = 0; i < recordsPerPage; i++) {
         const row = document.createElement('tr');
 
-        row.innerHTML = `
-          <td>${category.category_id}</td>
-          <td>${category.category_name}</td>
-          <td title="${category.category_description || ''}">${truncateText(category.category_description)}</td>
-          <td>${category.product_count}</td>
-          <td class="op-buttons">
-            <button class="action-btn view-btn">
-              <i class="bi bi-eye"></i> View
-            </button>
-            <button class="action-btn edit-btn">
-              <i class="bi bi-pencil"></i> Edit
-            </button>
-            <button class="action-btn archive-btn">
-              <i class="bi bi-archive"></i> Archive
-            </button>
-          </td>
-        `;
+        if (i < paginatedCategories.length) {
+          // Actual category data
+          const category = paginatedCategories[i];
+          row.innerHTML = `
+            <td>${category.category_id}</td>
+            <td>${category.category_name}</td>
+            <td title="${category.category_description || ''}">${truncateText(category.category_description)}</td>
+            <td>${category.product_count}</td>
+            <td class="op-buttons">
+              <button class="action-btn view-btn">
+                <i class="bi bi-eye"></i> View
+              </button>
+              <button class="action-btn edit-btn">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+              <button class="action-btn archive-btn">
+                <i class="bi bi-archive"></i> Archive
+              </button>
+            </td>
+          `;
 
-        tbody.appendChild(row);
+          tbody.appendChild(row);
 
-        // Subcategory row (hidden by default)
-        const subcatRow = document.createElement('tr');
-        subcatRow.className = 'subcategory-row hidden';
-        subcatRow.innerHTML = `
-          <td colspan="5">
-            <table class="subcategory-table">
-              <thead>
-                <tr>
-                  <th>Subcategory ID</th>
-                  <th>Subcategory Name</th>
-                  <th>Description</th>
-                  <th>Product Count</th>
-                </tr>
-              </thead>
-              <tbody class="subcategory-table-body" data-category-id="${category.category_id}">
-                <!-- Subcategories will be loaded here -->
-              </tbody>
-            </table>
-          </td>
-        `;
-        tbody.appendChild(subcatRow);
-      });
+          // Subcategory row (hidden by default)
+          const subcatRow = document.createElement('tr');
+          subcatRow.className = 'subcategory-row hidden';
+          subcatRow.innerHTML = `
+            <td colspan="5">
+              <table class="subcategory-table">
+                <thead>
+                  <tr>
+                    <th>Subcategory ID</th>
+                    <th>Subcategory Name</th>
+                    <th>Description</th>
+                    <th>Product Count</th>
+                  </tr>
+                </thead>
+                <tbody class="subcategory-table-body" data-category-id="${category.category_id}">
+                  <!-- Subcategories will be loaded here -->
+                </tbody>
+              </table>
+            </td>
+          `;
+          tbody.appendChild(subcatRow);
 
-      // Add event listeners for view buttons
-      tbody.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function(){
-          toggleSubcategories(this);
-        });
-      });
+          // Add event listener for view button
+          row.querySelector('.view-btn')?.addEventListener('click', function(){
+            toggleSubcategories(this);
+          });
+        } else {
+          // Empty placeholder row
+          row.innerHTML = `
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          `;
+          row.style.opacity = '0.4';
+          tbody.appendChild(row);
+        }
+      }
     }
 
     // Update pagination buttons
@@ -132,60 +146,76 @@ document.addEventListener("DOMContentLoaded", function(){
     if (archivedTbody) {
       archivedTbody.innerHTML = '';
 
-      if (paginatedCategories.length === 0) {
-        archivedTbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No archived categories</td></tr>';
+      if (allArchivedCategories.length === 0) {
+        archivedTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--muted);">No archived categories</td></tr>';
       } else {
-        paginatedCategories.forEach(category => {
+        // Fill with actual data or placeholders to maintain 8 rows
+        for (let i = 0; i < recordsPerPage; i++) {
           const row = document.createElement('tr');
 
-          row.innerHTML = `
-            <td>${category.category_id}</td>
-            <td>${category.category_name}</td>
-            <td title="${category.category_description || ''}">${truncateText(category.category_description)}</td>
-            <td>${category.product_count}</td>
-            <td title="${category.archive_reason || ''}">${truncateText(category.archive_reason, 30)}</td>
-            <td>${category.archived_at || '-'}</td>
-            <td class="op-buttons">
-              <button class="action-btn view-btn">
-                <i class="bi bi-eye"></i> View
-              </button>
-              <button class="action-btn unarchive-btn">
-                <i class="fas fa-undo"></i> Unarchive
-              </button>
-            </td>
-          `;
+          if (i < paginatedCategories.length) {
+            // Actual archived category data
+            const category = paginatedCategories[i];
+            row.innerHTML = `
+              <td>${category.category_id}</td>
+              <td>${category.category_name}</td>
+              <td title="${category.category_description || ''}">${truncateText(category.category_description)}</td>
+              <td>${category.product_count}</td>
+              <td title="${category.archive_reason || ''}">${truncateText(category.archive_reason, 30)}</td>
+              <td>${category.archived_at || '-'}</td>
+              <td class="op-buttons">
+                <button class="action-btn view-btn">
+                  <i class="bi bi-eye"></i> View
+                </button>
+                <button class="action-btn unarchive-btn">
+                  <i class="fas fa-undo"></i> Unarchive
+                </button>
+              </td>
+            `;
 
-          archivedTbody.appendChild(row);
+            archivedTbody.appendChild(row);
 
-          // Subcategory row for archived categories
-          const subcatRow = document.createElement('tr');
-          subcatRow.className = 'subcategory-row hidden';
-          subcatRow.innerHTML = `
-            <td colspan="7">
-              <table class="subcategory-table">
-                <thead>
-                  <tr>
-                    <th>Subcategory ID</th>
-                    <th>Subcategory Name</th>
-                    <th>Description</th>
-                    <th>Product Count</th>
-                  </tr>
-                </thead>
-                <tbody class="subcategory-table-body" data-category-id="${category.category_id}">
-                  <!-- Subcategories will be loaded here -->
-                </tbody>
-              </table>
-            </td>
-          `;
-          archivedTbody.appendChild(subcatRow);
-        });
+            // Subcategory row for archived categories
+            const subcatRow = document.createElement('tr');
+            subcatRow.className = 'subcategory-row hidden';
+            subcatRow.innerHTML = `
+              <td colspan="7">
+                <table class="subcategory-table">
+                  <thead>
+                    <tr>
+                      <th>Subcategory ID</th>
+                      <th>Subcategory Name</th>
+                      <th>Description</th>
+                      <th>Product Count</th>
+                    </tr>
+                  </thead>
+                  <tbody class="subcategory-table-body" data-category-id="${category.category_id}">
+                    <!-- Subcategories will be loaded here -->
+                  </tbody>
+                </table>
+              </td>
+            `;
+            archivedTbody.appendChild(subcatRow);
 
-        // Add event listeners for view buttons
-        archivedTbody.querySelectorAll('.view-btn').forEach(btn => {
-          btn.addEventListener('click', function(){
-            toggleSubcategories(this);
-          });
-        });
+            // Add event listener for view button
+            row.querySelector('.view-btn')?.addEventListener('click', function(){
+              toggleSubcategories(this);
+            });
+          } else {
+            // Empty placeholder row
+            row.innerHTML = `
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            `;
+            row.style.opacity = '0.4';
+            archivedTbody.appendChild(row);
+          }
+        }
       }
     }
 

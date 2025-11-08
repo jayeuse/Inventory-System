@@ -55,33 +55,54 @@ document.addEventListener("DOMContentLoaded", function() {
     const tbody = document.getElementById('suppliers-table-body');
     tbody.innerHTML = '';
 
-    if (paginatedSuppliers.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No suppliers found</td></tr>';
+    if (filteredSuppliers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--muted);">No suppliers found</td></tr>';
     } else {
-      paginatedSuppliers.forEach(supplier => {
+      // Fill with actual data or placeholders to maintain 8 rows
+      for (let i = 0; i < recordsPerPage; i++) {
         const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${supplier.supplier_id}</td>
-          <td>${supplier.supplier_name}</td>
-          <td>${supplier.contact_person}</td>
-          <td>${supplier.address}</td>
-          <td>${supplier.email}</td>
-          <td>${supplier.phone_number}</td>
-          <td>${supplier.status}</td>
-          <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
-          <td>
-            <div class="op-buttons">
-              <button class="action-btn edit-btn">
-                <i class="bi bi-pencil"></i> Edit
-              </button>
-              <button class="action-btn archive-btn">
-                <i class="fas fa-archive"></i> Archive
-              </button>
-            </div>
-          </td>
-        `;
+        
+        if (i < paginatedSuppliers.length) {
+          // Actual supplier data
+          const supplier = paginatedSuppliers[i];
+          row.innerHTML = `
+            <td>${supplier.supplier_id}</td>
+            <td>${supplier.supplier_name}</td>
+            <td>${supplier.contact_person}</td>
+            <td>${supplier.address}</td>
+            <td>${supplier.email}</td>
+            <td>${supplier.phone_number}</td>
+            <td>${supplier.status}</td>
+            <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
+            <td>
+              <div class="op-buttons">
+                <button class="action-btn edit-btn">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+                <button class="action-btn archive-btn">
+                  <i class="fas fa-archive"></i> Archive
+                </button>
+              </div>
+            </td>
+          `;
+        } else {
+          // Empty placeholder row
+          row.innerHTML = `
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          `;
+          row.style.opacity = '0.4';
+        }
+        
         tbody.appendChild(row);
-      });
+      }
     }
 
     // Update pagination buttons
@@ -99,32 +120,55 @@ document.addEventListener("DOMContentLoaded", function() {
     if (archivedTbody) {
       archivedTbody.innerHTML = '';
 
-      if (paginatedSuppliers.length === 0) {
-        archivedTbody.innerHTML = '<tr><td colspan="11" style="text-align: center;">No archived suppliers</td></tr>';
+      if (allArchivedSuppliers.length === 0) {
+        archivedTbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--muted);">No archived suppliers</td></tr>';
       } else {
-        paginatedSuppliers.forEach(supplier => {
+        // Fill with actual data or placeholders to maintain 8 rows
+        for (let i = 0; i < recordsPerPage; i++) {
           const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${supplier.supplier_id}</td>
-            <td>${supplier.supplier_name}</td>
-            <td>${supplier.contact_person}</td>
-            <td>${supplier.address}</td>
-            <td>${supplier.email}</td>
-            <td>${supplier.phone_number}</td>
-            <td>${supplier.status}</td>
-            <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
-            <td>${supplier.archive_reason || '-'}</td>
-            <td>${supplier.archived_at || '-'}</td>
-            <td>
-              <div class="op-buttons">
-                <button class="action-btn unarchive-btn">
-                  <i class="fas fa-undo"></i> Unarchive
-                </button>
-              </div>
-            </td>
-          `;
+          
+          if (i < paginatedSuppliers.length) {
+            // Actual archived supplier data
+            const supplier = paginatedSuppliers[i];
+            row.innerHTML = `
+              <td>${supplier.supplier_id}</td>
+              <td>${supplier.supplier_name}</td>
+              <td>${supplier.contact_person}</td>
+              <td>${supplier.address}</td>
+              <td>${supplier.email}</td>
+              <td>${supplier.phone_number}</td>
+              <td>${supplier.status}</td>
+              <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
+              <td>${supplier.archive_reason || '-'}</td>
+              <td>${supplier.archived_at || '-'}</td>
+              <td>
+                <div class="op-buttons">
+                  <button class="action-btn unarchive-btn">
+                    <i class="fas fa-undo"></i> Unarchive
+                  </button>
+                </div>
+              </td>
+            `;
+          } else {
+            // Empty placeholder row
+            row.innerHTML = `
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            `;
+            row.style.opacity = '0.4';
+          }
+          
           archivedTbody.appendChild(row);
-        });
+        }
       }
     }
 
