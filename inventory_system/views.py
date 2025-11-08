@@ -221,51 +221,40 @@ class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
         new_status = data.get('status')
 
         if old_status != 'Archived' and new_status == 'Archived':
-            
-            if ProductStocks.objects.filter(product = instance).exists():
+            # Comprehensive validation before archiving
+            if ProductStocks.objects.filter(product=instance).exists():
                 raise ValidationError("Cannot archive Product: It has existing stock record/s!")
             
-            if ProductBatch.objects.filter(product_stock__product = instance).exists():
+            if ProductBatch.objects.filter(product_stock__product=instance).exists():
                 raise ValidationError("Cannot archive Product: It has existing batch record/s!")
             
-            if OrderItem.objects.filter(product = instance).exists():
+            if OrderItem.objects.filter(product=instance).exists():
                 raise ValidationError("Cannot archive Product: It is referenced in order/s!")
             
             updated = serializer.save(
-                status = 'Archived',
-                archived_at = timezone.now(),
-                archive_reason = data.get('archive_reason')
-            )
-
-            self._create_archive_log(
-                updated,
-                reason = data.get('archive_reason', 'Product Archived'),
-                user = self.request.user,
-                snapshot = ProductSerializer(updated).data,
-                action = 'Archived'
-            )
-
-        elif old_status == 'Archived' and new_status != 'Archived':
-            updated.serializer.save(status = 'Active', archived_at = None, archive_reason = None)
-
-            self._create_archive_log(
-                updated,
-                reason = 'Product Unarchived',
-                user = self.request.user,
-                snapshot = ProductSerializer(updated).data,
-                action = 'Unarchived'
-            )
-        else:
-            serializer.save()
-        
-        if data.get('status') == 'Archived':
-            serializer.save(
                 status='Archived',
                 archived_at=timezone.now(),
                 archive_reason=data.get('archive_reason')
             )
-        elif instance.status == 'Archived' and data.get('status') != 'Archived':
-            serializer.save(status='Active', archived_at=None, archive_reason=None)
+
+            self._create_archive_log(
+                updated,
+                reason=data.get('archive_reason', 'Product Archived'),
+                user=self.request.user,
+                snapshot=ProductSerializer(updated).data,
+                action='Archived'
+            )
+
+        elif old_status == 'Archived' and new_status != 'Archived':
+            updated = serializer.save(status='Active', archived_at=None, archive_reason=None)
+
+            self._create_archive_log(
+                updated,
+                reason='Product Unarchived',
+                user=self.request.user,
+                snapshot=ProductSerializer(updated).data,
+                action='Unarchived'
+            )
         else:
             serializer.save()
 
@@ -349,6 +338,126 @@ class ReceiveOrderViewSet(viewsets.ModelViewSet):
         OrderService.validate_receive_quantity_create(order_item, quantity_received)
 
         serializer.save()
+
+    @action(detail=False, methods=['post'])
+    def bulk_receive(self, request):
+        """
+        Receive multiple order items in one atomic transaction.
+        
+        Request body example:
+        {
+            "items": [
+                {
+                    "order": "ORD-2025-00001",
+                    "order_item": "ITM-00001",
+                    "quantity_received": 100,
+                    "received_by": "John Doe",
+                    "expiry_date": "2026-12-31"  // optional
+                },
+                {
+                    "order": "ORD-2025-00001",
+                    "order_item": "ITM-00002",
+                    "quantity_received": 50,
+                    "received_by": "John Doe"
+                }
+            ]
+        }
+        """
+        from django.db import transaction as db_transaction
+        from rest_framework import status
+        
+        items = request.data.get('items', [])
+        
+        if not items:
+            return Response(
+                {'error': 'No items provided. Include an "items" array in the request body.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not isinstance(items, list):
+            return Response(
+                {'error': '"items" must be an array.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        results = []
+        errors = []
+        
+        try:
+            with db_transaction.atomic():
+                # Lock all order items upfront to prevent race conditions
+                order_item_ids = [item.get('order_item') for item in items if item.get('order_item')]
+                locked_order_items = {
+                    oi.order_item_id: oi 
+                    for oi in OrderItem.objects.select_for_update().filter(
+                        order_item_id__in=order_item_ids
+                    )
+                }
+                
+                for index, item_data in enumerate(items):
+                    try:
+                        # Validate that order_item was locked
+                        order_item_id = item_data.get('order_item')
+                        if order_item_id and order_item_id not in locked_order_items:
+                            errors.append({
+                                'index': index,
+                                'order_item': order_item_id,
+                                'error': f'Order item {order_item_id} not found.'
+                            })
+                            continue
+                        
+                        # Validate and create receive order
+                        serializer = self.get_serializer(data=item_data)
+                        serializer.is_valid(raise_exception=True)
+                        receive_order = serializer.save()
+                        
+                        results.append({
+                            'index': index,
+                            'receive_order_id': receive_order.receive_order_id,
+                            'order_item_id': receive_order.order_item.order_item_id,
+                            'product_name': f"{receive_order.order_item.product.brand_name} {receive_order.order_item.product.generic_name}",
+                            'quantity_received': receive_order.quantity_received,
+                            'status': 'success'
+                        })
+                        
+                    except ValidationError as e:
+                        # Collect validation errors but continue processing
+                        errors.append({
+                            'index': index,
+                            'order_item': item_data.get('order_item'),
+                            'error': e.detail if hasattr(e, 'detail') else str(e)
+                        })
+                    except Exception as e:
+                        errors.append({
+                            'index': index,
+                            'order_item': item_data.get('order_item'),
+                            'error': str(e)
+                        })
+                
+                # If any errors occurred, rollback the entire transaction
+                if errors:
+                    raise ValidationError({
+                        'message': 'Bulk receive failed. All items rolled back.',
+                        'errors': errors,
+                        'successful_items': results
+                    })
+        
+        except ValidationError:
+            # Re-raise validation errors
+            raise
+        except Exception as e:
+            return Response(
+                {'error': f'Unexpected error during bulk receive: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response({
+            'message': f'Successfully received {len(results)} item(s)',
+            'results': results,
+            'total_items': len(items),
+            'successful': len(results),
+            'failed': len(errors)
+        }, status=status.HTTP_201_CREATED)
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date_of_transaction')

@@ -33,86 +33,103 @@ def capture_old_receive_quantity(sender, instance, **kwargs):
 # ReceiveOrder Signals - Handle inventory updates when items are received
 @receiver(post_save, sender=ReceiveOrder)
 def handle_received_items(sender, instance, created, **kwargs):
-    """Handle inventory updates and transaction recording when items are received"""
+    """Handle inventory updates, transaction recording, and order status update when items are received"""
+    # Prevent recursive signal calls
+    if getattr(instance, '_processing', False):
+        return
+    
     try:
-        if not hasattr(instance, '_processing'):
-            instance._processing = True
+        instance._processing = True
         
-            with transaction.atomic():
-                # Get the product and find or create its ProductStocks
+        with transaction.atomic():
+            # Get the product and find or create its ProductStocks
 
-                if created:
-                    quantity_to_add = instance.quantity_received
-                    print(f"New Receipt - Adding quantity:  {quantity_to_add}")
-                else:
-                    old_quantity = getattr(instance, '_old_quantity_received', 0)
-                    quantity_to_add = instance.quantity_received - old_quantity
-                    print(f"Update - Old: {old_quantity}, New {instance.quantity_received}, Difference: {quantity_to_add}")
+            if created:
+                quantity_to_add = instance.quantity_received
+                print(f"New Receipt - Adding quantity:  {quantity_to_add}")
+            else:
+                old_quantity = getattr(instance, '_old_quantity_received', 0)
+                quantity_to_add = instance.quantity_received - old_quantity
+                print(f"Update - Old: {old_quantity}, New {instance.quantity_received}, Difference: {quantity_to_add}")
 
-                if quantity_to_add <= 0:
-                    print(f"No quantity to add, skipping inventory update")
-                    return
+            if quantity_to_add <= 0:
+                print(f"No quantity to add, skipping inventory update")
+                # Still update order status even if no quantity change
+                OrderService.update_order_status(instance.order)
+                return
 
-                product = instance.order_item.product
-                product_stock, _ = ProductStocks.objects.get_or_create(
-                    product=product,
-                    defaults={'total_on_hand': 0, 'status': 'Normal'}
-                )
-                
-                # Create or update batch with the received quantity
-                batch = InventoryService.create_or_update_product_batch(
-                    product=product,
-                    product_stock=product_stock,
-                    received_quantity=instance.quantity_received
-                )
-                
-                # Update stock totals and status
-                InventoryService.update_stock_total(product_stock)
-                InventoryService.update_batch_status(batch)
-                InventoryService.update_stock_status(product_stock)
-                
-                # Record stock-in transaction
-                TransactionService.record_stock_in(
-                    product=product,
-                    batch=batch,
-                    quantity_change=quantity_to_add,
-                    on_hand=batch.on_hand,
-                    performed_by=instance.received_by,
-                    remarks=f"Received {quantity_to_add} units from {instance.order_item.supplier.supplier_name} via Order {instance.order.order_id}"
-                )
-                
-                print(f"✅ Processed ReceiveOrder {instance.receive_order_id}: {quantity_to_add} units added to batch {batch.batch_id}")
+            product = instance.order_item.product
+            product_stock, _ = ProductStocks.objects.get_or_create(
+                product=product,
+                defaults={'total_on_hand': 0, 'status': 'Normal'}
+            )
+            
+            # Create or update batch with the received quantity
+            # Use actual expiry_date from ReceiveOrder if provided
+            batch = InventoryService.create_or_update_product_batch(
+                product=product,
+                product_stock=product_stock,
+                received_quantity=instance.quantity_received,
+                expiry_date=instance.expiry_date  # Pass actual expiry date if available
+            )
+            
+            # Update stock totals and status
+            InventoryService.update_stock_total(product_stock)
+            InventoryService.update_batch_status(batch)
+            InventoryService.update_stock_status(product_stock)
+            
+            # Record stock-in transaction
+            TransactionService.record_stock_in(
+                product=product,
+                batch=batch,
+                quantity_change=quantity_to_add,
+                on_hand=batch.on_hand,
+                performed_by=instance.received_by,
+                remarks=f"Received {quantity_to_add} units from {instance.order_item.supplier.supplier_name} via Order {instance.order.order_id}"
+            )
+            
+            print(f"✅ Processed ReceiveOrder {instance.receive_order_id}: {quantity_to_add} units added to batch {batch.batch_id}")
+            
+            # Update order status after processing inventory
+            OrderService.update_order_status(instance.order)
+            print(f"✅ Updated Order {instance.order.order_id} status to: {instance.order.status}")
                 
     except Exception as e:
         print(f"❌ Error in handle_received_items: {e}")
+        # Transaction will automatically rollback due to atomic block
         raise
     
     finally:
         if hasattr(instance, '_processing'):
             delattr(instance, '_processing')
 
-
-@receiver(post_save, sender=ReceiveOrder)
-def update_order_status_on_receive(sender, instance, **kwargs):
-    """Update order status when ReceiveOrder is created or updated"""
-    OrderService.update_order_status(instance.order)
-
 # ProductBatch Signals - Update stock totals and status when batches change
 @receiver(post_save, sender=ProductBatch)
 def update_stock_on_batch_save(sender, instance, created, **kwargs):
     """Update ProductStocks totals and status when batch is saved"""
-    product_stock = instance.product_stock
+    # Prevent recursive signal calls
+    if getattr(instance, '_updating_stock', False):
+        return
     
-    # Update stock totals
-    InventoryService.update_stock_total(product_stock)
-    
-    # Update batch status
-    InventoryService.update_batch_status(instance)
-    
-    # Update stock status
-    InventoryService.update_stock_status(product_stock)
-    
-    print(f"✅ Updated stock {product_stock.stock_id}: {product_stock.total_on_hand} units - {product_stock.status}")
+    try:
+        instance._updating_stock = True
+        
+        product_stock = instance.product_stock
+        
+        # Update stock totals
+        InventoryService.update_stock_total(product_stock)
+        
+        # Update batch status
+        InventoryService.update_batch_status(instance)
+        
+        # Update stock status
+        InventoryService.update_stock_status(product_stock)
+        
+        print(f"✅ Updated stock {product_stock.stock_id}: {product_stock.total_on_hand} units - {product_stock.status}")
+        
+    finally:
+        if hasattr(instance, '_updating_stock'):
+            delattr(instance, '_updating_stock')
 
 @receiver(post_delete, sender=ProductBatch)
 def update_stock_on_batch_delete(sender, instance, **kwargs):

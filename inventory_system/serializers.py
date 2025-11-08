@@ -298,6 +298,7 @@ class ReceiveOrderSerializer(serializers.ModelSerializer):
             'quantity_received',
             'date_received',
             'received_by',
+            'expiry_date',
         ]
         extra_kwargs = {
             'order': {'write_only': True},
@@ -308,25 +309,41 @@ class ReceiveOrderSerializer(serializers.ModelSerializer):
         return f"{obj.order_item.product.brand_name} {obj.order_item.product.generic_name}"
     
     def validate(self, data):
+        from django.db import transaction
+        
         order_item = data.get('order_item')
         quantity_received = data.get('quantity_received')
         
         if order_item and quantity_received:
-            # Get total already received for this order item
-            total_received = ReceiveOrder.objects.filter(
-                order_item=order_item
-            ).aggregate(models.Sum('quantity_received'))['quantity_received__sum'] or 0
-            
-            # Add current quantity to total
-            if not self.instance:  # Creating new
-                total_received += quantity_received
-            else:  # Updating existing
-                total_received = total_received - self.instance.quantity_received + quantity_received
-            
-            if total_received > order_item.quantity_ordered:
-                raise serializers.ValidationError(
-                    f"Total quantity received ({total_received}) cannot exceed quantity ordered ({order_item.quantity_ordered})."
-                )
+            # Use atomic transaction with row-level locking to prevent race conditions
+            with transaction.atomic():
+                # Lock the order_item row to prevent concurrent modifications
+                locked_order_item = OrderItem.objects.select_for_update().get(pk=order_item.pk)
+                
+                # Get total already received for this order item (with lock held)
+                total_received = ReceiveOrder.objects.filter(
+                    order_item=locked_order_item
+                ).aggregate(models.Sum('quantity_received'))['quantity_received__sum'] or 0
+                
+                # Add current quantity to total
+                if not self.instance:  # Creating new
+                    new_total = total_received + quantity_received
+                else:  # Updating existing
+                    new_total = total_received - self.instance.quantity_received + quantity_received
+                
+                # Calculate remaining quantity
+                already_received = total_received if not self.instance else (total_received - self.instance.quantity_received)
+                remaining = locked_order_item.quantity_ordered - already_received
+                
+                if new_total > locked_order_item.quantity_ordered:
+                    raise serializers.ValidationError({
+                        'quantity_received': (
+                            f"Cannot receive {quantity_received} units. "
+                            f"Ordered: {locked_order_item.quantity_ordered}, "
+                            f"Already received: {already_received}, "
+                            f"Remaining: {remaining}"
+                        )
+                    })
         
         return data
     

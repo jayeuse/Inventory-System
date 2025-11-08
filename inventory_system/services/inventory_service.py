@@ -9,20 +9,26 @@ class InventoryService:
     """Business logic for inventory management"""
     
     @staticmethod
-    def create_or_update_product_batch(product, product_stock, received_quantity):
+    def create_or_update_product_batch(product, product_stock, received_quantity, expiry_date=None):
         """
         Create a new batch or update existing one based on expiry date tolerance
         Args:
             product: Product instance
             product_stock: ProductStocks instance
             received_quantity: Quantity received
+            expiry_date: Optional actual expiry date from product packaging. If None, will be auto-generated.
         """
         EXPIRY_TOLERANCE_DAYS = 10
         RECENT_BATCH_DAYS = 30
         
-        new_expiry_date = timezone.now().date() + timedelta(
-            days=product.expiry_threshold_days + EXPIRY_TOLERANCE_DAYS
-        )
+        # Use provided expiry_date or generate one
+        if expiry_date:
+            new_expiry_date = expiry_date
+        else:
+            new_expiry_date = timezone.now().date() + timedelta(
+                days=product.expiry_threshold_days + EXPIRY_TOLERANCE_DAYS
+            )
+        
         cutoff_date = timezone.now().date() - timedelta(days=RECENT_BATCH_DAYS)
 
         # Find suitable batches for this product_stock
@@ -37,6 +43,7 @@ class InventoryService:
             if expiry_diff <= EXPIRY_TOLERANCE_DAYS:
                 existing_batch.on_hand += received_quantity
                 existing_batch.save(update_fields=['on_hand'])
+                print(f"📦 Updated existing batch {existing_batch.batch_id} - Expiry: {existing_batch.expiry_date}")
                 return existing_batch
             
         # Create new batch
@@ -47,6 +54,7 @@ class InventoryService:
             status='Normal',
         )
         
+        print(f"📦 Created new batch {new_batch.batch_id} - Expiry: {new_expiry_date}")
         return new_batch
 
     @staticmethod
