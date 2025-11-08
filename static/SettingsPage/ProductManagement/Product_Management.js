@@ -118,77 +118,101 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!tableBody) return;
     tableBody.innerHTML = '';
 
-    if (paginatedProducts.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="10" style="text-align: center;">No products found</td></tr>';
+    if (filteredProducts.length === 0) {
+      // Show "No products found" message
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="10" style="text-align: center; padding: 40px; color: var(--muted);">No products found.</td>';
+      tableBody.appendChild(tr);
     } else {
-      paginatedProducts.forEach(p => {
+      // Fill with actual data or placeholders to maintain 8 rows
+      for (let i = 0; i < recordsPerPage; i++) {
         const row = document.createElement('tr');
-        row.dataset.categoryName = p.category_name || '';
-        const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
         
-        row.innerHTML = `
-          <td>${p.product_id || ''}</td>
-          <td>${p.brand_name || ''}</td>
-          <td>${p.generic_name || ''}</td>
-          <td>${p.category_name || ''}</td>
-          <td>${p.subcategory_name || ''}</td>
-          <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
-          <td>${p.low_stock_threshold || ''} units</td>
-          <td>${p.expiry_threshold_days || ''} days</td>
-          <td>${p.last_updated || ''}</td>
-          <td>
-            <div class="op-buttons">
-              <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
-              <button class="action-btn archive-btn"><i class="fas fa-archive"></i> Archive</button>
-            </div>
-          </td>
-        `;
+        if (i < paginatedProducts.length) {
+          // Actual product data
+          const p = paginatedProducts[i];
+          row.dataset.categoryName = p.category_name || '';
+          const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
+          
+          row.innerHTML = `
+            <td>${p.product_id || ''}</td>
+            <td>${p.brand_name || ''}</td>
+            <td>${p.generic_name || ''}</td>
+            <td>${p.category_name || ''}</td>
+            <td>${p.subcategory_name || ''}</td>
+            <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
+            <td>${p.low_stock_threshold || ''} units</td>
+            <td>${p.expiry_threshold_days || ''} days</td>
+            <td>${p.last_updated || ''}</td>
+            <td>
+              <div class="op-buttons">
+                <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
+                <button class="action-btn archive-btn"><i class="fas fa-archive"></i> Archive</button>
+              </div>
+            </td>
+          `;
 
-        // Helper to populate edit modal
-        const populateEditModal = (product) => {
-          currentEditProductId = product.product_id || product.productId || null;
-          const setIf = (selector, value) => {
-            const el = document.querySelector(selector);
-            if (el) el.value = value ?? '';
-          };
-          setIf('#editBrandName', product.brand_name || '');
-          setIf('#editGenericName', product.generic_name || '');
-          setIf('#editPrice', product.price_per_unit ?? '');
-          setIf('#editUnitOfMeasurement', product.unit_of_measurement || '');
-          setIf('#editLowStockThreshold', product.low_stock_threshold ?? '');
-          setIf('#editExpiryThreshold', product.expiry_threshold_days ?? '');
-          setIf('#editNotificationRecipient', product.notification_recipient || '');
+            // Helper to populate edit modal
+            const populateEditModal = (product) => {
+              currentEditProductId = product.product_id || product.productId || null;
+              const setIf = (selector, value) => {
+                const el = document.querySelector(selector);
+                if (el) el.value = value ?? '';
+              };
+              setIf('#editBrandName', product.brand_name || '');
+              setIf('#editGenericName', product.generic_name || '');
+              setIf('#editPrice', product.price_per_unit ?? '');
+              setIf('#editUnitOfMeasurement', product.unit_of_measurement || '');
+              setIf('#editLowStockThreshold', product.low_stock_threshold ?? '');
+              setIf('#editExpiryThreshold', product.expiry_threshold_days ?? '');
+              setIf('#editNotificationRecipient', product.notification_recipient || '');
 
-          const editCategory = document.getElementById('editCategory');
-          const editSubcategory = document.getElementById('editSubcategory');
-          const categoryVal = product.category_id || product.category || '';
-          const subcategoryVal = product.subcategory_id || product.subcategory || '';
+              const editCategory = document.getElementById('editCategory');
+              const editSubcategory = document.getElementById('editSubcategory');
+              const categoryVal = product.category_id || product.category || '';
+              const subcategoryVal = product.subcategory_id || product.subcategory || '';
 
-          if (editCategory) {
-            editCategory.value = categoryVal;
-            populateSubSelectForCategory(editSubcategory, categoryVal);
-          }
+              if (editCategory) {
+                editCategory.value = categoryVal;
+                populateSubSelectForCategory(editSubcategory, categoryVal);
+              }
 
-          if (editSubcategory) {
-            if (!categoryVal) editSubcategory.innerHTML = '<option value="">Select Subcategory</option>';
-            editSubcategory.value = subcategoryVal;
-          }
+              if (editSubcategory) {
+                if (!categoryVal) editSubcategory.innerHTML = '<option value="">Select Subcategory</option>';
+                editSubcategory.value = subcategoryVal;
+              }
 
-          if (editProductModal) editProductModal.style.display = 'flex';
-        };
+              if (editProductModal) editProductModal.style.display = 'flex';
+            };
 
-        row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
-        row.querySelector('.archive-btn')?.addEventListener('click', function () {
-          const id = p.product_id || p.productId || null;
-          if (!id) return alert('Product id missing');
-          if (!archiveModal) return alert('Archive modal not found');
-          archiveModal.dataset.targetApi = `/api/products/${id}/`;
-          archiveModal.dataset.targetAction = 'archive';
-          archiveModal.style.display = 'flex';
-        });
-
+          row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
+          row.querySelector('.archive-btn')?.addEventListener('click', function () {
+            const id = p.product_id || p.productId || null;
+            if (!id) return alert('Product id missing');
+            if (!archiveModal) return alert('Archive modal not found');
+            archiveModal.dataset.targetApi = `/api/products/${id}/`;
+            archiveModal.dataset.targetAction = 'archive';
+            archiveModal.style.display = 'flex';
+          });
+        } else {
+          // Empty placeholder row
+          row.innerHTML = `
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          `;
+          row.style.opacity = '0.4';
+        }
+        
         tableBody.appendChild(row);
-      });
+      }
     }
 
     // Update pagination buttons
@@ -222,76 +246,98 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!archivedBody) return;
     archivedBody.innerHTML = '';
 
-    if (paginatedProducts.length === 0) {
-      archivedBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No archived products found</td></tr>';
+    if (filteredProducts.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="9" style="text-align: center; padding: 40px; color: var(--muted);">No archived products found.</td>';
+      archivedBody.appendChild(tr);
     } else {
-      paginatedProducts.forEach(p => {
+      // Fill with actual data or placeholders to maintain 8 rows
+      for (let i = 0; i < recordsPerPage; i++) {
         const row = document.createElement('tr');
-        row.dataset.categoryName = p.category_name || '';
-        const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
-        const archiveReason = p.archive_reason || p.reason || '';
-        const archivedDate = p.archived_at || p.archived_date || p.updated_at || p.date_archived || '';
+        
+        if (i < paginatedProducts.length) {
+          // Actual product data
+          const p = paginatedProducts[i];
+          row.dataset.categoryName = p.category_name || '';
+          const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
+          const archiveReason = p.archive_reason || p.reason || '';
+          const archivedDate = p.archived_at || p.archived_date || p.updated_at || p.date_archived || '';
 
-        row.innerHTML = `
-          <td>${p.product_id || ''}</td>
-          <td>${p.brand_name || ''}</td>
-          <td>${p.generic_name || ''}</td>
-          <td>${p.category_name || ''}</td>
-          <td>${p.subcategory_name || ''}</td>
-          <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
-          <td>${archiveReason}</td>
-          <td>${archivedDate}</td>
-          <td>
-            <div class="op-buttons">
-              <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
-              <button class="action-btn unarchive-btn"><i class="fas fa-box-open"></i> Unarchive</button>
-            </div>
-          </td>
-        `;
+          row.innerHTML = `
+            <td>${p.product_id || ''}</td>
+            <td>${p.brand_name || ''}</td>
+            <td>${p.generic_name || ''}</td>
+            <td>${p.category_name || ''}</td>
+            <td>${p.subcategory_name || ''}</td>
+            <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
+            <td>${archiveReason}</td>
+            <td>${archivedDate}</td>
+            <td>
+              <div class="op-buttons">
+                <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
+                <button class="action-btn unarchive-btn"><i class="fas fa-box-open"></i> Unarchive</button>
+              </div>
+            </td>
+          `;
 
-        const populateEditModal = (product) => {
-          currentEditProductId = product.product_id || product.productId || null;
-          const setIf = (selector, value) => {
-            const el = document.querySelector(selector);
-            if (el) el.value = value ?? '';
-          };
-          setIf('#editBrandName', product.brand_name || '');
-          setIf('#editGenericName', product.generic_name || '');
-          setIf('#editPrice', product.price_per_unit ?? '');
-          setIf('#editUnitOfMeasurement', product.unit_of_measurement || '');
-          setIf('#editLowStockThreshold', product.low_stock_threshold ?? '');
-          setIf('#editExpiryThreshold', product.expiry_threshold_days ?? '');
-          setIf('#editNotificationRecipient', product.notification_recipient || '');
+            const populateEditModal = (product) => {
+              currentEditProductId = product.product_id || product.productId || null;
+              const setIf = (selector, value) => {
+                const el = document.querySelector(selector);
+                if (el) el.value = value ?? '';
+              };
+              setIf('#editBrandName', product.brand_name || '');
+              setIf('#editGenericName', product.generic_name || '');
+              setIf('#editPrice', product.price_per_unit ?? '');
+              setIf('#editUnitOfMeasurement', product.unit_of_measurement || '');
+              setIf('#editLowStockThreshold', product.low_stock_threshold ?? '');
+              setIf('#editExpiryThreshold', product.expiry_threshold_days ?? '');
+              setIf('#editNotificationRecipient', product.notification_recipient || '');
 
-          const editCategory = document.getElementById('editCategory');
-          const editSubcategory = document.getElementById('editSubcategory');
-          const categoryVal = product.category_id || product.category || '';
-          const subcategoryVal = product.subcategory_id || product.subcategory || '';
+              const editCategory = document.getElementById('editCategory');
+              const editSubcategory = document.getElementById('editSubcategory');
+              const categoryVal = product.category_id || product.category || '';
+              const subcategoryVal = product.subcategory_id || product.subcategory || '';
 
-          if (editCategory) {
-            editCategory.value = categoryVal;
-            populateSubSelectForCategory(editSubcategory, categoryVal);
-          }
+              if (editCategory) {
+                editCategory.value = categoryVal;
+                populateSubSelectForCategory(editSubcategory, categoryVal);
+              }
 
-          if (editSubcategory) {
-            if (!categoryVal) editSubcategory.innerHTML = '<option value="">Select Subcategory</option>';
-            editSubcategory.value = subcategoryVal;
-          }
+              if (editSubcategory) {
+                if (!categoryVal) editSubcategory.innerHTML = '<option value="">Select Subcategory</option>';
+                editSubcategory.value = subcategoryVal;
+              }
 
-          if (editProductModal) editProductModal.style.display = 'flex';
-        };
+              if (editProductModal) editProductModal.style.display = 'flex';
+            };
 
-        row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
-        row.querySelector('.unarchive-btn')?.addEventListener('click', function () {
-          const id = p.product_id || p.productId || null;
-          if (!id) return alert('Product id missing');
-          if (!unarchiveModal) return alert('Unarchive modal not found');
-          unarchiveModal.dataset.targetApi = `/api/products/unarchive/?id=${id}`;
-          unarchiveModal.style.display = 'flex';
-        });
-
+          row.querySelector('.edit-btn')?.addEventListener('click', () => populateEditModal(p));
+          row.querySelector('.unarchive-btn')?.addEventListener('click', function () {
+            const id = p.product_id || p.productId || null;
+            if (!id) return alert('Product id missing');
+            if (!unarchiveModal) return alert('Unarchive modal not found');
+            unarchiveModal.dataset.targetApi = `/api/products/unarchive/?id=${id}`;
+            unarchiveModal.style.display = 'flex';
+          });
+        } else {
+          // Empty placeholder row
+          row.innerHTML = `
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          `;
+          row.style.opacity = '0.4';
+        }
+        
         archivedBody.appendChild(row);
-      });
+      }
     }
 
     // Update pagination buttons
