@@ -450,6 +450,7 @@ class ReceiveOrder(models.Model):
     date_received = models.DateTimeField(default=timezone.now, db_column='date_received')
     received_by = models.TextField(db_column='received_by')
     expiry_date = models.DateField(null=True, blank=True, db_column='expiry_date', help_text="Actual expiry date from product packaging")
+    remarks = models.TextField(null=True, blank=True, db_column='remarks', help_text="Additional notes or remarks for this receive")
     
     def save(self, *args, **kwargs):
         if not self.receive_order_id:

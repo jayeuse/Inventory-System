@@ -294,6 +294,45 @@ class ProductBatchViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(product_stock__stock_id=stock_id)
         
         return queryset
+    
+    def perform_update(self, serializer):
+        # Extract custom transaction fields BEFORE saving
+        transaction_remarks = serializer.validated_data.get('transaction_remarks', None)
+        transaction_performed_by = serializer.validated_data.get('transaction_performed_by', None)
+        
+        # Remove from validated_data so they don't cause errors
+        serializer.validated_data.pop('transaction_remarks', None)
+        serializer.validated_data.pop('transaction_performed_by', None)
+        
+        # Get the instance before saving to attach custom fields
+        instance = serializer.instance
+        
+        # Attach custom fields to instance BEFORE save (so signal can use them)
+        if transaction_remarks:
+            instance._custom_transaction_remarks = transaction_remarks
+        if transaction_performed_by:
+            instance._custom_transaction_performed_by = transaction_performed_by
+        
+        # Now save (this will trigger the signal with custom fields attached)
+        serializer.save()
+    
+    def perform_create(self, serializer):
+        # Extract custom transaction fields BEFORE saving
+        transaction_remarks = serializer.validated_data.get('transaction_remarks', None)
+        transaction_performed_by = serializer.validated_data.get('transaction_performed_by', None)
+        
+        # Remove from validated_data
+        serializer.validated_data.pop('transaction_remarks', None)
+        serializer.validated_data.pop('transaction_performed_by', None)
+        
+        # Save first to get the instance
+        instance = serializer.save()
+        
+        # Attach custom fields after creation
+        if transaction_remarks:
+            instance._custom_transaction_remarks = transaction_remarks
+        if transaction_performed_by:
+            instance._custom_transaction_performed_by = transaction_performed_by
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-date_ordered')
@@ -326,6 +365,16 @@ class ReceiveOrderViewSet(viewsets.ModelViewSet):
         if new_quantity is not None:
             OrderService.validate_receive_quantity_update(instance, new_quantity)
 
+        # Extract custom transaction fields if provided
+        transaction_remarks = serializer.validated_data.pop('transaction_remarks', None)
+        transaction_performed_by = serializer.validated_data.pop('transaction_performed_by', None)
+        
+        # Attach custom fields to instance for signal to use
+        if transaction_remarks:
+            instance._custom_transaction_remarks = transaction_remarks
+        if transaction_performed_by:
+            instance._custom_transaction_performed_by = transaction_performed_by
+        
         serializer.save()
 
     def perform_create(self, serializer):
@@ -337,7 +386,18 @@ class ReceiveOrderViewSet(viewsets.ModelViewSet):
         
         OrderService.validate_receive_quantity_create(order_item, quantity_received)
 
-        serializer.save()
+        # Extract custom transaction fields if provided
+        transaction_remarks = serializer.validated_data.pop('transaction_remarks', None)
+        transaction_performed_by = serializer.validated_data.pop('transaction_performed_by', None)
+        
+        # Save the instance
+        instance = serializer.save()
+        
+        # Attach custom fields to instance for signal to use
+        if transaction_remarks:
+            instance._custom_transaction_remarks = transaction_remarks
+        if transaction_performed_by:
+            instance._custom_transaction_performed_by = transaction_performed_by
 
     @action(detail=False, methods=['post'])
     def bulk_receive(self, request):

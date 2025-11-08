@@ -195,11 +195,6 @@ document.addEventListener("DOMContentLoaded", function(){
     const expiry_date = document.getElementById("stockslist_edit_expiryDate").value;
     const remarks = document.getElementById("stockslist_edit_remarks").value.trim();
 
-    const data = {
-      on_hand: on_hand,
-      expiry_date: expiry_date
-    }
-
     if (!on_hand || !sku || !expiry_date){
       alert("Please fill in all required fields.");
       return;
@@ -208,6 +203,15 @@ document.addEventListener("DOMContentLoaded", function(){
       alert("Please provide a reason/remarks for editing this batch.");
       return;
     }
+
+    const data = {
+      on_hand: on_hand,
+      expiry_date: expiry_date,
+      transaction_remarks: remarks  // Add custom remarks for the transaction
+    }
+
+    console.log("Sending PATCH request to:", `/api/product-batches/${batch_id}/`);
+    console.log("Request data:", data);
 
     try {
       const response = await fetch(`/api/product-batches/${batch_id}/`, {
@@ -220,8 +224,25 @@ document.addEventListener("DOMContentLoaded", function(){
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error("API Error:", response.status, response.statusText, errorData);
-        console.log(batch_id);
+        console.error("API Error:", response.status, response.statusText);
+        console.error("Error Details:", errorData);
+        
+        // Show user-friendly error message
+        let errorMessage = "Failed to update batch:\n\n";
+        if (errorData && typeof errorData === 'object') {
+          // Display all error fields
+          for (const [field, errors] of Object.entries(errorData)) {
+            if (Array.isArray(errors)) {
+              errorMessage += `${field}: ${errors.join(', ')}\n`;
+            } else {
+              errorMessage += `${field}: ${errors}\n`;
+            }
+          }
+        } else {
+          errorMessage += "Unknown error occurred.";
+        }
+        
+        alert(errorMessage);
         return;
       }
 
@@ -229,12 +250,10 @@ document.addEventListener("DOMContentLoaded", function(){
         alert("Batch details updated Successfully!");
         stockslist_closeEditBatchModal();
         loadStocks();
-      } else {
-        const errorData = await response.json();
-        console.error("Error: " + JSON.stringify(errorData));
       }
     } catch (error){
-      console.error("Network Error: ", error)
+      console.error("Network Error: ", error);
+      alert("Network error occurred. Please check your connection and try again.");
     }
 
   });

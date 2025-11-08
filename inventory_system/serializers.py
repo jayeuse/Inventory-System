@@ -168,6 +168,10 @@ class ProductBatchSerializer(serializers.ModelSerializer):
     stock_id = serializers.CharField(source='product_stock.stock_id', read_only=True)
     product_name = serializers.SerializerMethodField()
     
+    # Optional fields for custom transaction details when adjusting on_hand
+    transaction_remarks = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    transaction_performed_by = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    
     class Meta:
         model = ProductBatch
         fields = [
@@ -178,6 +182,8 @@ class ProductBatchSerializer(serializers.ModelSerializer):
             'on_hand',
             'expiry_date',
             'status',
+            'transaction_remarks',
+            'transaction_performed_by',
         ]
         extra_kwargs = {
             'product_stock': {'write_only': True},
@@ -221,6 +227,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     supplier_name = serializers.CharField(source='supplier.supplier_name', read_only=True)
     supplier_id = serializers.CharField(source='supplier.supplier_id', read_only=True)
     order_id = serializers.CharField(source='order.order_id', read_only=True)
+    quantity_received = serializers.SerializerMethodField()
     
     class Meta:
         model = OrderItem
@@ -237,6 +244,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             'supplier_id',        
             'supplier_name',      
             'quantity_ordered',
+            'quantity_received',
         ]
         extra_kwargs = {
             'order': {'write_only': True},
@@ -246,6 +254,17 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     def get_product_name(self, obj):
         return f"{obj.product.brand_name} {obj.product.generic_name}"
+    
+    def get_quantity_received(self, obj):
+        """Calculate total quantity received so far for this order item"""
+        from django.db.models import Sum
+        from .models import ReceiveOrder
+        
+        total = ReceiveOrder.objects.filter(
+            order_item=obj
+        ).aggregate(Sum('quantity_received'))['quantity_received__sum']
+        
+        return total or 0
 
     def validate_quantity_ordered(self, value):
         if value <= 0:
@@ -285,6 +304,10 @@ class ReceiveOrderSerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
     quantity_ordered = serializers.IntegerField(source='order_item.quantity_ordered', read_only=True)
     
+    # Optional fields for custom transaction details
+    transaction_remarks = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    transaction_performed_by = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    
     class Meta:
         model = ReceiveOrder
         fields = [
@@ -299,6 +322,9 @@ class ReceiveOrderSerializer(serializers.ModelSerializer):
             'date_received',
             'received_by',
             'expiry_date',
+            'remarks',
+            'transaction_remarks',
+            'transaction_performed_by',
         ]
         extra_kwargs = {
             'order': {'write_only': True},

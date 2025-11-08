@@ -62,8 +62,13 @@ class TransactionService:
         return transaction
     
     @staticmethod
-    def record_adjust(product, batch, quantity_change, on_hand, performed_by, remarks=None):
-        """Record a stock adjustment transaction (e.g., inventory corrections, damage, loss)"""
+    def record_adjust(product, batch, quantity_change, on_hand, performed_by, remarks=None, skip_validation=False):
+        """
+        Record a stock adjustment transaction (e.g., inventory corrections, damage, loss)
+        
+        Args:
+            skip_validation: If True, skips negative stock validation (for direct on_hand updates)
+        """
         if isinstance(product, str):
             product = Product.objects.get(product_id=product)
         
@@ -71,7 +76,8 @@ class TransactionService:
             batch = ProductBatch.objects.get(batch_id=batch)
         
         # Validate that adjustment won't result in negative stock
-        if batch and quantity_change < 0:
+        # Skip validation for direct batch updates where on_hand is set directly
+        if not skip_validation and batch and quantity_change < 0:
             requested_reduction = abs(quantity_change)
             if batch.on_hand < requested_reduction:
                 raise ValidationError(
