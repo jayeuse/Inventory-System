@@ -236,6 +236,11 @@ function renderOrders(orders) {
         const tr = document.createElement('tr');
             const dateReceived = formatDateOnly(order.date_received);
         const statusBadge = `<span class="${getStatusBadgeClass(order.status)}">${order.status || '-'}</span>`;
+        
+        // Disable receive button if order is fully received
+        const isFullyReceived = order.status && order.status.toLowerCase() === 'received' && order.date_received;
+        const receiveButtonDisabled = isFullyReceived ? 'disabled' : '';
+        const receiveButtonClass = isFullyReceived ? 'action-btn receive-btn disabled' : 'action-btn receive-btn';
 
         tr.innerHTML = `
             <td>${order.order_id || '-'}</td>
@@ -248,7 +253,7 @@ function renderOrders(orders) {
                     <button class="action-btn view-btn" onclick="toggleOrderItems(this)">
                         <i class="bi bi-eye"></i> View
                     </button>
-                    <button class="action-btn receive-btn" onclick="openReceiveOrderModal('${order.order_id}')">
+                    <button class="${receiveButtonClass}" onclick="openReceiveOrderModal('${order.order_id}')" ${receiveButtonDisabled}>
                         <i class="fas fa-truck-loading"></i> Receive Order
                     </button>
                 </div>
@@ -270,6 +275,7 @@ function renderOrders(orders) {
                     <th>Product ID</th>
                     <th>Product Name</th>
                     <th>Quantity Ordered</th>
+                    <th>Quantity Received</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -281,6 +287,7 @@ function renderOrders(orders) {
                     <td>${item.product_id || '-'}</td>
                     <td>${item.product_name || (item.brand_name ? item.brand_name + ' ' + (item.generic_name || '') : '-')}</td>
                     <td>${item.quantity_ordered || '-'}</td>
+                    <td>${item.quantity_received || 0}</td>
                 </tr>`;
         });
 
@@ -405,9 +412,10 @@ function showReceiveModal(order) {
     const receiveOrderContent = document.getElementById('receiveOrderContent');
     if (!receiveOrderContent) return;
 
-    // items from serializer include order_item_id, product_name, quantity_ordered
+    // items from serializer include order_item_id, product_name, quantity_ordered, quantity_received
     const items = order.items || [];
     const totalOrdered = items.reduce((sum, it) => sum + (it.quantity_ordered || 0), 0);
+    const totalReceived = items.reduce((sum, it) => sum + (it.quantity_received || 0), 0);
     const dateReceivedDisplay = order.date_received ? formatDateOnly(order.date_received) : '-';
     // Determine ISO value for date input (YYYY-MM-DD)
     let dateReceivedInputVal = new Date().toISOString().split('T')[0];
@@ -443,19 +451,48 @@ function showReceiveModal(order) {
                     <th>Item ID</th>
                     <th>Product</th>
                     <th>Ordered</th>
-                    <th>Received</th>
+                    <th>Already Received</th>
+                    <th>Remaining</th>
+                    <th>Receive Now</th>
+                    <th>Expiry Date</th>
+                    <th>Remarks</th>
                 </tr>
             </thead>
             <tbody>`;
 
     items.forEach((item, index) => {
+        const ordered = item.quantity_ordered || 0;
+        const alreadyReceived = item.quantity_received || 0;
+        const remaining = ordered - alreadyReceived;
+        
         formHTML += `
             <tr>
                 <td>${item.order_item_id || '-'}</td>
                 <td>${item.product_name || (item.brand_name ? item.brand_name + ' ' + (item.generic_name || '') : '-')}</td>
-                <td>${item.quantity_ordered || 0}</td>
+                <td>${ordered}</td>
+                <td>${alreadyReceived}</td>
+                <td>${remaining}</td>
                 <td>
-                    <input type="number" id="receivedQty${index}" value="0" min="0" max="${item.quantity_ordered || 0}">
+                    <input type="number" 
+                           id="receivedQty${index}" 
+                           value="" 
+                           min="0" 
+                           max="${remaining}"
+                           placeholder="0"
+                           ${remaining === 0 ? 'disabled' : ''}>
+                </td>
+                <td>
+                    <input type="date" 
+                           id="expiryDate${index}" 
+                           ${remaining === 0 ? 'disabled' : ''}
+                           style="width: 130px;">
+                </td>
+                <td>
+                    <textarea 
+                           id="remarks${index}" 
+                           placeholder="Notes..."
+                           ${remaining === 0 ? 'disabled' : ''}
+                           style="width: 150px; height: 40px; resize: vertical; font-size: 12px; padding: 4px;"></textarea>
                 </td>
             </tr>`;
     });
@@ -463,17 +500,6 @@ function showReceiveModal(order) {
     formHTML += `
             </tbody>
         </table>
-        <div class="receipt-divider"></div>
-        <div class="receipt-summary">
-            <div class="receipt-info-row">
-                <span class="receipt-info-label">Total Items Ordered:</span>
-                <span>${items.length}</span>
-            </div>
-            <div class="receipt-info-row">
-                <span class="receipt-info-label receipt-total">Total Quantity Ordered:</span>
-                <span class="receipt-total">${totalOrdered}</span>
-            </div>
-        </div>
         <div class="receipt-divider"></div>
         <div class="receipt-info">
             <div class="receipt-info-row">
@@ -535,26 +561,44 @@ async function handleReceiveOrder() {
 
         order.items.forEach((item, index) => {
             const receivedQtyInput = document.getElementById(`receivedQty${index}`);
+            const expiryDateInput = document.getElementById(`expiryDate${index}`);
+            const remarksInput = document.getElementById(`remarks${index}`);
             if (!receivedQtyInput) return;
 
             const receivedQty = parseInt(receivedQtyInput.value) || 0;
+            const expiryDate = expiryDateInput ? expiryDateInput.value : null;
+            const remarks = remarksInput ? remarksInput.value.trim() : '';
+            const alreadyReceived = item.quantity_received || 0;
+            const remaining = item.quantity_ordered - alreadyReceived;
             
             if (receivedQty > 0) {
                 hasAnyReceived = true;
                 
-                // Validate quantity
-                if (receivedQty > item.quantity_ordered) {
-                    alert(`Cannot receive more than ordered for ${item.product_name}. Ordered: ${item.quantity_ordered}, Attempting: ${receivedQty}`);
+                // Validate quantity - check against remaining, not total ordered
+                if (receivedQty > remaining) {
+                    alert(`Cannot receive more than remaining for ${item.product_name}. Remaining: ${remaining}, Attempting: ${receivedQty}`);
                     throw new Error('Invalid quantity');
                 }
 
-                receiveRecords.push({
+                const receiveRecord = {
                     order: orderId,
                     order_item: item.order_item_id,
                     quantity_received: receivedQty,
                     date_received: dateReceived,
                     received_by: receivedBy
-                });
+                };
+
+                // Add expiry_date if provided
+                if (expiryDate) {
+                    receiveRecord.expiry_date = expiryDate;
+                }
+
+                // Add remarks if provided
+                if (remarks) {
+                    receiveRecord.remarks = remarks;
+                }
+
+                receiveRecords.push(receiveRecord);
             }
         });
 
@@ -570,30 +614,35 @@ async function handleReceiveOrder() {
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
         }
 
-        console.log('Sending receive records:', receiveRecords);
+        console.log('Sending bulk receive request:', { items: receiveRecords });
 
-        // Send each receive record to the API
-        const promises = receiveRecords.map(record => 
-            fetch('/api/receive-orders/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(record)
-            })
-        );
+        // Use the bulk_receive endpoint
+        const response = await fetch('/api/receive-orders/bulk_receive/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ items: receiveRecords })
+        });
 
-        const responses = await Promise.all(promises);
+        const result = await response.json();
         
-        // Check if all requests succeeded
-        const allSuccessful = responses.every(r => r.ok);
-        
-        if (!allSuccessful) {
-            const failedResponses = await Promise.all(
-                responses.filter(r => !r.ok).map(r => r.json().catch(() => ({ error: 'Unknown error' })))
-            );
-            console.error('Failed to receive some items:', failedResponses);
-            alert('Some items failed to be received. Please check the console for details.');
+        if (!response.ok) {
+            console.error('Bulk receive failed:', result);
+            
+            // Display detailed error message
+            let errorMsg = 'Failed to receive items:\n\n';
+            if (result.errors && Array.isArray(result.errors)) {
+                result.errors.forEach(err => {
+                    errorMsg += `Item ${err.order_item || err.index}: ${JSON.stringify(err.error)}\n`;
+                });
+            } else if (result.error) {
+                errorMsg += result.error;
+            } else {
+                errorMsg += JSON.stringify(result);
+            }
+            
+            alert(errorMsg);
             
             // Re-enable button
             if (confirmBtn) {
@@ -603,8 +652,9 @@ async function handleReceiveOrder() {
             return;
         }
 
-        // Success - close modal and reload orders
-        alert(`Successfully received ${receiveRecords.length} item(s) for order ${orderId}`);
+        // Success
+        const successCount = result.successful || result.results?.length || receiveRecords.length;
+        alert(`Successfully received ${successCount} item(s) for order ${orderId}`);
         
         document.getElementById('receiveOrderModal').style.display = 'none';
         
@@ -614,7 +664,7 @@ async function handleReceiveOrder() {
             confirmBtn.innerHTML = '<i class="fas fa-check"></i> Complete Receiving';
         }
         
-        // Reload orders to reflect updated status
+        // Reload orders to reflect updated status and quantities
         await loadOrders();
 
     } catch (error) {

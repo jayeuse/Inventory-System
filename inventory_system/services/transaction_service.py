@@ -1,5 +1,6 @@
 
 from ..models import Transaction, Product, ProductBatch
+from rest_framework.exceptions import ValidationError
 
 
 class TransactionService:
@@ -37,6 +38,14 @@ class TransactionService:
         if isinstance(batch, str):
             batch = ProductBatch.objects.get(batch_id=batch)
         
+        # Validate sufficient stock before recording stock-out
+        requested_quantity = abs(quantity_change)
+        if batch.on_hand < requested_quantity:
+            raise ValidationError(
+                f"Insufficient stock in batch {batch.batch_id}. "
+                f"Requested: {requested_quantity}, Available: {batch.on_hand}"
+            )
+        
         # Ensure quantity_change is negative for stock out
         quantity_change = -abs(quantity_change)
         
@@ -53,13 +62,28 @@ class TransactionService:
         return transaction
     
     @staticmethod
-    def record_adjust(product, batch, quantity_change, on_hand, performed_by, remarks=None):
-        """Record a stock adjustment transaction (e.g., inventory corrections, damage, loss)"""
+    def record_adjust(product, batch, quantity_change, on_hand, performed_by, remarks=None, skip_validation=False):
+        """
+        Record a stock adjustment transaction (e.g., inventory corrections, damage, loss)
+        
+        Args:
+            skip_validation: If True, skips negative stock validation (for direct on_hand updates)
+        """
         if isinstance(product, str):
             product = Product.objects.get(product_id=product)
         
         if batch and isinstance(batch, str):
             batch = ProductBatch.objects.get(batch_id=batch)
+        
+        # Validate that adjustment won't result in negative stock
+        # Skip validation for direct batch updates where on_hand is set directly
+        if not skip_validation and batch and quantity_change < 0:
+            requested_reduction = abs(quantity_change)
+            if batch.on_hand < requested_reduction:
+                raise ValidationError(
+                    f"Cannot adjust batch {batch.batch_id} by -{requested_reduction}. "
+                    f"Current stock: {batch.on_hand}. This would result in negative inventory."
+                )
         
         # Keep the sign as provided for adjustments (can be + or -)
         transaction = Transaction.objects.create(

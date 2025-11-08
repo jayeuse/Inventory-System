@@ -172,7 +172,7 @@ function getTypeBadgeClass(type) {
   const lowerType = (type || '').toLowerCase();
   if (lowerType === 'in' || lowerType === 'stock in') return 'type-badge type-badge-in';
   if (lowerType === 'out' || lowerType === 'stock out') return 'type-badge type-badge-out';
-  if (lowerType === 'adjust' || lowerType === 'adjustment') return 'type-badge type-badge-adjust';
+  if (lowerType === 'adj' || lowerType === 'adjust' || lowerType === 'adjustment' || lowerType === 'stock adjustment') return 'type-badge type-badge-adjust';
   return 'type-badge';
 }
 
@@ -180,6 +180,6 @@ function getTypeBadgeText(type) {
   const lowerType = (type || '').toLowerCase();
   if (lowerType === 'in' || lowerType === 'stock in') return 'Stock In';
   if (lowerType === 'out' || lowerType === 'stock out') return 'Stock Out';
-  if (lowerType === 'adjust' || lowerType === 'adjustment') return 'Adjust';
+  if (lowerType === 'adj' || lowerType === 'adjust' || lowerType === 'adjustment' || lowerType === 'stock adjustment') return 'Adjust';
   return type;
 }
