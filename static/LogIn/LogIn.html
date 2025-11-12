@@ -1,0 +1,243 @@
+ <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="LogIn.css">
+ </head>
+  <body>
+    <div class="split-container">
+      <div class="left-side">
+        <img src="image.jpg" alt="Inventory Illustration" />
+      </div>
+      <div class="right-side">
+        <div class="floating-shapes">
+          <div class="shape shape-1"></div>
+          <div class="shape shape-2"></div>
+          <div class="shape shape-3"></div>
+          <div class="shape shape-4"></div>
+          <div class="shape shape-5"></div>
+          <div class="shape shape-6"></div>
+          <div class="shape shape-7"></div>
+          <div class="shape shape-8"></div>
+        </div>
+
+        <div class="container">
+          <div class="card active" id="login-card">
+            <div class="logo">
+              <h1>Log In</h1>
+            </div>
+
+            <div class="welcome-text">
+              Welcome back! Please enter your details
+            </div>
+
+            <div class="form-group">
+              <label for="login-username">Username</label>
+              <input
+                type="text"
+                id="login-username"
+                placeholder="Enter your username"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="login-password">Password</label>
+              <input
+                type="password"
+                id="login-password"
+                placeholder="Enter your password"
+              />
+              <button class="password-toggle" id="password-toggle">Show</button>
+            </div>
+
+            <button class="btn btn-primary pulse" id="login-btn">Log In</button>
+
+            <div class="link">
+              <a href="#" id="forgot-password-link">Forgot your password?</a>
+            </div>
+          </div>
+          <div class="card hidden" id="forgot-username-card">
+            <div class="step-indicator">
+              <div class="step active">1</div>
+              <div class="step-line"></div>
+              <div class="step">2</div>
+              <div class="step-line"></div>
+              <div class="step">3</div>
+              <div class="step-line"></div>
+              <div class="step">4</div>
+            </div>
+
+            <h2 style="text-align: center; margin-bottom: 20px">
+              Find Your Account
+            </h2>
+            <p class="instructions">
+              Enter your username to search for your account.
+            </p>
+
+            <div class="form-group">
+              <label for="forgot-username">Username</label>
+              <input
+                type="text"
+                id="forgot-username"
+                placeholder="Enter your username"
+              />
+            </div>
+
+            <button class="btn btn-primary" id="find-account-btn">
+              Find Account
+            </button>
+
+            <div class="link">
+              <a href="#" id="back-to-login-from-username">Back to Login</a>
+            </div>
+          </div>
+          <div class="card hidden" id="verification-card">
+            <div class="step-indicator">
+              <div class="step">1</div>
+              <div class="step-line active"></div>
+              <div class="step active">2</div>
+              <div class="step-line"></div>
+              <div class="step">3</div>
+              <div class="step-line"></div>
+              <div class="step">4</div>
+            </div>
+
+            <h2 style="text-align: center; margin-bottom: 20px">
+              Verify Your Identity
+            </h2>
+            <p class="instructions">
+              We've sent a verification code to the email associated with your
+              account. Please enter it below to continue.
+            </p>
+
+            <div class="form-group">
+              <div class="verification-inputs">
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="0"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="1"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="2"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="3"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="4"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="5"
+                />
+              </div>
+            </div>
+
+            <button class="btn btn-primary" id="verify-btn">Verify Code</button>
+
+            <div class="resend-code">
+              Didn't receive the code?
+              <a href="#" id="resend-link">Resend Code</a>
+            </div>
+
+            <div class="link">
+              <a href="#" id="back-to-username">Back to Username</a>
+            </div>
+          </div>
+          <div class="card hidden" id="forgot-password-card">
+            <div class="step-indicator">
+              <div class="step">1</div>
+              <div class="step-line active"></div>
+              <div class="step">2</div>
+              <div class="step-line active"></div>
+              <div class="step active">3</div>
+              <div class="step-line"></div>
+              <div class="step">4</div>
+            </div>
+
+            <h2 style="text-align: center; margin-bottom: 20px">
+              Reset Your Password
+            </h2>
+            <p class="instructions">Enter your new password below.</p>
+
+            <div class="form-group">
+              <label for="new-password">New Password</label>
+              <input
+                type="password"
+                id="new-password"
+                placeholder="Enter new password"
+              />
+              <button class="password-toggle" id="new-password-toggle">
+                Show
+              </button>
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-password">Confirm Password</label>
+              <input
+                type="password"
+                id="confirm-password"
+                placeholder="Confirm new password"
+              />
+              <button class="password-toggle" id="confirm-password-toggle">
+                Show
+              </button>
+            </div>
+
+            <button class="btn btn-primary" id="reset-password-btn">
+              Reset Password
+            </button>
+
+            <div class="link">
+              <a href="#" id="back-to-login-from-password">Back to Login</a>
+            </div>
+          </div>
+          <div class="card hidden" id="success-card">
+            <div class="step-indicator">
+              <div class="step">1</div>
+              <div class="step-line active"></div>
+              <div class="step">2</div>
+              <div class="step-line active"></div>
+              <div class="step">3</div>
+              <div class="step-line active"></div>
+              <div class="step active">4</div>
+            </div>
+
+            <div class="success-message">
+              <h3>Password Reset Successful!</h3>
+              <p>
+                Your password has been successfully reset. You can now log in
+                with your new password.
+              </p>
+            </div>
+            <button class="btn btn-secondary" id="back-to-login-success">
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="LogIn.js"></script>
+</body>
+</html>
