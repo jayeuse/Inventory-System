@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from django.db import models
 from django.utils.timezone import localtime
-from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog
+from django.contrib.auth.models import User
+from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog, UserInformation
 
 class CategorySerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
@@ -411,3 +412,112 @@ class TransactionSerializer(serializers.ModelSerializer):
             local_time = localtime(obj.date_of_transaction)
             return local_time.strftime('%b %d, %Y %I:%M %p')
         return None
+
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer for Django's built-in User model"""
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff', 'date_joined', 'last_login']
+        read_only_fields = ['id', 'date_joined', 'last_login']
+
+class UserInformationSerializer(serializers.ModelSerializer):
+    """Serializer for UserInformation (user profile)"""
+    # Nested user data
+    user = UserSerializer(read_only=True)
+    
+    # Write-only fields for creating user and profile together
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    email = serializers.EmailField(write_only=True)
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
+    
+    # Computed fields
+    full_name = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = UserInformation
+        fields = [
+            'user_info_code',
+            'user_info_id',
+            'user',
+            'middle_name',
+            'phone_number',
+            'address',
+            'role',
+            'created_at',
+            'updated_at',
+            'created_by',
+            'full_name',
+            'created_at_formatted',
+            # Write-only fields for creation
+            'username',
+            'password',
+            'email',
+            'first_name',
+            'last_name',
+        ]
+        read_only_fields = ['user_info_code', 'user_info_id', 'created_at', 'updated_at', 'created_by']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+    
+    def get_created_at_formatted(self, obj):
+        if obj.created_at:
+            local_time = localtime(obj.created_at)
+            return local_time.strftime('%b %d, %Y %I:%M %p')
+        return None
+    
+    def create(self, validated_data):
+        # Extract User fields
+        username = validated_data.pop('username')
+        password = validated_data.pop('password')
+        email = validated_data.pop('email')
+        first_name = validated_data.pop('first_name')
+        last_name = validated_data.pop('last_name')
+        
+        # Create User
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            email=email,
+            first_name=first_name,
+            last_name=last_name
+        )
+        
+        # Get created_by (only if authenticated)
+        request = self.context.get('request')
+        created_by = None
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            created_by = request.user
+        
+        # Create UserInformation
+        user_info = UserInformation.objects.create(
+            user=user,
+            created_by=created_by,
+            **validated_data
+        )
+        
+        return user_info
+    
+    def update(self, instance, validated_data):
+        # Update User fields if provided
+        user = instance.user
+        user.email = validated_data.pop('email', user.email)
+        user.first_name = validated_data.pop('first_name', user.first_name)
+        user.last_name = validated_data.pop('last_name', user.last_name)
+        
+        # Update password if provided
+        password = validated_data.pop('password', None)
+        if password:
+            user.set_password(password)
+        
+        user.save()
+        
+        # Update UserInformation fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        return instance

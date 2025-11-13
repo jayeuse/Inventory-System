@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 import os
 
-from .models import ArchiveLog, Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction
+from .models import ArchiveLog, Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, UserInformation
 from .serializers import (
     ArchiveLogSerializer,
     CategorySerializer, 
@@ -22,8 +22,10 @@ from .serializers import (
     OrderItemSerializer, 
     OrderSerializer, 
     ReceiveOrderSerializer,
-    TransactionSerializer
+    TransactionSerializer,
+    UserInformationSerializer
 )
+from .permissions import IsAdmin, IsStaffOrReadOnly, InventoryPermission, TransactionPermission
 from .services.order_service import OrderService
 
 def serve_static_html(request, file_path):
@@ -58,6 +60,7 @@ class ArchiveLogViewSet(viewsets.ModelViewSet):
     queryset = ArchiveLog.objects.all().order_by('-archived_at')
     serializer_class = ArchiveLogSerializer
     lookup_field = 'archive_id'
+    permission_classes = [IsAdmin]  # Only Admin can view archive logs
 
 class ArchiveLoggingMixin:
     def _create_archive_log(self, instance, reason=None, user=None, snapshot=None, action='Archived'):
@@ -77,6 +80,7 @@ class CategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'category_id'
+    permission_classes = [IsStaffOrReadOnly]  # Admin/Staff can edit, Clerk can view
 
     def get_queryset(self):
         show_archived = self.request.query_params.get('show_archived')
@@ -123,6 +127,7 @@ class SubcategoryViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Subcategory.objects.all()
     serializer_class = SubcategorySerializer
     lookup_field = 'subcategory_id'
+    permission_classes = [IsStaffOrReadOnly]  # Admin/Staff can edit, Clerk can view
 
     def get_queryset(self):
         show_archived = self.request.query_params.get('show_archived')
@@ -165,6 +170,7 @@ class SupplierViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
     lookup_field = 'supplier_id'
+    permission_classes = [IsStaffOrReadOnly]  # Admin/Staff can edit, Clerk can view
 
     def get_queryset(self):
         show_archived = self.request.query_params.get('show_archived')
@@ -208,6 +214,7 @@ class ProductViewSet(ArchiveLoggingMixin, viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     lookup_field = 'product_id'
+    permission_classes = [IsStaffOrReadOnly]  # Admin/Staff can edit, Clerk can view
 
     def get_queryset(self):
         show_archived = self.request.query_params.get('show_archived')
@@ -283,11 +290,13 @@ class ProductStocksViewSet(viewsets.ModelViewSet):
     queryset = ProductStocks.objects.all().order_by('-stock_id')
     serializer_class = ProductStocksSerializer
     lookup_field = 'stock_id'
+    permission_classes = [InventoryPermission]  # Admin/Staff full access, Clerk read-only
 
 class ProductBatchViewSet(viewsets.ModelViewSet):
     queryset = ProductBatch.objects.all().order_by('-batch_id')
     serializer_class = ProductBatchSerializer
     lookup_field = 'batch_id'
+    permission_classes = [InventoryPermission]  # Admin/Staff full access, Clerk read-only
 
     def get_queryset(self):
         queryset = ProductBatch.objects.all().order_by('batch_id')
@@ -341,11 +350,13 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-date_ordered')
     serializer_class = OrderSerializer
     lookup_field = 'order_id'
+    permission_classes = [InventoryPermission]  # Admin/Staff full access, Clerk read-only
 
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all().order_by('order_item_id')
     serializer_class = OrderItemSerializer
     lookup_field = 'order_item_id'
+    permission_classes = [InventoryPermission]  # Admin/Staff full access, Clerk read-only
 
     def perform_update(self, serializer):
         instance = serializer.instance
@@ -360,6 +371,7 @@ class ReceiveOrderViewSet(viewsets.ModelViewSet):
     queryset = ReceiveOrder.objects.all().order_by('-date_received')
     serializer_class = ReceiveOrderSerializer
     lookup_field = 'receive_order_id'
+    permission_classes = [InventoryPermission]  # Admin/Staff full access, Clerk read-only
 
     def perform_update(self, serializer):
         instance = serializer.instance
@@ -526,3 +538,47 @@ class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date_of_transaction')
     serializer_class = TransactionSerializer
     lookup_field = 'transaction_id'
+    permission_classes = [TransactionPermission]  # Admin full, Staff inventory, Clerk read-only
+
+class UserInformationViewSet(viewsets.ModelViewSet):
+    """API endpoint for user management"""
+    queryset = UserInformation.objects.all().select_related('user', 'created_by')
+    serializer_class = UserInformationSerializer
+    lookup_field = 'user_info_id'
+    permission_classes = [IsAdmin]  # Only Admin can manage users
+    
+    def get_queryset(self):
+        queryset = UserInformation.objects.all().order_by('-created_at')
+        role = self.request.query_params.get('role')
+        if role:
+            queryset = queryset.filter(role=role)
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    def deactivate(self, request, user_info_id=None):
+        """Deactivate a user account"""
+        user_info = self.get_object()
+        user_info.user.is_active = False
+        user_info.user.save()
+        return Response({'status': 'User deactivated'}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'])
+    def activate(self, request, user_info_id=None):
+        """Activate a user account"""
+        user_info = self.get_object()
+        user_info.user.is_active = True
+        user_info.user.save()
+        return Response({'status': 'User activated'}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'])
+    def reset_password(self, request, user_info_id=None):
+        """Reset user password"""
+        user_info = self.get_object()
+        new_password = request.data.get('new_password')
+        
+        if not new_password:
+            return Response({'error': 'new_password is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user_info.user.set_password(new_password)
+        user_info.user.save()
+        return Response({'status': 'Password reset successful'}, status=status.HTTP_200_OK)

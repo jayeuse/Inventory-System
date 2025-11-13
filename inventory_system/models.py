@@ -517,3 +517,68 @@ class Transaction(models.Model):
 
     class Meta:
         db_table = 'transaction'
+
+class UserInformation(models.Model):
+    """
+    Extended user profile for inventory system.
+    Links to Django's auth.User model (stores username, password, email, first_name, last_name).
+    This model stores only ADDITIONAL fields specific to inventory management.
+    """
+    ROLE_CHOICES = [
+        ('Admin', 'Administrator'),
+        ('Staff', 'Staff'),
+        ('Clerk', 'Clerk'),
+    ]
+
+    user_info_code = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, db_column='user_info_code')
+    user_info_id = models.CharField(max_length=20, unique=True, editable=False, db_column='user_info_id')
+    
+    # Link to Django auth user (required - stores username, password, email, first_name, last_name, is_active, date_joined, last_login)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='user_information',
+        db_column='user_id'
+    )
+    
+    # Additional personal info (not in auth_user)
+    middle_name = models.CharField(max_length=100, blank=True, null=True, db_column='middle_name')
+    
+    # Contact information (not in auth_user)
+    phone_number = models.CharField(max_length=20, blank=True, null=True, db_column='phone_number')
+    address = models.TextField(blank=True, null=True, db_column='address')
+    
+    # Inventory-specific fields
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Staff', db_column='role')
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True, db_column='created_at')
+    updated_at = models.DateTimeField(auto_now=True, db_column='updated_at')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='created_user_profiles',
+        db_column='created_by'
+    )
+    
+    def save(self, *args, **kwargs):
+        if not self.user_info_id:
+            self.user_info_id = generate_code(UserInformation, 'user_info_id', 'USR-')
+        super().save(*args, **kwargs)
+    
+    def get_full_name(self):
+        """Return the user's full name from auth_user + middle name."""
+        if self.middle_name:
+            return f"{self.user.first_name} {self.middle_name} {self.user.last_name}"
+        return self.user.get_full_name()
+    
+    def __str__(self):
+        return f"{self.user_info_id} - {self.user.username} ({self.get_full_name()})"
+    
+    class Meta:
+        db_table = 'user_information'
+        ordering = ['-created_at']
+        verbose_name = 'User Profile'
+        verbose_name_plural = 'User Profiles'

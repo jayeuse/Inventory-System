@@ -1,10 +1,25 @@
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from django.db import transaction
-from .models import Product, Category, ReceiveOrder, ProductBatch, ProductStocks
+from django.contrib.auth.models import User
+from .models import Product, Category, ReceiveOrder, ProductBatch, ProductStocks, UserInformation
 from .services.inventory_service import InventoryService
 from .services.order_service import OrderService
 from .services.transaction_service import TransactionService
+
+# User Profile Auto-creation Signal
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Automatically create UserInformation profile when a User is created"""
+    if created:
+        UserInformation.objects.create(user=instance, role='Staff')
+        print(f"UserInformation profile created for user: {instance.username}")
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Save UserInformation when User is saved"""
+    if hasattr(instance, 'user_information'):
+        instance.user_information.save()
 
 # Category Product Count Signals
 @receiver(post_save, sender=Product)
