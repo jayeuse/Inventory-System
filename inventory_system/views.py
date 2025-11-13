@@ -39,6 +39,9 @@ def serve_static_html(request, file_path):
 def dashboard_view(request):
     return serve_static_html(request, 'DashboardPage/DashboardPage.html')
 
+def login_view(request):
+    return serve_static_html(request, 'LoginPage/LoginPage.html')
+
 def products_view(request):
     return serve_static_html(request, 'ProductPage/ProductPage.html')
 

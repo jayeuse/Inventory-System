@@ -21,6 +21,7 @@ router.register(r'archive_logs', views.ArchiveLogViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('login/', views.login_view, name='login'),
     path('dashboard/', views.dashboard_view, name = 'dashboard'),
     path('products/', views.products_view, name = 'products'),
     path('inventory/', views.inventory_view, name = 'inventory'),
