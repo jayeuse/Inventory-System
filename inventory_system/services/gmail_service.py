@@ -29,8 +29,13 @@ class GmailService:
         Token will be saved and reused for subsequent requests.
         """
         creds = None
-        token_path = os.path.join(settings.BASE_DIR, 'gmail_token.pickle')
-        credentials_path = os.path.join(settings.BASE_DIR, 'gmail_credentials.json')
+        credentials_dir = os.path.join(settings.BASE_DIR, '.credentials')
+        
+        # Ensure credentials directory exists
+        os.makedirs(credentials_dir, exist_ok=True)
+        
+        token_path = os.path.join(credentials_dir, 'gmail_token.pickle')
+        credentials_path = os.path.join(credentials_dir, 'gmail_credentials.json')
         
         # Load saved credentials if they exist
         if os.path.exists(token_path):

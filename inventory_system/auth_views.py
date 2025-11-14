@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from .models import OTP
-from .gmail_service import gmail_service
+from .services.gmail_service import gmail_service
 
 
 @csrf_exempt
