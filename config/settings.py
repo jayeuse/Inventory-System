@@ -141,3 +141,13 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+# Disable CSRF for API endpoints (development only - use proper authentication in production)
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+
+# Gmail OTP Settings
+GMAIL_SENDER_EMAIL = 'me'  # Uses authenticated user's email, or specify: 'your-email@gmail.com'
+
+# CSRF Settings
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
