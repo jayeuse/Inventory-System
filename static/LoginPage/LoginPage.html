@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="/static/LoginPage/LoginPage.css">
@@ -25,7 +26,117 @@
         </div>
 
         <div class="container">
+          <!-- Login Card -->
           <div class="card active" id="login-card">
+            <div class="logo">
+              <h1>Log In</h1>
+            </div>
+
+            <div class="welcome-text">
+              Welcome back! Please enter your details
+            </div>
+
+            <div id="login-error" class="alert alert-danger" style="display: none;"></div>
+
+            <div class="form-group">
+              <label for="login-username">Username</label>
+              <input
+                type="text"
+                id="login-username"
+                placeholder="Enter your username"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="login-password">Password</label>
+              <input
+                type="password"
+                id="login-password"
+                placeholder="Enter your password"
+              />
+              <button class="password-toggle" id="password-toggle">Show</button>
+            </div>
+
+            <button class="btn btn-primary pulse" id="login-btn">Log In</button>
+
+            <div class="link">
+              <a href="#" id="forgot-password-link">Forgot your password?</a>
+            </div>
+          </div>
+
+          <!-- OTP Verification Card -->
+          <div class="card hidden" id="otp-verification-card">
+            <div class="step-indicator">
+              <div class="step active">1</div>
+              <div class="step-line active"></div>
+              <div class="step active">2</div>
+            </div>
+
+            <h2 style="text-align: center; margin-bottom: 20px">
+              Verify Your Identity
+            </h2>
+            <p class="instructions">
+              We've sent a verification code to your email (<span id="user-email-display"></span>). 
+              Please enter it below to continue.
+            </p>
+
+            <div id="otp-error" class="alert alert-danger" style="display: none;"></div>
+
+            <div class="form-group">
+              <div class="verification-inputs">
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="0"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="1"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="2"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="3"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="4"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="verification-code"
+                  data-index="5"
+                />
+              </div>
+            </div>
+
+            <button class="btn btn-primary" id="verify-otp-btn">Verify Code</button>
+
+            <div class="resend-code">
+              Didn't receive the code?
+              <a href="#" id="resend-otp-link">Resend Code</a>
+            </div>
+
+            <div class="link">
+              <a href="#" id="back-to-login-from-otp">Back to Login</a>
+            </div>
+          </div>
+
+          <!-- Existing forgot password cards remain unchanged -->
+          <div class="card hidden" id="forgot-username-card">
             <div class="logo">
               <h1>Log In</h1>
             </div>

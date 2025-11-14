@@ -202,33 +202,11 @@
           loginBtn.disabled = true;
           loginBtn.textContent = "Logging in...";
           
-          // Get CSRF token from meta tag or cookie
-          let csrftoken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-          if (!csrftoken) {
-            // Fallback to cookie
-            function getCookie(name) {
-              let cookieValue = null;
-              if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                  const cookie = cookies[i].trim();
-                  if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                  }
-                }
-              }
-              return cookieValue;
-            }
-            csrftoken = getCookie('csrftoken');
-          }
-          
           try {
             const response = await fetch('/api/auth/login/', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken,
               },
               body: JSON.stringify({ username, password })
             });
@@ -293,30 +271,11 @@
           verifyOtpBtn.disabled = true;
           verifyOtpBtn.textContent = "Verifying...";
           
-          // Get CSRF token
-          function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-              const cookies = document.cookie.split(';');
-              for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                  break;
-                }
-              }
-            }
-            return cookieValue;
-          }
-          
-          const csrftoken = getCookie('csrftoken');
-          
           try {
             const response = await fetch('/api/auth/verify-otp/', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken,
               },
               body: JSON.stringify({
                 otp_session: otpSession,
@@ -359,30 +318,11 @@
           const originalText = resendOtpLink.textContent;
           resendOtpLink.textContent = "Sending...";
           
-          // Get CSRF token
-          function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-              const cookies = document.cookie.split(';');
-              for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                  break;
-                }
-              }
-            }
-            return cookieValue;
-          }
-          
-          const csrftoken = getCookie('csrftoken');
-          
           try {
             const response = await fetch('/api/auth/resend-otp/', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken,
               },
               body: JSON.stringify({
                 otp_session: otpSession

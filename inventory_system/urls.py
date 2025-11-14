@@ -32,6 +32,8 @@ urlpatterns = [
     
     # Authentication API endpoints
     path('api/auth/login/', auth_views.login_api, name='api_login'),
+    path('api/auth/verify-otp/', auth_views.verify_otp, name='verify_otp'),
+    path('api/auth/resend-otp/', auth_views.resend_otp, name='resend_otp'),
     path('api/auth/logout/', auth_views.logout_api, name='api_logout'),
     path('api/auth/me/', auth_views.current_user, name='current_user'),
     

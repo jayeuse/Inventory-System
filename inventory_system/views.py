@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from django.views.decorators.csrf import ensure_csrf_cookie
 import os
 
 from .models import ArchiveLog, Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, UserInformation
@@ -41,6 +42,7 @@ def serve_static_html(request, file_path):
 def dashboard_view(request):
     return serve_static_html(request, 'DashboardPage/DashboardPage.html')
 
+@ensure_csrf_cookie
 def login_view(request):
     return serve_static_html(request, 'LoginPage/LoginPage.html')
 
