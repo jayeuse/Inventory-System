@@ -2,6 +2,7 @@ from rest_framework.routers import DefaultRouter
 from django.contrib import admin
 from django.urls import path, include
 from . import views
+from . import auth_views
 
 
 router = DefaultRouter()
@@ -17,14 +18,22 @@ router.register(r'order-items', views.OrderItemViewSet)
 router.register(r'receive-orders', views.ReceiveOrderViewSet)
 router.register(r'transactions', views.TransactionViewSet)
 router.register(r'archive_logs', views.ArchiveLogViewSet)
+router.register(r'users', views.UserInformationViewSet)
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('login/', views.login_view, name='login'),
     path('dashboard/', views.dashboard_view, name = 'dashboard'),
     path('products/', views.products_view, name = 'products'),
     path('inventory/', views.inventory_view, name = 'inventory'),
     path('transactions/', views.transactions_view, name = 'transactions'),
     path('settings/', views.settings_view, name = 'settings'),
+    
+    # Authentication API endpoints
+    path('api/auth/login/', auth_views.login_api, name='api_login'),
+    path('api/auth/logout/', auth_views.logout_api, name='api_logout'),
+    path('api/auth/me/', auth_views.current_user, name='current_user'),
+    
     path('api/', include(router.urls)),
 ]

@@ -133,3 +133,14 @@
           });
         });
       });
+
+      // Navigate to dashboard when login button is clicked
+      const loginBtn = document.getElementById("login-btn");
+      if (loginBtn) {
+        loginBtn.addEventListener("click", function (e) {
+          // Prevent default form submission (if any) and go to dashboard
+          e.preventDefault();
+          // Use trailing slash to match Django's URL patterns
+          window.location.href = '/dashboard/';
+        });
+      }
