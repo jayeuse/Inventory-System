@@ -207,6 +207,7 @@
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
               },
               body: JSON.stringify({ username, password })
             });
@@ -276,6 +277,7 @@
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
               },
               body: JSON.stringify({
                 otp_session: otpSession,
@@ -323,6 +325,7 @@
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
               },
               body: JSON.stringify({
                 otp_session: otpSession

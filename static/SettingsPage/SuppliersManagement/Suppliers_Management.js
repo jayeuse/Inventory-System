@@ -278,7 +278,8 @@ document.addEventListener("DOMContentLoaded", function() {
       const response = await fetch('/api/suppliers/', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify(data)
       });
@@ -326,7 +327,8 @@ document.addEventListener("DOMContentLoaded", function() {
       const response = await fetch(`/api/suppliers/${currentEditSupplierId}/`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify(data)
       });
@@ -366,7 +368,10 @@ document.addEventListener("DOMContentLoaded", function() {
     try {
       const response = await fetch(archiveTarget.apiUrl, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
         body: JSON.stringify({ status: 'Archived', archive_reason: archiveReason })
       });
       
@@ -407,7 +412,10 @@ document.addEventListener("DOMContentLoaded", function() {
     try {
       const response = await fetch(`${archiveTarget.apiUrl}?show_archived=true`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
         body: JSON.stringify({ status: 'Active', unarchive_reason: unarchiveReason })
       });
       

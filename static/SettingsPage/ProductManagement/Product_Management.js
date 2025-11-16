@@ -217,6 +217,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Update pagination buttons
     updatePaginationButtons(activeCurrentPage, totalPages, false);
+    // Reapply frontend permissions (disable/archive buttons) after rendering rows
+    if (window.userPermissions && typeof window.userPermissions.applyPermissions === 'function') {
+      try { window.userPermissions.applyPermissions(); } catch (err) { console.error('Error applying user permissions:', err); }
+    }
   }
 
   // Display archived products with pagination
@@ -342,6 +346,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Update pagination buttons
     updatePaginationButtons(archivedCurrentPage, totalPages, true);
+    // Reapply frontend permissions (disable/archive buttons) after rendering archived rows
+    if (window.userPermissions && typeof window.userPermissions.applyPermissions === 'function') {
+      try { window.userPermissions.applyPermissions(); } catch (err) { console.error('Error applying user permissions:', err); }
+    }
   }
 
   // Update pagination buttons
@@ -596,7 +604,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const res = await fetch('/api/products/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
         body: JSON.stringify(data)
       });
 
@@ -631,7 +642,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const res = await fetch(`/api/products/${currentEditProductId}/`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
         body: JSON.stringify(data)
       });
 
@@ -667,7 +681,10 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
       const response = await fetch(apiUrl, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
         body: JSON.stringify({ 
           status: 'Archived',
           archive_reason: archiveReason
@@ -714,7 +731,10 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log('Sending unarchive request to:', apiUrl);
       const response = await fetch(apiUrl, {
         method: 'POST',  // Changed to POST since we're targeting the list endpoint
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
         body: JSON.stringify({ action: 'unarchive' })
       });
 
