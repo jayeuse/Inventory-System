@@ -360,7 +360,8 @@ if (categoryPaginationContainer) {
       const response = await fetch('/api/categories/', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify(data)
 
@@ -394,7 +395,8 @@ if (categoryPaginationContainer) {
       const response = await fetch('/api/subcategories/', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify(data)
       });
@@ -426,7 +428,8 @@ if (categoryPaginationContainer) {
       const response = await fetch (`/api/categories/${currentEditCategoryId}/`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify(data)
       });
@@ -460,7 +463,10 @@ if (categoryPaginationContainer) {
     try {
       const response = await fetch(archiveTarget.apiUrl, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
         body: JSON.stringify({ status: 'Archived', archive_reason: archiveReason })
       });
       
@@ -500,7 +506,10 @@ if (categoryPaginationContainer) {
     try {
       const response = await fetch(`${archiveTarget.apiUrl}?show_archived=true`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
         body: JSON.stringify({ status: 'Active', unarchive_reason: unarchiveReason })
       });
       

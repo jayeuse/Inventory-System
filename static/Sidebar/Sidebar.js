@@ -7,18 +7,26 @@ document.addEventListener("DOMContentLoaded", function () {
       function setActive(itemName) {
         icons.forEach(icon => icon.classList.remove("active"));
         labels.forEach(label => label.classList.remove("active"));
-        logoutLabel.classList.remove("active");
-        logoutIcon.classList.remove("active");
+        if (logoutLabel) logoutLabel.classList.remove("active");
+        if (logoutIcon) logoutIcon.classList.remove("active");
 
-        if (itemName === "Logout") {
-          logoutLabel.classList.add("active");
-          logoutIcon.classList.add("active");
+        if (itemName === "logout") {
+          if (logoutLabel) logoutLabel.classList.add("active");
+          if (logoutIcon) logoutIcon.classList.add("active");
         } else {
           document.querySelectorAll(`[data-item="${itemName}"]`).forEach(el => el.classList.add("active"));
         }
       }
 
-      [...icons, ...labels, logoutLabel, logoutIcon].forEach(el =>
-        el.addEventListener("click", () => setActive(el.dataset.item))
-      );
+      // Add click handlers for navigation items only
+      [...icons, ...labels].forEach(el => {
+        el.addEventListener("click", () => {
+          const itemName = el.dataset.item;
+          if (itemName !== "logout") {
+            setActive(itemName);
+          }
+        });
+      });
+      
+      // Note: Logout handlers are in LogoutManagement.js
     });

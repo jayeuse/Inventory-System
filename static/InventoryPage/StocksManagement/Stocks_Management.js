@@ -217,7 +217,8 @@ document.addEventListener("DOMContentLoaded", function(){
       const response = await fetch(`/api/product-batches/${batch_id}/`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
         },
         body: JSON.stringify(data)
       });

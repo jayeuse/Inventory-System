@@ -44,3 +44,10 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+
+# Gmail API Credentials (stored in .credentials/ folder)
+.credentials/
+gmail_credentials.json
+gmail_token.pickle
+*.pickle
+*.pickle.bak

@@ -12,7 +12,7 @@ pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
 2. Create/Select project
 3. Enable Gmail API
 4. Create OAuth 2.0 credentials (Desktop app)
-5. Download as `gmail_credentials.json` → Place in project root
+5. Download as `gmail_credentials.json` → Place in `.credentials/` folder (will be created automatically)
 
 ### 3. Authenticate Gmail API
 ```bash
