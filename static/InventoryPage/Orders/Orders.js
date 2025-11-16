@@ -301,6 +301,11 @@ function renderOrders(orders) {
 
         tbody.appendChild(itemsRow);
     });
+
+        // Reapply frontend permissions (disable receive/create buttons) after rendering
+        if (window.userPermissions && typeof window.userPermissions.applyPermissions === 'function') {
+            try { window.userPermissions.applyPermissions(); } catch (err) { console.error('Error applying user permissions:', err); }
+        }
 }
 
 function renderPage() {
@@ -620,7 +625,8 @@ async function handleReceiveOrder() {
         const response = await fetch('/api/receive-orders/bulk_receive/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
             },
             body: JSON.stringify({ items: receiveRecords })
         });
