@@ -9,6 +9,26 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import ensure_csrf_cookie
+from rest_framework.decorators import api_view, permission_classes
+from .serializers import (
+    ArchiveLogSerializer,
+    CategorySerializer, 
+    SubcategorySerializer,
+    SupplierSerializer, 
+    ProductSerializer, 
+    ProductStocksSerializer,
+    ProductBatchSerializer, 
+    OrderItemSerializer, 
+    OrderSerializer, 
+    ReceiveOrderSerializer,
+    TransactionSerializer,
+    UserInformationSerializer,
+    DashboardCategorySerializer,
+    DashboardSupplierSerializer,
+    DashboardStockStatusSerializer,
+)
+from rest_framework.permissions import AllowAny
+from django.db.models import Sum, Count, F
 import os
 
 from .models import ArchiveLog, Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, UserInformation
@@ -41,6 +61,46 @@ def serve_static_html(request, file_path):
 
 def dashboard_view(request):
     return serve_static_html(request, 'DashboardPage/DashboardPage.html')
+
+
+# --- Dashboard aggregate endpoints ---
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def dashboard_categories(request):
+    """Return category distribution based on total_on_hand across product stocks."""
+    qs = ProductStocks.objects.values(category_name=F('product__category__category_name')).annotate(count=Sum('total_on_hand')).order_by('-count')
+    data = []
+    for row in qs:
+        name = row.get('category_name') or 'Uncategorized'
+        data.append({'category_name': name, 'count': int(row.get('count') or 0)})
+    serializer = DashboardCategorySerializer(data, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def dashboard_top_suppliers(request):
+    """Return top suppliers by number of products supplied. Query param `top` optional."""
+    try:
+        top = int(request.query_params.get('top', 5))
+    except (TypeError, ValueError):
+        top = 5
+    # Annotate suppliers with the number of distinct products they supply.
+    qs = Supplier.objects.annotate(products_supplied=Count('product', distinct=True)).order_by('-products_supplied')[:top]
+    # Use values() to build simple dicts for serialization
+    data = [{'supplier_name': s.supplier_name or 'Unknown', 'products_supplied': int(getattr(s, 'products_supplied', 0) or 0)} for s in qs]
+    serializer = DashboardSupplierSerializer(data, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def dashboard_stock_status(request):
+    """Return counts grouped by ProductStocks.status for the stock status donut chart."""
+    qs = ProductStocks.objects.values(status_label=F('status')).annotate(count=Count('pk')).order_by('-count')
+    data = [{'status_label': r.get('status_label') or 'Unknown', 'count': int(r.get('count') or 0)} for r in qs]
+    serializer = DashboardStockStatusSerializer(data, many=True)
+    return Response(serializer.data)
 
 @ensure_csrf_cookie
 def login_view(request):

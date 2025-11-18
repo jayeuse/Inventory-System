@@ -24,9 +24,22 @@ function dashboard_initializeInteractions() {
   statCards.forEach((card) => {
     card.style.cursor = "pointer";
     card.addEventListener("click", function () {
-      const label = this.querySelector(".stat-label").textContent.toLowerCase();
-      console.log(`Navigate to: ${label}`);
-      // Add navigation logic here
+      const label = (this.querySelector(".stat-label").textContent || '').toLowerCase();
+      // Navigate to Inventory main page when clicking product-related card
+      if (label.includes('product')) {
+        window.location.href = '/inventory/';
+        return;
+      }
+
+      // Navigate to Orders tab inside Inventory when clicking pending orders
+      if (label.includes('pending') && label.includes('order')) {
+        // Use URL param so Inventory page can read and open Orders tab
+        window.location.href = '/inventory/?tab=orders';
+        return;
+      }
+
+      // Fallback: go to Inventory main page
+      window.location.href = '/inventory/';
     });
   });
 }
