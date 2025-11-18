@@ -2,6 +2,18 @@
 
 Django-based inventory management system with automatic database setup.
 
+Inventory System — Django-based inventory management for pharmacies. Provides a REST API, admin UI, automated database setup, sample-data utilities, and signal-driven stock and transaction automation.
+
+Quick start (one-step):
+
+```bash
+git clone <repository-url>
+cd inventory_system
+setup.bat
+python manage.py createsuperuser
+python manage.py runserver
+```
+
 ## 🚀 Setup Instructions
 
 ### Prerequisites
@@ -10,6 +22,7 @@ Django-based inventory management system with automatic database setup.
 - PostgreSQL installed and running
 
 ### Quick Setup
+For simple dependency setup (virtualenv, pip, PostgreSQL), see `SETUP.md`.
 
 1. **Clone the repository**
 
