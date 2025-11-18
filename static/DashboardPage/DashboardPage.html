@@ -29,6 +29,7 @@
       <main class="main flex-grow-1 p-4">
         <div class="tabs">
           <div class="tab active" data-page="dashboard">Dashboard Overview</div>
+          <div class="tab" data-page="transactions">Recent Transactions</div>
         </div>
 
         <!-- Dashboard Page -->
@@ -122,6 +123,8 @@
             </div>
           </div>
         </div>
+        <!-- Recent Transactions Page (loaded lazily) -->
+        <div id="transactions_page" class="page-content"></div>
       </main>
     </div>
 
@@ -136,6 +139,7 @@
           .then((data) => {
             document.getElementById("sidebar-container").innerHTML = data;
             initializeSidebar();
+            initializeTabs();
           })
           .catch((error) => {
             console.error("Error loading sidebar:", error);
@@ -273,9 +277,134 @@
           });
         }
 
+        // Tabs: switch pages and lazy-load Recent Transactions
+        function initializeTabs() {
+          const tabs = document.querySelectorAll('.tabs .tab');
+          const pages = document.querySelectorAll('.page-content');
+
+          tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+              const target = tab.getAttribute('data-page');
+
+              // Toggle active classes
+              tabs.forEach(t => t.classList.remove('active'));
+              pages.forEach(p => p.classList.remove('active'));
+              tab.classList.add('active');
+
+              const pageEl = document.getElementById(target + '_page');
+              if (pageEl) pageEl.classList.add('active');
+
+              // If Recent Transactions page, load content lazily
+              if (target === 'transactions' && pageEl && !pageEl.dataset.loaded) {
+                loadRecentTransactions(pageEl);
+              }
+            });
+          });
+        }
+
+        function loadRecentTransactions(container) {
+          fetch('/static/DashboardPage/RecentTransaction.html')
+            .then(r => r.text())
+            .then(html => {
+              try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const content = doc.getElementById('transactions-content') || doc.querySelector('main');
+                if (!content) {
+                  container.innerHTML = html;
+                } else {
+                  container.innerHTML = content.innerHTML;
+                }
+
+                // Load page-specific CSS (if any)
+                const cssHref = '/static/DashboardPage/RecentTransaction.css';
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = cssHref;
+                document.head.appendChild(link);
+
+                // Load page-specific JS
+                const script = document.createElement('script');
+                script.src = '/static/DashboardPage/RecentTransaction.js';
+                document.body.appendChild(script);
+
+                // If the manager is included statically (deferred), invoke its loader now
+                try {
+                  if (window.RecentTransactionsManagement && typeof window.RecentTransactionsManagement.loadAndRender === 'function') {
+                    window.RecentTransactionsManagement.loadAndRender();
+                  } else {
+                    // fallback: attempt shortly in case the script is still loading
+                    setTimeout(() => { window.RecentTransactionsManagement?.loadAndRender?.(); }, 100);
+                  }
+                } catch (err) {
+                  console.error('Error invoking RecentTransactionsManagement after static load', err);
+                }
+
+                // Mark as loaded (content injected); the manager will populate the timeline on script load
+                container.dataset.loaded = '1';
+              } catch (err) {
+                console.error('Failed to parse recent transactions HTML', err);
+                container.innerHTML = html;
+              }
+            })
+            .catch(err => {
+              console.error('Error loading recent transactions:', err);
+              container.innerHTML = '<div class="card"><div class="card-body">Failed to load recent transactions.</div></div>';
+            });
+        }
+
         // Initialize Charts
         initializeCharts();
+        // Populate the compact dashboard activity table
+        loadDashboardRecentActivity();
       });
+
+      async function loadDashboardRecentActivity() {
+        const tbody = document.getElementById('dashboard_activityTableBody');
+        if (!tbody) return;
+        try {
+          const url = '/api/transactions/?page_size=5';
+          const res = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': (typeof getCSRFToken === 'function') ? getCSRFToken() : ''
+            }
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          const items = Array.isArray(data) ? data : (data.results || []);
+          // Build rows
+          tbody.innerHTML = items.map(t => {
+            const qtyRaw = t.quantity_change != null ? String(t.quantity_change) : '0';
+            const parsed = Number(qtyRaw.replace(/[^0-9\-\.\+]/g, ''));
+            const hasNumeric = !isNaN(parsed) && parsed !== 0;
+            const direction = hasNumeric ? (parsed > 0 ? 'in' : 'out') : (String(t.transaction_type || '').toLowerCase().includes('in') ? 'in' : 'out');
+            const badgeClass = direction === 'in' ? 'activity-badge badge-in' : 'activity-badge badge-out';
+            const badgeText = direction === 'in' ? 'Stock In' : 'Stock Out';
+            const isAdjustment = String(t.transaction_type || '').toLowerCase().includes('adj') || String(t.transaction_type || '').toLowerCase().includes('adjust');
+            const qtyDisplay = qtyRaw.replace(/^\+/, '');
+            // Date formatting: try native, fallback to raw
+            let dateText = '';
+            try {
+              const d = new Date(t.date_of_transaction);
+              if (!isNaN(d)) dateText = d.toLocaleDateString();
+              else dateText = String(t.date_of_transaction).split(',')[0] || String(t.date_of_transaction);
+            } catch (e) {
+              dateText = String(t.date_of_transaction);
+            }
+
+            return `<tr>
+                      <td><span class="${badgeClass}">${badgeText}</span></td>
+                      <td>${(t.product_name || t.product_id || '-')}</td>
+                      <td>${qtyDisplay}</td>
+                      <td>${dateText}</td>
+                    </tr>`;
+          }).join('');
+        } catch (err) {
+          console.error('Failed to load dashboard recent activity', err);
+        }
+      }
 
       function initializeCharts() {
         // Category Pie Chart
@@ -501,5 +630,6 @@
     <script src="/static/utils/permissions.js"></script>
     <script src="/static/SettingsPage/LogoutManagement/LogoutManagement.js"></script>
     <script src="/static/DashboardPage/DashboardPage.js"></script>
+    <script src="/static/DashboardPage/RecantTransationsManagement/RecentTransactionsManagement.js" defer></script>
   </body>
 </html>
