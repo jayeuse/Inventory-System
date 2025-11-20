@@ -413,6 +413,36 @@ class TransactionSerializer(serializers.ModelSerializer):
             return local_time.strftime('%b %d, %Y %I:%M %p')
         return None
 
+        # --- Small DTO serializers for dashboard charts ---
+class DashboardCategorySerializer(serializers.Serializer):
+        """Serializer for category distribution chart data.
+
+        Expected input (from view): list of dicts like
+            { 'category_name': 'Analgesics', 'count': 3250 }
+        """
+        category_name = serializers.CharField()
+        count = serializers.IntegerField()
+
+
+class DashboardSupplierSerializer(serializers.Serializer):
+        """Serializer for top suppliers chart data.
+
+        Expected input (from view): list of dicts like
+            { 'supplier_name': 'MedSupply Corp', 'products_supplied': 450 }
+        """
+        supplier_name = serializers.CharField()
+        products_supplied = serializers.IntegerField()
+
+
+class DashboardStockStatusSerializer(serializers.Serializer):
+        """Serializer for stock status donut chart.
+
+        Expected input (from view): list of dicts like
+            { 'status_label': 'Normal', 'count': 856 }
+        """
+        status_label = serializers.CharField()
+        count = serializers.IntegerField()
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for Django's built-in User model"""
     class Meta:

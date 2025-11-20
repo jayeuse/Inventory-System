@@ -37,5 +37,10 @@ urlpatterns = [
     path('api/auth/logout/', auth_views.logout_api, name='api_logout'),
     path('api/auth/me/', auth_views.current_user, name='current_user'),
     
+    # Dashboard aggregates
+    path('api/dashboard/categories/', views.dashboard_categories, name='api_dashboard_categories'),
+    path('api/dashboard/top-suppliers/', views.dashboard_top_suppliers, name='api_dashboard_top_suppliers'),
+    path('api/dashboard/stock-status/', views.dashboard_stock_status, name='api_dashboard_stock_status'),
+
     path('api/', include(router.urls)),
 ]
