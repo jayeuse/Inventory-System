@@ -102,6 +102,21 @@ def dashboard_stock_status(request):
     serializer = DashboardStockStatusSerializer(data, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def dashboard_stats(request):
+    """Return dashboard statistics: total products count and pending orders count."""
+    # Count active products (exclude archived)
+    total_products = Product.objects.exclude(status='Archived').count()
+    
+    # Count pending orders (status = 'Pending' or 'Partially Received')
+    pending_orders = Order.objects.filter(status__in=['Pending', 'Partially Received']).count()
+    
+    return Response({
+        'total_products': total_products,
+        'pending_orders': pending_orders
+    })
+
 @ensure_csrf_cookie
 def login_view(request):
     return serve_static_html(request, 'LoginPage/LoginPage.html')
