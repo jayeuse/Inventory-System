@@ -48,11 +48,16 @@ function dashboard_initializeInteractions() {
 
 // Update stat cards: dashboard_updateStats({ totalProducts: 1247, pendingOrders: 12 })
 function dashboard_updateStats(stats) {
-  if (stats.totalProducts !== undefined) {
-    document.getElementById('dashboard_totalProducts').textContent = stats.totalProducts.toLocaleString();
+  const totalProductsEl = document.getElementById('dashboard_totalProducts');
+  const pendingOrdersEl = document.getElementById('dashboard_pendingOrders');
+  
+  if (stats.totalProducts !== undefined && totalProductsEl) {
+    totalProductsEl.textContent = stats.totalProducts.toLocaleString();
+    totalProductsEl.classList.remove('stat-loading');
   }
-  if (stats.pendingOrders !== undefined) {
-    document.getElementById('dashboard_pendingOrders').textContent = stats.pendingOrders.toLocaleString();
+  if (stats.pendingOrders !== undefined && pendingOrdersEl) {
+    pendingOrdersEl.textContent = stats.pendingOrders.toLocaleString();
+    pendingOrdersEl.classList.remove('stat-loading');
   }
 }
 

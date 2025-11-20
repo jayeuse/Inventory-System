@@ -38,6 +38,7 @@ function waitForChartsReady(timeoutMs = 5000) {
 async function fetchAndUpdateAllCharts() {
 	try {
 		await Promise.all([
+			fetchDashboardStats(),
 			fetchCategoryDistribution(),
 			fetchTopSuppliers(),
 			fetchStockStatus()
@@ -58,6 +59,23 @@ function getHeaders() {
 	} catch (e) {
 		// Fallback: no csrf helper available
 		return { 'Content-Type': 'application/json' };
+	}
+}
+
+async function fetchDashboardStats() {
+	const url = '/api/dashboard/stats/';
+	try {
+		const res = await fetch(url, { method: 'GET', headers: getHeaders(), cache: 'no-cache' });
+		if (!res.ok) throw new Error(`HTTP ${res.status}`);
+		const data = await res.json();
+		// Expected: { total_products, pending_orders }
+		const stats = {
+			totalProducts: Number(data.total_products || 0),
+			pendingOrders: Number(data.pending_orders || 0)
+		};
+		window.dashboard_updateStats(stats);
+	} catch (err) {
+		console.error('Error fetching dashboard stats:', err);
 	}
 }
 

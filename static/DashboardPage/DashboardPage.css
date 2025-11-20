@@ -177,6 +177,12 @@ body {
   line-height: 1;
 }
 
+.stat-value.stat-loading {
+  color: var(--muted);
+  opacity: 0.5;
+  font-size: 28px;
+}
+
 .stat-icon {
   width: 48px;
   height: 48px;
