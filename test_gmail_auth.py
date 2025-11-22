@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from inventory_system.gmail_service import gmail_service
+from inventory_system.services import gmail_service
 
 def test_authentication():
     """Test Gmail API authentication"""
