@@ -115,7 +115,7 @@ class GmailService:
         except HttpError as error:
             raise Exception(f"An error occurred while sending email: {error}")
     
-    def send_otp_email(self, user_email, username, otp_code):
+    def send_otp_email(self, user_email, username, otp_code, is_password_reset=False):
         """
         Send OTP verification email to user.
         
@@ -123,11 +123,27 @@ class GmailService:
             user_email: User's email address
             username: User's username
             otp_code: 6-digit OTP code
+            is_password_reset: Boolean indicating if this is for password reset
         
         Returns:
             Sent message object
         """
-        subject = "Your Login Verification Code"
+        if is_password_reset:
+            subject = "Password Reset Verification Code"
+            title = "🔑 Password Reset"
+            greeting_text = "You requested to reset your password for your Inventory Management System account. Please use the verification code below to proceed:"
+        else:
+            subject = "Your Login Verification Code"
+            title = "🔐 Login Verification"
+            greeting_text = "You requested to log in to your Inventory Management System account. Please use the verification code below to complete your login:"
+        if is_password_reset:
+            subject = "Password Reset Verification Code"
+            title = "🔑 Password Reset"
+            greeting_text = "You requested to reset your password for your Inventory Management System account. Please use the verification code below to proceed:"
+        else:
+            subject = "Your Login Verification Code"
+            title = "🔐 Login Verification"
+            greeting_text = "You requested to log in to your Inventory Management System account. Please use the verification code below to complete your login:"
         
         # HTML email template
         body = f"""
@@ -198,11 +214,11 @@ class GmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>🔐 Login Verification</h1>
+                    <h1>{title}</h1>
                 </div>
                 <div class="content">
                     <p>Hello <strong>{username}</strong>,</p>
-                    <p>You requested to log in to your Inventory Management System account. Please use the verification code below to complete your login:</p>
+                    <p>{greeting_text}</p>
                     
                     <div class="otp-box">
                         <div style="font-size: 14px; color: #6c757d; margin-bottom: 10px;">Your Verification Code</div>
@@ -215,6 +231,128 @@ class GmailService:
                     </div>
                     
                     <p>This code will expire in <strong>10 minutes</strong>.</p>
+                </div>
+                <div class="footer">
+                    <p>Inventory Management System<br>
+                    This is an automated message, please do not reply.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self.send_email(user_email, subject, body)
+
+
+    def send_password_reset_success_email(self, user_email, username):
+        """
+        Send password reset success confirmation email to user.
+        
+        Args:
+            user_email: User's email address
+            username: User's username
+        
+        Returns:
+            Sent message object
+        """
+        subject = "Password Reset Successful"
+        
+        # HTML email template
+        body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: 'Poppins', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                }}
+                .container {{
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: #ffffff;
+                    padding: 30px;
+                    text-align: center;
+                }}
+                .header h1 {{
+                    margin: 0;
+                    font-size: 28px;
+                }}
+                .content {{
+                    padding: 40px 30px;
+                }}
+                .success-box {{
+                    background-color: #d1fae5;
+                    border: 2px solid #10b981;
+                    border-radius: 8px;
+                    padding: 20px;
+                    text-align: center;
+                    margin: 30px 0;
+                }}
+                .success-icon {{
+                    font-size: 48px;
+                    margin-bottom: 10px;
+                }}
+                .warning {{
+                    background-color: #fff3cd;
+                    border-left: 4px solid #ffc107;
+                    padding: 15px;
+                    margin: 20px 0;
+                    border-radius: 4px;
+                }}
+                .footer {{
+                    background-color: #f8f9fa;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 14px;
+                    color: #6c757d;
+                }}
+                .action-required {{
+                    background-color: #fee;
+                    border-left: 4px solid #dc2626;
+                    padding: 15px;
+                    margin: 20px 0;
+                    border-radius: 4px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>✅ Password Reset Successful</h1>
+                </div>
+                <div class="content">
+                    <p>Hello <strong>{username}</strong>,</p>
+                    <p>This email confirms that your password has been successfully reset for your Inventory Management System account.</p>
+                    
+                    <div class="success-box">
+                        <div class="success-icon">🔒</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #059669;">Your password has been changed</div>
+                        <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">You can now log in with your new password</div>
+                    </div>
+                    
+                    <div class="action-required">
+                        <strong>⚠️ Did not request this change?</strong>
+                        <p style="margin: 10px 0 0 0;">If you did not initiate this password reset, please contact your system administrator immediately as your account may have been compromised.</p>
+                    </div>
+                    
+                    <p><strong>Security Tips:</strong></p>
+                    <ul style="color: #6c757d;">
+                        <li>Keep your password confidential and do not share it with anyone</li>
+                        <li>Use a strong, unique password for your account</li>
+                        <li>Log out of your account when using shared devices</li>
+                    </ul>
                 </div>
                 <div class="footer">
                     <p>Inventory Management System<br>

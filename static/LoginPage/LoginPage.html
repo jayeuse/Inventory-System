@@ -60,7 +60,7 @@
             <button class="btn btn-primary pulse" id="login-btn">Log In</button>
 
             <div class="link">
-              <a href="#" id="forgot-password-link">Forgot your password?</a>
+              <a href="#" id="forgot-password-link" style="display: none;">Forgot your password?</a>
             </div>
           </div>
 
@@ -220,46 +220,48 @@
               Verify Your Identity
             </h2>
             <p class="instructions">
-              We've sent a verification code to the email associated with your
-              account. Please enter it below to continue.
+              We've sent a verification code to your email (<span id="reset-email-display"></span>). 
+              Please enter it below to continue.
             </p>
+
+            <div id="reset-otp-error" class="alert alert-danger" style="display: none;"></div>
 
             <div class="form-group">
               <div class="verification-inputs">
                 <input
                   type="text"
                   maxlength="1"
-                  class="verification-code"
+                  class="verification-code reset-verification-code"
                   data-index="0"
                 />
                 <input
                   type="text"
                   maxlength="1"
-                  class="verification-code"
+                  class="verification-code reset-verification-code"
                   data-index="1"
                 />
                 <input
                   type="text"
                   maxlength="1"
-                  class="verification-code"
+                  class="verification-code reset-verification-code"
                   data-index="2"
                 />
                 <input
                   type="text"
                   maxlength="1"
-                  class="verification-code"
+                  class="verification-code reset-verification-code"
                   data-index="3"
                 />
                 <input
                   type="text"
                   maxlength="1"
-                  class="verification-code"
+                  class="verification-code reset-verification-code"
                   data-index="4"
                 />
                 <input
                   type="text"
                   maxlength="1"
-                  class="verification-code"
+                  class="verification-code reset-verification-code"
                   data-index="5"
                 />
               </div>
@@ -269,11 +271,11 @@
 
             <div class="resend-code">
               Didn't receive the code?
-              <a href="#" id="resend-link">Resend Code</a>
+              <a href="#" id="resend-reset-link">Resend Code</a>
             </div>
 
             <div class="link">
-              <a href="#" id="back-to-username">Back to Username</a>
+              <a href="#" id="back-to-username">Back to Login</a>
             </div>
           </div>
           <div class="card hidden" id="forgot-password-card">
@@ -291,6 +293,8 @@
               Reset Your Password
             </h2>
             <p class="instructions">Enter your new password below.</p>
+
+            <div id="reset-password-error" class="alert alert-danger" style="display: none;"></div>
 
             <div class="form-group">
               <label for="new-password">New Password</label>
