@@ -37,6 +37,13 @@ urlpatterns = [
     path('api/auth/logout/', auth_views.logout_api, name='api_logout'),
     path('api/auth/me/', auth_views.current_user, name='current_user'),
     
+    # Password Reset API endpoints
+    path('api/auth/check-username/', auth_views.check_username, name='check_username'),
+    path('api/auth/request-password-reset/', auth_views.request_password_reset, name='request_password_reset'),
+    path('api/auth/verify-reset-otp/', auth_views.verify_reset_otp, name='verify_reset_otp'),
+    path('api/auth/reset-password/', auth_views.reset_password, name='reset_password'),
+    path('api/auth/resend-reset-otp/', auth_views.resend_reset_otp, name='resend_reset_otp'),
+    
     # Dashboard aggregates
     path('api/dashboard/categories/', views.dashboard_categories, name='api_dashboard_categories'),
     path('api/dashboard/top-suppliers/', views.dashboard_top_suppliers, name='api_dashboard_top_suppliers'),
