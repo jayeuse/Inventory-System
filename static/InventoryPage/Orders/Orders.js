@@ -9,6 +9,10 @@ let filteredOrders = null;
 let pageSize = 5;
 let currentPage = 1;
 
+// Expose for PDF export
+window.ordersCache = ordersCache;
+window.filteredOrders = filteredOrders;
+
 // --- Add Order Modal Logic ---
 let tempOrderItems = [];
 let suppliersCache = [];
@@ -377,7 +381,9 @@ async function loadOrders() {
         }
 
         ordersCache = all;
+        window.ordersCache = ordersCache;
         filteredOrders = null;
+        window.filteredOrders = null;
         currentPage = 1;
 
         updateSummaryCounts(ordersCache);
@@ -430,6 +436,7 @@ function renderFilteredOrders() {
         const matchesStatus = status === 'all' || (status === 'partial' ? s.includes('partial') : s === status);
         return matchesSearch && matchesStatus;
     });
+    window.filteredOrders = filteredOrders;
 
     currentPage = 1;
     renderPage();

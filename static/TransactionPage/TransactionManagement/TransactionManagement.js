@@ -82,10 +82,21 @@ function handleSearchAndFilter() {
       (transaction.product_name && transaction.product_name.toLowerCase().includes(searchTerm)) ||
       (transaction.batch_id && transaction.batch_id.toLowerCase().includes(searchTerm));
 
-    // Type filter
-    const matchesType = 
-      typeValue === 'all' ||
-      (transaction.transaction_type && transaction.transaction_type.toLowerCase() === typeValue);
+    // Type filter - match all variations of transaction types
+    let matchesType = typeValue === 'all';
+    if (!matchesType && transaction.transaction_type) {
+      const transactionType = transaction.transaction_type.toLowerCase();
+      if (typeValue === 'in') {
+        matchesType = transactionType === 'in' || transactionType === 'stock in';
+      } else if (typeValue === 'out') {
+        matchesType = transactionType === 'out' || transactionType === 'stock out';
+      } else if (typeValue === 'adjust') {
+        matchesType = transactionType === 'adj' || 
+                      transactionType === 'adjust' || 
+                      transactionType === 'adjustment' || 
+                      transactionType === 'stock adjustment';
+      }
+    }
 
     return matchesSearch && matchesType;
   });

@@ -21,6 +21,8 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <link rel="stylesheet" href="/static/TransactionPage/TransactionPage.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   </head>
   <body>
     <div class="d-flex">
@@ -49,6 +51,9 @@
                   <option value="adjust">Adjust</option>
                 </select>
               </div>
+              <button class="btn btn-export" id="exportTransactionsBtn">
+                <i class="fas fa-file-pdf"></i> Export PDF
+              </button>
             </div>
 
             <!-- Transaction Table -->
@@ -254,5 +259,6 @@
     <script src="/static/SettingsPage/LogoutManagement/LogoutManagement.js"></script>
     <script src="/static/TransactionPage/TransactionPage.js"></script>
     <script src="/static/TransactionPage/TransactionManagement/TransactionManagement.js"></script>
+    <script src="/static/TransactionPage/TransactionManagement/TransactionExport.js"></script>
   </body>
 </html>
