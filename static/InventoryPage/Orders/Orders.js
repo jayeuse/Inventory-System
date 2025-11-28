@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function() {
     initializeOrders();
 });
@@ -9,6 +8,213 @@ let ordersPrev = null;
 let filteredOrders = null;
 let pageSize = 5;
 let currentPage = 1;
+
+// --- Add Order Modal Logic ---
+let tempOrderItems = [];
+let suppliersCache = [];
+
+async function loadSuppliers(productId) {
+    // Fetch all suppliers and populate the dropdown (deduplicated by supplier_id)
+    const supplierSelect = document.getElementById('supplierId');
+    if (!supplierSelect) return;
+    supplierSelect.innerHTML = '';
+    try {
+        const resp = await fetch('/api/suppliers/');
+        if (!resp.ok) throw new Error('Failed to fetch suppliers');
+        const data = await resp.json();
+        const suppliersRaw = Array.isArray(data) ? data : (data.results || []);
+        // Deduplicate suppliers by supplier_id
+        const supplierMap = {};
+        suppliersRaw.forEach(s => {
+            if (!supplierMap[s.supplier_id]) {
+                supplierMap[s.supplier_id] = s;
+            }
+        });
+        const suppliers = Object.values(supplierMap);
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select supplier';
+        supplierSelect.appendChild(placeholder);
+        if (suppliers.length === 0) {
+            const none = document.createElement('option');
+            none.value = '';
+            none.textContent = 'No suppliers found';
+            supplierSelect.appendChild(none);
+        } else {
+            suppliers.forEach(supplier => {
+                const opt = document.createElement('option');
+                opt.value = supplier.supplier_id;
+                opt.textContent = supplier.supplier_name;
+                supplierSelect.appendChild(opt);
+            });
+        }
+    } catch (err) {
+        supplierSelect.innerHTML = '<option value="">Error loading suppliers</option>';
+    }
+}
+
+function resetAddOrderModal() {
+    tempOrderItems = [];
+    renderOrderItemsList();
+    const productIdInput = document.getElementById('productId');
+    if (productIdInput) {
+        productIdInput.value = '';
+        productIdInput.readOnly = true; // Always readonly
+    }
+    document.getElementById('productName').selectedIndex = 0;
+    document.getElementById('orderQuantity').value = '';
+    document.getElementById('purchasingPrice').value = '';
+    const orderedByInput = document.getElementById('orderedBy');
+    if (orderedByInput) {
+        orderedByInput.value = '';
+        orderedByInput.readOnly = false; // Editable on modal reset
+    }
+    const supplierSelect = document.getElementById('supplierId');
+    if (supplierSelect) supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+    loadSuppliers(); // Always load suppliers when resetting modal
+    updateOrdersCount();
+    updatePlaceAllOrdersBtn();
+}
+
+function getOrderItemFromModal() {
+    const productId = document.getElementById('productId').value.trim();
+    const productNameSelect = document.getElementById('productName');
+    const productName = productNameSelect.options[productNameSelect.selectedIndex]?.text || '';
+    const productNameId = productNameSelect.value;
+    const quantity = parseInt(document.getElementById('orderQuantity').value, 10);
+    const purchasingPrice = parseFloat(document.getElementById('purchasingPrice').value);
+    const orderedBy = document.getElementById('orderedBy').value.trim();
+    const supplierSelect = document.getElementById('supplierId');
+    const supplierId = supplierSelect ? supplierSelect.value : '';
+    return {
+        product_id: productId || productNameId,
+        product_name: productName,
+        quantity_ordered: quantity,
+        purchasing_price: purchasingPrice,
+        ordered_by: orderedBy,
+        supplier: supplierId
+    };
+}
+
+function renderOrderItemsList() {
+    const list = document.getElementById('multipleOrdersList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (tempOrderItems.length === 0) {
+        list.innerHTML = `<div class=\"empty-orders-message\"><i class=\"fas fa-shopping-cart\" style=\"font-size: 40px; margin-bottom: 10px;\"></i><p>No orders added yet</p><p style=\"font-size: 12px;\">Orders will appear here automatically</p></div>`;
+        updateOrdersCount();
+        updatePlaceAllOrdersBtn();
+        return;
+    }
+    tempOrderItems.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'order-item-row';
+        div.innerHTML = `
+            <span>${item.product_name || item.product_id}</span>
+            <span>Qty: ${item.quantity_ordered}</span>
+            <span>Price: ₱${item.purchasing_price?.toFixed(2) || ''}</span>
+            <span>Supplier: ${item.supplier || ''}</span>
+            <span>By: ${item.ordered_by}</span>
+            <button class=\"btn btn-sm btn-danger\" onclick=\"removeOrderItem(${idx})\"><i class=\"fas fa-trash\"></i></button>
+        `;
+        list.appendChild(div);
+    });
+    updateOrdersCount();
+    updatePlaceAllOrdersBtn();
+}
+
+function updateOrdersCount() {
+    const countEl = document.getElementById('ordersCount');
+    if (countEl) countEl.textContent = tempOrderItems.length;
+}
+
+function updatePlaceAllOrdersBtn() {
+    const btn = document.getElementById('placeAllOrdersBtn');
+    if (btn) btn.disabled = tempOrderItems.length === 0;
+}
+
+function removeOrderItem(idx) {
+    tempOrderItems.splice(idx, 1);
+    renderOrderItemsList();
+}
+
+async function handleAddOrderItem() {
+    const item = getOrderItemFromModal();
+    if (!item.product_id || !item.quantity_ordered || !item.purchasing_price || !item.ordered_by || !item.supplier) {
+        alert('Please fill in all fields for the order item, including supplier.');
+        return;
+    }
+    tempOrderItems.push(item);
+    renderOrderItemsList();
+    // Optionally clear fields except orderedBy
+    const productIdInput = document.getElementById('productId');
+    if (productIdInput) {
+        productIdInput.value = '';
+        productIdInput.readOnly = true; // Always readonly
+    }
+    document.getElementById('productName').selectedIndex = 0;
+    document.getElementById('orderQuantity').value = '';
+    document.getElementById('purchasingPrice').value = '';
+    // Make Ordered By readonly after first add
+    const orderedByInput = document.getElementById('orderedBy');
+    if (orderedByInput) {
+        orderedByInput.readOnly = true;
+    }
+    const supplierSelect = document.getElementById('supplierId');
+    if (supplierSelect) {
+        supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+        loadSuppliers();
+    }
+}
+
+async function handleSaveOrder() {
+    if (tempOrderItems.length === 0) {
+        alert('Add at least one order item.');
+        return;
+    }
+    const orderedBy = tempOrderItems[0].ordered_by;
+    const orderData = {
+        items: tempOrderItems.map(({product_id, quantity_ordered, purchasing_price, supplier}) => ({
+            product: product_id,
+            quantity_ordered,
+            purchasing_price,
+            supplier
+        })),
+        ordered_by: orderedBy
+    };
+    try {
+        const response = await csrfFetch('/api/orders/', {
+            method: 'POST',
+            headers: getCSRFHeaders(),
+            body: JSON.stringify(orderData)
+        });
+        if (response.ok) {
+            alert('Order added successfully!');
+            resetAddOrderModal();
+            document.getElementById('addOrderModal').style.display = 'none';
+            loadOrders();
+        } else {
+            const err = await response.json();
+            alert('Failed to add order: ' + (err.detail || JSON.stringify(err)));
+        }
+    } catch (err) {
+        alert('Error adding order: ' + err);
+    }
+}
+
+function attachAddToCartHandler() {
+    const addOrderItemBtn = document.getElementById('addToCartBtn');
+    if (addOrderItemBtn) {
+        addOrderItemBtn.onclick = handleAddOrderItem;
+    }
+}
+
+function attachPlaceAllOrdersHandler() {
+    const saveOrderBtn = document.getElementById('placeAllOrdersBtn');
+    if (saveOrderBtn) {
+        saveOrderBtn.onclick = handleSaveOrder;
+    }
+}
 
 function initializeOrders() {
     // Set current date
@@ -29,8 +235,18 @@ function initializeOrders() {
         confirmReceiveBtn.addEventListener("click", handleReceiveOrder);
     }
 
-    if (addOrderBtn && addOrderModal) addOrderBtn.addEventListener("click", () => (addOrderModal.style.display = "flex"));
-    if (cancelOrderBtn && addOrderModal) cancelOrderBtn.addEventListener("click", () => (addOrderModal.style.display = "none"));
+    if (addOrderBtn && addOrderModal) addOrderBtn.addEventListener("click", () => {
+        resetAddOrderModal();
+        addOrderModal.style.display = "flex";
+        setTimeout(() => {
+            attachAddToCartHandler();
+            attachPlaceAllOrdersHandler();
+        }, 0);
+    });
+    if (cancelOrderBtn && addOrderModal) cancelOrderBtn.addEventListener("click", () => {
+        resetAddOrderModal();
+        addOrderModal.style.display = "none";
+    });
     if (cancelReceiveBtn && receiveOrderModal) cancelReceiveBtn.addEventListener("click", () => (receiveOrderModal.style.display = "none"));
 
     window.onclick = (e) => {
@@ -686,25 +902,6 @@ async function handleReceiveOrder() {
     }
 }
 
-// Remove or comment out the getCsrfToken function since we're not using it
-/*
-function getCsrfToken() {
-    const name = 'csrftoken';
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-*/
-
 // Helper function to get CSRF token
 function getCsrfToken() {
     const name = 'csrftoken';
@@ -751,3 +948,14 @@ function updatePaginationControls(totalPages) {
         pageIndicator.textContent = `Page ${currentPage} / ${totalPages}`;
     }
 }
+
+// --- Add event to update suppliers when product changes ---
+document.addEventListener('DOMContentLoaded', function() {
+    // Always load all suppliers on product change (optional, can be removed if not needed)
+    const productNameSelect = document.getElementById('productName');
+    if (productNameSelect) {
+        productNameSelect.addEventListener('change', function() {
+            loadSuppliers();
+        });
+    }
+});
