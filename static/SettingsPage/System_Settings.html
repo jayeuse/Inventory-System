@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="/static/SettingsPage/ProductManagement/Product_Management.css">
   </head>
   <body>
-    <div class="d-flex">
+    <div class="d-flex settings-shell">
       <!-- Sidebar Container -->
       <div id="sidebar-container"></div>
 
@@ -134,43 +134,71 @@
               </button>
             </div>
 
-            <table id="activeSuppliersTable">
-              <thead>
-                <tr>
-                  <th>Supplier ID</th>
-                  <th>Supplier Name</th>
-                  <th>Contact Person</th>
-                  <th>Address</th>
-                  <th>Email</th>
-                  <th>Number</th>
-                  <th>Status</th>
-                  <th>Supply</th>
-                  <th style="text-align: right">Action</th>
-                </tr>
-              </thead>
-              <tbody id = "suppliers-table-body">
-              </tbody>
-            </table>
+            <div class="table-wrapper" id="activeSuppliersWrapper">
+              <table id="activeSuppliersTable">
+                <colgroup>
+                  <col style="width:8%" />
+                  <col style="width:16%" />
+                  <col style="width:12%" />
+                  <col style="width:14%" />
+                  <col style="width:14%" />
+                  <col style="width:8%" />
+                  <col style="width:6%" />
+                  <col style="width:6%" />
+                  <col style="width:16%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Supplier ID</th>
+                    <th>Supplier Name</th>
+                    <th>Contact Person</th>
+                    <th>Address</th>
+                    <th>Email</th>
+                    <th>Number</th>
+                    <th>Status</th>
+                    <th>Supply</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id = "suppliers-table-body">
+                </tbody>
+              </table>
+            </div>
 
-            <table id="archivedSuppliersTable" style="display: none;">
-              <thead>
-                <tr>
-                  <th>Supplier ID</th>
-                  <th>Supplier Name</th>
-                  <th>Contact Person</th>
-                  <th>Address</th>
-                  <th>Email</th>
-                  <th>Number</th>
-                  <th>Status</th>
-                  <th>Supply</th>
-                  <th>Archive Reason</th>
-                  <th>Archive Date</th>
-                  <th style="text-align: right">Action</th>
-                </tr>
-              </thead>
-              <tbody id="archivedSupplierTableBody">
-              </tbody>
-            </table>
+            <div class="table-wrapper" id="archivedSuppliersWrapper" style="display: none;">
+              <table id="archivedSuppliersTable">
+                <colgroup>
+                  <col style="width:5%" />
+                  <col style="width:13%" />
+                  <col style="width:10%" />
+                  <col style="width:11%" />
+                  <col style="width:11%" />
+                  <col style="width:7%" />
+                  <col style="width:6%" />
+                  <col style="width:7%" />
+                  <col style="width:8%" />
+                  <col style="width:8%" />
+                  <col style="width:14%" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Supplier ID</th>
+                    <th>Supplier Name</th>
+                    <th>Contact Person</th>
+                    <th>Address</th>
+                    <th>Email</th>
+                    <th>Number</th>
+                    <th>Status</th>
+                    <th>Supply</th>
+                    <th>Archive Reason</th>
+                    <th>Archive Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="archivedSupplierTableBody">
+                </tbody>
+              </table>
+            </div>
 
             <div class="pagination">
               <button class="pagination-btn" id="prevBtn">
@@ -214,25 +242,39 @@
                 </button>
               </div>
 
-              <table>
-                <thead>
-                  <tr>
-                    <th>Product ID</th>
-                    <th>Brand Name</th>
-                    <th>Generic Name</th>
-                    <th>Category</th>
-                    <th>Subcategory</th>
-                    <th>Unit Price</th>
-                    <th>Low Stock Threshold</th>
-                    <th>Expiry Date Threshold</th>
-                    <th>Last Update</th>
-                    <th style="text-align: center">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="tableBody">
-                  <!-- Rows will be populated dynamically by Product_Management.js -->
-                </tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <colgroup>
+                    <col style="width:7%" />
+                    <col style="width:11%" />
+                    <col style="width:11%" />
+                    <col style="width:10%" />
+                    <col style="width:10%" />
+                    <col style="width:9%" />
+                    <col style="width:9%" />
+                    <col style="width:8%" />
+                    <col style="width:7%" />
+                    <col style="width:18%" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Product ID</th>
+                      <th>Brand Name</th>
+                      <th>Generic Name</th>
+                      <th>Category</th>
+                      <th>Subcategory</th>
+                      <th>Unit Price</th>
+                      <th>Low Stock Threshold</th>
+                      <th>Expiry Date Threshold</th>
+                      <th>Last Update</th>
+                      <th style="text-align: center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tableBody">
+                    <!-- Rows will be populated dynamically by Product_Management.js -->
+                  </tbody>
+                </table>
+              </div>
 
               <div class="pagination">
                 <button class="pagination-btn" id="prevBtn">
@@ -259,24 +301,37 @@
                 </div>
               </div>
 
-              <table>
-                <thead>
-                  <tr>
-                    <th>Product ID</th>
-                    <th>Brand Name</th>
-                    <th>Generic Name</th>
-                    <th>Category</th>
-                    <th>Subcategory</th>
-                    <th>Unit Price</th>
-                    <th>Archive Reason</th>
-                    <th>Archived Date</th>
-                    <th style="text-align: center">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="archivedTableBody">
-                  <!-- Archived rows will be populated dynamically by Product_Management.js -->
-                </tbody>
-              </table>
+              <div class="table-wrapper">
+                <table>
+                  <colgroup>
+                    <col style="width:7%" />
+                    <col style="width:13%" />
+                    <col style="width:13%" />
+                    <col style="width:10%" />
+                    <col style="width:10%" />
+                    <col style="width:9%" />
+                    <col style="width:12%" />
+                    <col style="width:8%" />
+                    <col style="width:18%" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Product ID</th>
+                      <th>Brand Name</th>
+                      <th>Generic Name</th>
+                      <th>Category</th>
+                      <th>Subcategory</th>
+                      <th>Unit Price</th>
+                      <th>Archive Reason</th>
+                      <th>Archived Date</th>
+                      <th style="text-align: center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="archivedTableBody">
+                    <!-- Archived rows will be populated dynamically by Product_Management.js -->
+                  </tbody>
+                </table>
+              </div>
 
               <div class="pagination">
                 <button class="pagination-btn" id="archivedPrevBtn">
@@ -317,50 +372,55 @@
 
             <div class="layout">
               <div class="table-section">
-                <table id="activeCategoriesTable">
-                  <thead>
-                    <tr>
-                      <th>Category ID</th>
-                      <th>Category Name</th>
-                      <th>Description</th>
-                      <th>Products</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="category-table-body">
-                    <tr class="subcategory-row hidden">
-                      <td colspan="5">
-                        <table class="subcategory-table">
-                          <thead>
-                            <tr>
-                              <th>Subcategory ID</th>
-                              <th>Subcategory Name</th>
-                              <th>Description</th>
-                              <th>Product Count</th>
-                            </tr>
-                          </thead>
-                          <tbody id="subcategory-table-body">
-                          </tbody>
-                        </table>
-                      </td>
-                  </tbody>
-                </table>
+                <div class="table-wrapper" id="activeCategoriesWrapper">
+                  <table id="activeCategoriesTable">
+                    <thead>
+                      <tr>
+                        <th>Category ID</th>
+                        <th>Category Name</th>
+                        <th>Description</th>
+                        <th>Products</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="category-table-body">
+                      <tr class="subcategory-row hidden">
+                        <td colspan="5">
+                          <table class="subcategory-table">
+                            <thead>
+                              <tr>
+                                <th>Subcategory ID</th>
+                                <th>Subcategory Name</th>
+                                <th>Description</th>
+                                <th>Product Count</th>
+                              </tr>
+                            </thead>
+                            <tbody id="subcategory-table-body">
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
 
-                <table id="archivedCategoriesTable" style="display: none;">
-                  <thead>
-                    <tr>
-                      <th>Category ID</th>
-                      <th>Category Name</th>
-                      <th>Description</th>
-                      <th>Products</th>
-                      <th>Archive Reason</th>
-                      <th>Archive Date</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="archivedCategoriesTableBody">
-                  </tbody>
-                </table>
+                <div class="table-wrapper" id="archivedCategoriesWrapper" style="display: none;">
+                  <table id="archivedCategoriesTable">
+                    <thead>
+                      <tr>
+                        <th>Category ID</th>
+                        <th>Category Name</th>
+                        <th>Description</th>
+                        <th>Products</th>
+                        <th>Archive Reason</th>
+                        <th>Archive Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="archivedCategoriesTableBody">
+                    </tbody>
+                  </table>
+                </div>
 
                 <div class="pagination">
                   <button class="pagination-btn">
@@ -456,6 +516,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Add Supplier</h2>
+          <button class="close-btn" id="closeAddSupplierBtn">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -687,6 +748,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2>Edit Supplier</h2>
+          <button class="close-btn" id="closeEditSupplierBtn">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">

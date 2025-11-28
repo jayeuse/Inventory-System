@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const supplierModal = document.getElementById("addSupplierModal");
   const addSupplierBtn = document.getElementById("addSupplierBtn");
   const cancelSupplierBtn = document.getElementById("cancelBtn");
+  const closeAddSupplierBtn = document.getElementById("closeAddSupplierBtn");
 
   if (addSupplierBtn) {
     addSupplierBtn.addEventListener(
@@ -45,6 +46,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (cancelSupplierBtn) {
     cancelSupplierBtn.addEventListener(
+      "click",
+      () => (supplierModal.style.display = "none")
+    );
+  }
+
+  if (closeAddSupplierBtn) {
+    closeAddSupplierBtn.addEventListener(
       "click",
       () => (supplierModal.style.display = "none")
     );
@@ -351,6 +359,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const supplierToggleOptions = supplierToggle.querySelectorAll('.toggle-option');
     const activeSuppliersTable = document.getElementById('activeSuppliersTable');
     const archivedSuppliersTable = document.getElementById('archivedSuppliersTable');
+    const activeSuppliersWrapper = document.getElementById('activeSuppliersWrapper');
+    const archivedSuppliersWrapper = document.getElementById('archivedSuppliersWrapper');
     const addSupplierBtn = document.getElementById('addSupplierBtn');
 
     supplierToggleOptions.forEach(option => {
@@ -362,10 +372,14 @@ document.addEventListener("DOMContentLoaded", function () {
         if (type === 'active') {
           activeSuppliersTable.style.display = 'table';
           archivedSuppliersTable.style.display = 'none';
+          if (activeSuppliersWrapper) activeSuppliersWrapper.style.display = 'block';
+          if (archivedSuppliersWrapper) archivedSuppliersWrapper.style.display = 'none';
           addSupplierBtn.style.display = 'inline-flex'; // Show button
         } else {
           activeSuppliersTable.style.display = 'none';
           archivedSuppliersTable.style.display = 'table';
+          if (activeSuppliersWrapper) activeSuppliersWrapper.style.display = 'none';
+          if (archivedSuppliersWrapper) archivedSuppliersWrapper.style.display = 'block';
           addSupplierBtn.style.display = 'none'; // Hide button
         }
       });
@@ -378,12 +392,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const categoryToggleOptions = categoryToggle.querySelectorAll('.toggle-option');
     const activeCategoriesTable = document.getElementById('activeCategoriesTable');
     const archivedCategoriesTable = document.getElementById('archivedCategoriesTable');
+    const activeCategoriesWrapper = document.getElementById('activeCategoriesWrapper');
+    const archivedCategoriesWrapper = document.getElementById('archivedCategoriesWrapper');
     const formSection = document.querySelector('#categories-content .form-section');
 
     // Set initial state - show form section and active table
     if (formSection) formSection.style.display = 'block';
     if (activeCategoriesTable) activeCategoriesTable.style.display = 'table';
     if (archivedCategoriesTable) archivedCategoriesTable.style.display = 'none';
+    if (activeCategoriesWrapper) activeCategoriesWrapper.style.display = 'block';
+    if (archivedCategoriesWrapper) archivedCategoriesWrapper.style.display = 'none';
 
     categoryToggleOptions.forEach(option => {
       option.addEventListener('click', function() {
@@ -394,10 +412,14 @@ document.addEventListener("DOMContentLoaded", function () {
         if (type === 'active') {
           activeCategoriesTable.style.display = 'table';
           archivedCategoriesTable.style.display = 'none';
+          if (activeCategoriesWrapper) activeCategoriesWrapper.style.display = 'block';
+          if (archivedCategoriesWrapper) archivedCategoriesWrapper.style.display = 'none';
           if (formSection) formSection.style.display = 'block'; // Show form section
         } else {
           activeCategoriesTable.style.display = 'none';
           archivedCategoriesTable.style.display = 'table';
+          if (activeCategoriesWrapper) activeCategoriesWrapper.style.display = 'none';
+          if (archivedCategoriesWrapper) archivedCategoriesWrapper.style.display = 'block';
           if (formSection) formSection.style.display = 'none'; // Hide form section when viewing archives
         }
       });

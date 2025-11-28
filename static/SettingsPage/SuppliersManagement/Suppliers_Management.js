@@ -5,6 +5,10 @@ document.addEventListener("DOMContentLoaded", function() {
   let currentPage = 1;
   let archivedCurrentPage = 1;
   const recordsPerPage = 8;
+  const truncateText = (text, maxLength = 30) => {
+    if (!text) return '-';
+    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+  };
 
   // Fetching Suppliers Data
   async function loadSuppliers() {
@@ -28,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function() {
       console.error('Error fetching Suppliers:', error);
     }
   }
-
+          // Fill with actual data or placeholders to maintain 6 rows
   function displaySuppliers() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const statusFilter = document.getElementById('statusFilter').value;
@@ -58,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (filteredSuppliers.length === 0) {
       tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--muted);">No suppliers found</td></tr>';
     } else {
-      // Fill with actual data or placeholders to maintain 8 rows
+      // Fill with actual data or placeholders to maintain 6 rows
       for (let i = 0; i < recordsPerPage; i++) {
         const row = document.createElement('tr');
         
@@ -66,15 +70,15 @@ document.addEventListener("DOMContentLoaded", function() {
           // Actual supplier data
           const supplier = paginatedSuppliers[i];
           row.innerHTML = `
-            <td>${supplier.supplier_id}</td>
-            <td>${supplier.supplier_name}</td>
-            <td>${supplier.contact_person}</td>
-            <td>${supplier.address}</td>
-            <td>${supplier.email}</td>
-            <td>${supplier.phone_number}</td>
-            <td>${supplier.status}</td>
-            <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
-            <td>
+            <td class="truncate-cell truncate-140" title="${supplier.supplier_id || ''}">${truncateText(supplier.supplier_id, 20)}</td>
+            <td class="truncate-cell truncate-200" title="${supplier.supplier_name || ''}">${truncateText(supplier.supplier_name, 32)}</td>
+            <td class="truncate-cell truncate-180" title="${supplier.contact_person || ''}">${truncateText(supplier.contact_person, 28)}</td>
+            <td class="address-cell" title="${supplier.address || ''}">${truncateText(supplier.address)}</td>
+            <td class="email-cell" title="${supplier.email || ''}">${truncateText(supplier.email, 28)}</td>
+            <td class="truncate-cell truncate-160" title="${supplier.phone_number || ''}">${truncateText(supplier.phone_number, 24)}</td>
+            <td class="truncate-cell truncate-140" title="${supplier.status || ''}">${truncateText(supplier.status, 20)}</td>
+            <td class="supply-cell" data-product-id="${supplier.product_id}" title="${supplier.product_name || ''}">${truncateText(supplier.product_name, 24)}</td>
+            <td class="actions-cell">
               <div class="op-buttons">
                 <button class="action-btn edit-btn">
                   <i class="bi bi-pencil"></i> Edit
@@ -86,19 +90,23 @@ document.addEventListener("DOMContentLoaded", function() {
             </td>
           `;
         } else {
-          // Empty placeholder row
+          // Empty placeholder row (keeps same structure for consistent height)
+          row.classList.add('placeholder-row');
           row.innerHTML = `
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
+            <td class="truncate-cell truncate-140 placeholder-value">-</td>
+            <td class="truncate-cell truncate-200 placeholder-value">-</td>
+            <td class="truncate-cell truncate-180 placeholder-value">-</td>
+            <td class="address-cell placeholder-value">-</td>
+            <td class="email-cell placeholder-value">-</td>
+            <td class="truncate-cell truncate-160 placeholder-value">-</td>
+            <td class="truncate-cell truncate-140 placeholder-value">-</td>
+            <td class="supply-cell placeholder-value">-</td>
+            <td class="actions-cell">
+              <div class="op-buttons placeholder-buttons">
+                <span>-</span>
+              </div>
+            </td>
           `;
-          row.style.opacity = '0.4';
         }
         
         tbody.appendChild(row);
@@ -123,7 +131,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (allArchivedSuppliers.length === 0) {
         archivedTbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: var(--muted);">No archived suppliers</td></tr>';
       } else {
-        // Fill with actual data or placeholders to maintain 8 rows
+        // Fill with actual data or placeholders to maintain 6 rows
         for (let i = 0; i < recordsPerPage; i++) {
           const row = document.createElement('tr');
           
@@ -131,17 +139,17 @@ document.addEventListener("DOMContentLoaded", function() {
             // Actual archived supplier data
             const supplier = paginatedSuppliers[i];
             row.innerHTML = `
-              <td>${supplier.supplier_id}</td>
-              <td>${supplier.supplier_name}</td>
-              <td>${supplier.contact_person}</td>
-              <td>${supplier.address}</td>
-              <td>${supplier.email}</td>
-              <td>${supplier.phone_number}</td>
-              <td>${supplier.status}</td>
-              <td data-product-id="${supplier.product_id}">${supplier.product_name}</td>
-              <td>${supplier.archive_reason || '-'}</td>
-              <td>${supplier.archived_at || '-'}</td>
-              <td>
+              <td class="truncate-cell truncate-140" title="${supplier.supplier_id || ''}">${truncateText(supplier.supplier_id, 20)}</td>
+              <td class="truncate-cell truncate-200" title="${supplier.supplier_name || ''}">${truncateText(supplier.supplier_name, 32)}</td>
+              <td class="truncate-cell truncate-180" title="${supplier.contact_person || ''}">${truncateText(supplier.contact_person, 28)}</td>
+              <td class="address-cell" title="${supplier.address || ''}">${truncateText(supplier.address)}</td>
+              <td class="email-cell" title="${supplier.email || ''}">${truncateText(supplier.email, 28)}</td>
+              <td class="truncate-cell truncate-160" title="${supplier.phone_number || ''}">${truncateText(supplier.phone_number, 24)}</td>
+              <td class="truncate-cell truncate-140" title="${supplier.status || ''}">${truncateText(supplier.status, 20)}</td>
+              <td class="supply-cell" data-product-id="${supplier.product_id}" title="${supplier.product_name || ''}">${truncateText(supplier.product_name, 24)}</td>
+              <td class="truncate-cell truncate-200" title="${supplier.archive_reason || '-'}">${truncateText(supplier.archive_reason, 30)}</td>
+              <td class="truncate-cell truncate-160" title="${supplier.archived_at || '-'}">${truncateText(supplier.archived_at || '-', 28)}</td>
+              <td class="actions-cell">
                 <div class="op-buttons">
                   <button class="action-btn unarchive-btn">
                     <i class="fas fa-undo"></i> Unarchive
@@ -151,20 +159,24 @@ document.addEventListener("DOMContentLoaded", function() {
             `;
           } else {
             // Empty placeholder row
+            row.classList.add('placeholder-row');
             row.innerHTML = `
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
-              <td>-</td>
+              <td class="truncate-cell truncate-140 placeholder-value">-</td>
+              <td class="truncate-cell truncate-200 placeholder-value">-</td>
+              <td class="truncate-cell truncate-180 placeholder-value">-</td>
+              <td class="address-cell placeholder-value">-</td>
+              <td class="email-cell placeholder-value">-</td>
+              <td class="truncate-cell truncate-160 placeholder-value">-</td>
+              <td class="truncate-cell truncate-140 placeholder-value">-</td>
+              <td class="supply-cell placeholder-value">-</td>
+              <td class="truncate-cell truncate-200 placeholder-value">-</td>
+              <td class="truncate-cell truncate-160 placeholder-value">-</td>
+              <td class="actions-cell">
+                <div class="op-buttons placeholder-buttons">
+                  <span>-</span>
+                </div>
+              </td>
             `;
-            row.style.opacity = '0.4';
           }
           
           archivedTbody.appendChild(row);
@@ -351,6 +363,14 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('editSupplierModal').style.display = 'none';
     currentEditSupplierId = null;
   })
+
+  const closeEditSupplierBtn = document.getElementById('closeEditSupplierBtn');
+  if (closeEditSupplierBtn) {
+    closeEditSupplierBtn.addEventListener('click', function(){
+      document.getElementById('editSupplierModal').style.display = 'none';
+      currentEditSupplierId = null;
+    });
+  }
 
   // Archiving Suppliers
   document.getElementById('supplierConfirmArchiveBtn').addEventListener('click', async function(){
