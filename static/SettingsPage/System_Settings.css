@@ -37,6 +37,12 @@ body {
   color: #1e293b;
   min-height: 100vh;
 }
+
+.settings-shell {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+}
 /* Additional CSS for collapsible forms */
 .form-toggle-buttons {
   display: flex;
@@ -89,8 +95,16 @@ body {
   transform: rotate(180deg);
 }
 .main {
-  padding: 48px 32px;
+  padding: 24px 32px;
   max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: calc(100vh - 48px);
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .tabs {
@@ -98,6 +112,7 @@ body {
   align-items: flex-end;
   position: relative;
   z-index: 2;
+  margin-bottom: -1px;
 }
 
 .tab {
@@ -132,10 +147,26 @@ body {
 
 .tab-content {
   display: none;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .tab-content.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
+}
+
+#settings-content.active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
+
+#settings-content {
+  flex: 1;
+  min-height: 0;
 }
 
 .page-title {
@@ -152,6 +183,14 @@ body {
   font-size: 30px;
 }
 
+.tab-content > .card .search-row,
+.tab-content > .card .toggle-container,
+.tab-content > .card .product-tabs,
+.tab-content > .card .info-banner,
+.tab-content > .card .section-divider {
+  flex-shrink: 0;
+}
+
 .card {
   background: #ffffff;
   border: 1px solid var(--border);
@@ -166,11 +205,80 @@ body {
   min-height: 280px;
 }
 
+.tab-content > .card {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#suppliers-content > .card,
+#products-content > .card {
+  overflow: visible;
+  min-height: 520px;
+}
+
+.table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 12px;
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+#suppliers-content .table-wrapper,
+#products-content .table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+}
+
+.table-wrapper > table {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+#suppliers-content .table-wrapper > table,
+#products-content .table-wrapper > table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+}
+
+#suppliers-content .table-wrapper th,
+#suppliers-content .table-wrapper td,
+#products-content .table-wrapper th,
+#products-content .table-wrapper td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-wrapper > table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .settings-grid {
   background-color: white;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 25px;
+  min-height: 0;
+}
+
+#settings-content .settings-grid {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .card-2 {
@@ -419,7 +527,8 @@ select:focus {
 
 .search-input {
   flex-grow: 1;
-  min-width: 820px;
+  min-width: 0;
+  width: 100%;
 }
 
 .btn-outline {
@@ -437,9 +546,6 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: #ffffff;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border);
 }
 
 thead {
@@ -478,6 +584,22 @@ tbody tr:hover {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.actions-cell {
+  min-width: 240px;
+  white-space: nowrap;
+}
+
+.actions-cell .op-buttons {
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+.actions-cell .action-btn {
+  flex: 0 0 auto;
+  min-width: 0;
+  text-align: center;
 }
 
 .action-btn {
@@ -543,7 +665,15 @@ tbody tr:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 18px;
+  margin-top: 16px;
+  padding-top: 16px;
+
+#suppliers-content .pagination,
+#products-content .pagination {
+  margin-top: auto;
+}
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .pagination-btn {
@@ -589,6 +719,9 @@ tbody tr:hover {
   box-shadow: var(--shadow);
   width: 700px;
   max-width: 90%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   animation: scaleIn 0.25s ease;
 }
@@ -606,8 +739,9 @@ tbody tr:hover {
 
 .modal-header {
   background: var(--primary-lighter);
-  padding: 32px 40px;
+  padding: 24px 32px;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -616,7 +750,10 @@ tbody tr:hover {
 }
 
 .modal-body {
-  padding: 40px;
+  padding: 28px 32px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-group {
@@ -640,9 +777,10 @@ tbody tr:hover {
 .modal-footer {
   display: flex;
   justify-content: space-between;
-  padding: 28px 40px;
+  padding: 20px 32px;
   border-top: 1px solid var(--border);
   background: var(--primary-lighter);
+  flex-shrink: 0;
 }
 
 .btn-secondary {
@@ -660,15 +798,24 @@ tbody tr:hover {
 .layout {
   display: flex;
   gap: 24px;
+  flex: 1;
+  min-height: 0;
+  align-items: flex-start;
 }
 
 .table-section {
   flex: 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .form-section {
   flex: 1;
   min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
 }
 
 .form-container {
@@ -678,9 +825,9 @@ tbody tr:hover {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: var(--shadow);
-  height: 100%;
   display: flex;
   flex-direction: column;
+  gap: 16px;
 }
 
 .form-container h3 {
@@ -693,7 +840,7 @@ tbody tr:hover {
 .form-content {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  gap: 16px;
 }
 
 .form-fields {
@@ -704,8 +851,7 @@ tbody tr:hover {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: auto;
-  padding-top: 20px;
+  padding-top: 12px;
 }
 
 #category-name {
@@ -779,6 +925,88 @@ tbody tr:hover {
   background-color: rgba(230, 217, 245, 0.3);
 }
 
+.address-cell {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.last-update-cell {
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.email-cell {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.supply-cell {
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.truncate-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.truncate-220 {
+  max-width: 220px;
+}
+
+.truncate-200 {
+  max-width: 200px;
+}
+
+.truncate-180 {
+  max-width: 180px;
+}
+
+.truncate-160 {
+  max-width: 160px;
+}
+
+.truncate-140 {
+  max-width: 140px;
+}
+
+.placeholder-row {
+  opacity: 0.5;
+}
+
+.placeholder-row td {
+  padding: 12px 8px;
+  vertical-align: middle;
+}
+
+.placeholder-value {
+  color: var(--muted);
+}
+
+.placeholder-buttons {
+  gap: 8px;
+  justify-content: center;
+}
+
+.placeholder-buttons span {
+  display: inline-block;
+  min-width: 32px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(139, 95, 191, 0.12);
+  color: var(--muted);
+  text-align: center;
+}
+
 .hidden {
   display: none;
 }
@@ -834,10 +1062,13 @@ tbody tr:hover {
 
 .product-tab-content {
   display: none;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .product-tab-content.active {
-  display: block;
+  display: flex;
 }
 
 .info-banner {
@@ -924,6 +1155,32 @@ tbody tr:hover {
 @media (max-width: 768px) {
   .main {
     padding: 20px;
+    height: auto;
+    overflow: visible;
+  }
+
+  .settings-shell {
+    min-height: auto;
+    flex-direction: column;
+  }
+
+  .tab-content {
+    overflow: visible;
+  }
+
+  .tab-content > .card {
+    min-height: auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  .table-wrapper {
+    min-height: auto;
+    max-height: none;
+  }
+
+  .table-wrapper > table {
+    min-width: 600px;
   }
 
   .settings-grid {
@@ -945,12 +1202,6 @@ tbody tr:hover {
 
   .theme-options {
     flex-direction: column;
-  }
-
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
   }
 
   .search-row {
@@ -996,5 +1247,16 @@ tbody tr:hover {
 
   .product-tab {
     text-align: center;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
   }
 }

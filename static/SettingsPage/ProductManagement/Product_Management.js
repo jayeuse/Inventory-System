@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
   let activeCurrentPage = 1;
   let archivedCurrentPage = 1;
   const recordsPerPage = 8;
+  const truncateText = (text, maxLength = 30) => {
+    if (!text) return '-';
+    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+  };
   
   console.log('Checking for products-content:', document.getElementById('products-content'));
   console.log('Checking for product tabs:', document.querySelectorAll('.product-tab').length);
@@ -124,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
       tr.innerHTML = '<td colspan="10" style="text-align: center; padding: 40px; color: var(--muted);">No products found.</td>';
       tableBody.appendChild(tr);
     } else {
-      // Fill with actual data or placeholders to maintain 8 rows
+      // Fill with actual data or placeholders to maintain 6 rows
       for (let i = 0; i < recordsPerPage; i++) {
         const row = document.createElement('tr');
         
@@ -136,15 +140,15 @@ document.addEventListener('DOMContentLoaded', function () {
           
           row.innerHTML = `
             <td>${p.product_id || ''}</td>
-            <td>${p.brand_name || ''}</td>
-            <td>${p.generic_name || ''}</td>
-            <td>${p.category_name || ''}</td>
-            <td>${p.subcategory_name || ''}</td>
+            <td class="truncate-cell truncate-200" title="${p.brand_name || ''}">${truncateText(p.brand_name, 32)}</td>
+            <td class="truncate-cell truncate-200" title="${p.generic_name || ''}">${truncateText(p.generic_name, 32)}</td>
+            <td class="truncate-cell truncate-160" title="${p.category_name || ''}">${truncateText(p.category_name, 24)}</td>
+            <td class="truncate-cell truncate-160" title="${p.subcategory_name || ''}">${truncateText(p.subcategory_name, 24)}</td>
             <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
             <td>${p.low_stock_threshold || ''} units</td>
             <td>${p.expiry_threshold_days || ''} days</td>
-            <td>${p.last_updated || ''}</td>
-            <td>
+            <td class="last-update-cell" title="${p.last_updated || ''}">${truncateText(p.last_updated)}</td>
+            <td class="actions-cell">
               <div class="op-buttons">
                 <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
                 <button class="action-btn archive-btn"><i class="fas fa-archive"></i> Archive</button>
@@ -195,20 +199,24 @@ document.addEventListener('DOMContentLoaded', function () {
             archiveModal.style.display = 'flex';
           });
         } else {
-          // Empty placeholder row
+          // Empty placeholder row (mirrors structure for consistent height)
+          row.classList.add('placeholder-row');
           row.innerHTML = `
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
+            <td class="placeholder-value">-</td>
+            <td class="truncate-cell truncate-200 placeholder-value">-</td>
+            <td class="truncate-cell truncate-200 placeholder-value">-</td>
+            <td class="truncate-cell truncate-160 placeholder-value">-</td>
+            <td class="truncate-cell truncate-160 placeholder-value">-</td>
+            <td class="placeholder-value">-</td>
+            <td class="placeholder-value">-</td>
+            <td class="placeholder-value">-</td>
+            <td class="last-update-cell placeholder-value">-</td>
+            <td class="actions-cell">
+              <div class="op-buttons placeholder-buttons">
+                <span>-</span>
+              </div>
+            </td>
           `;
-          row.style.opacity = '0.4';
         }
         
         tableBody.appendChild(row);
@@ -255,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function () {
       tr.innerHTML = '<td colspan="9" style="text-align: center; padding: 40px; color: var(--muted);">No archived products found.</td>';
       archivedBody.appendChild(tr);
     } else {
-      // Fill with actual data or placeholders to maintain 8 rows
+      // Fill with actual data or placeholders to maintain 6 rows
       for (let i = 0; i < recordsPerPage; i++) {
         const row = document.createElement('tr');
         
@@ -269,14 +277,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
           row.innerHTML = `
             <td>${p.product_id || ''}</td>
-            <td>${p.brand_name || ''}</td>
-            <td>${p.generic_name || ''}</td>
-            <td>${p.category_name || ''}</td>
-            <td>${p.subcategory_name || ''}</td>
+            <td class="truncate-cell truncate-200" title="${p.brand_name || ''}">${truncateText(p.brand_name, 32)}</td>
+            <td class="truncate-cell truncate-200" title="${p.generic_name || ''}">${truncateText(p.generic_name, 32)}</td>
+            <td class="truncate-cell truncate-160" title="${p.category_name || ''}">${truncateText(p.category_name, 24)}</td>
+            <td class="truncate-cell truncate-160" title="${p.subcategory_name || ''}">${truncateText(p.subcategory_name, 24)}</td>
             <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
-            <td>${archiveReason}</td>
-            <td>${archivedDate}</td>
-            <td>
+            <td class="truncate-cell truncate-200" title="${archiveReason}">${truncateText(archiveReason, 28)}</td>
+            <td class="truncate-cell truncate-140" title="${archivedDate}">${truncateText(archivedDate, 22)}</td>
+            <td class="actions-cell">
               <div class="op-buttons">
                 <button class="action-btn edit-btn"><i class="bi bi-pencil"></i> Edit</button>
                 <button class="action-btn unarchive-btn"><i class="fas fa-box-open"></i> Unarchive</button>
@@ -326,18 +334,22 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         } else {
           // Empty placeholder row
+          row.classList.add('placeholder-row');
           row.innerHTML = `
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
+            <td class="placeholder-value">-</td>
+            <td class="truncate-cell truncate-200 placeholder-value">-</td>
+            <td class="truncate-cell truncate-200 placeholder-value">-</td>
+            <td class="truncate-cell truncate-160 placeholder-value">-</td>
+            <td class="truncate-cell truncate-160 placeholder-value">-</td>
+            <td class="placeholder-value">-</td>
+            <td class="truncate-cell truncate-200 placeholder-value">-</td>
+            <td class="truncate-cell truncate-140 placeholder-value">-</td>
+            <td class="actions-cell">
+              <div class="op-buttons placeholder-buttons">
+                <span>-</span>
+              </div>
+            </td>
           `;
-          row.style.opacity = '0.4';
         }
         
         archivedBody.appendChild(row);
