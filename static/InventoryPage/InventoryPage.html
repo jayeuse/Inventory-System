@@ -22,6 +22,8 @@
     />
     <link rel="stylesheet" href="/static/InventoryPage/InventoryPage.css" />
     <link rel="stylesheet" href="/static/InventoryPage/Orders/Orders.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   </head>
   <body>
     <div class="d-flex">
@@ -51,6 +53,9 @@
                   <option value="expired">Expired</option>
                 </select>
               </div>
+              <button class="btn btn-export" id="exportStockListBtn">
+                <i class="fas fa-file-pdf"></i> Export PDF
+              </button>
             </div>
 
             <div class="info-banner">
@@ -607,6 +612,10 @@
               if (typeof initializeOrders === 'function') {
                 initializeOrders();
               }
+              // Attach export listener after Orders content is loaded
+              if (typeof window.attachOrdersExportListener === 'function') {
+                window.attachOrdersExportListener();
+              }
             };
             document.body.appendChild(script);
           }
@@ -622,5 +631,7 @@
     <script src="/static/SettingsPage/LogoutManagement/LogoutManagement.js"></script>
     <script src="/static/InventoryPage/InventoryPage.js"></script>
     <script src="/static/InventoryPage/StocksManagement/Stocks_Management.js"></script>
+    <script src="/static/InventoryPage/StocksManagement/StockExport.js"></script>
+    <script src="/static/InventoryPage/Orders/OrderExport.js"></script>
   </body>
 </html>
