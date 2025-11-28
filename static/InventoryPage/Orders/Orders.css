@@ -115,6 +115,7 @@ body {
     transition: all 0.25s ease;
     display: flex;
     flex-direction: column;
+    height: 858px;
 }
 
 .card:hover {
@@ -132,7 +133,7 @@ body {
     }
 }
 
-.table-container {
+#orders-content .table-container {
     display: grid;
     grid-template-columns: 1fr 200px; 
     gap: 20px;
@@ -307,6 +308,19 @@ select:focus {
 }
 
 .btn-outline:hover {
+    background: #7a4fa6;
+    box-shadow: 0 4px 8px rgba(139, 95, 191, 0.3);
+}
+
+.add-to-cart-btn {
+    margin-top: 16px;
+    width: 100%;
+    justify-content: center;
+    background: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.add-to-cart-btn:hover {
     background: #7a4fa6;
     box-shadow: 0 4px 8px rgba(139, 95, 191, 0.3);
 }
@@ -689,7 +703,8 @@ tbody tr:hover {
 
 /* New styles for the receipt-style receive order modal */
 .receipt-modal .modal-content {
-    width: 500px;
+    width: 1500px;
+    max-width: 95%;
     border-radius: 14px;
     background: #fff;
     font-family: 'Poppins', sans-serif;

@@ -42,6 +42,9 @@ body {
   padding: 48px 32px;
   max-width: 1400px;
   margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .tabs {
@@ -49,6 +52,7 @@ body {
   align-items: flex-end;
   position: relative;
   z-index: 2;
+  flex-shrink: 0;
 }
 
 .tab {
@@ -83,10 +87,14 @@ body {
 
 .page-content {
   display: none;
+  flex: 1;
+  min-height: 0;
 }
 
 .page-content.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .card {
@@ -98,6 +106,13 @@ body {
   padding: 24px;
   animation: fadeIn 0.3s ease;
   transition: all 0.25s ease;
+}
+
+#products-page .card {
+  min-height: 858px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .card:hover {
@@ -226,9 +241,6 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: #ffffff;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border);
 }
 
 thead {
@@ -236,17 +248,26 @@ thead {
   color: var(--primary-color);
   border-bottom: 1px solid var(--primary-light);
   background: rgba(139, 95, 191, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 th,
 td {
-  padding: 12px 10px;
-  text-align: left;
+  padding: 14px 12px;
+  text-align: left; 
 }
 
 th {
   text-align: left;
   font-weight: 600;
+}
+
+tbody td {
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 tbody tr {
@@ -261,6 +282,43 @@ tbody tr:last-child {
 
 tbody tr:hover {
   background: rgba(230, 217, 245, 0.4);
+}
+
+.table-container {
+  height: 600px;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #ffffff;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+.table-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--primary-lighter);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #7a4fa8;
+}
+
+#products-page .pagination {
+  margin-top: 18px;
+  flex-shrink: 0;
 }
 
 .pagination {

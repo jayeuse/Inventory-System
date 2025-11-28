@@ -55,6 +55,11 @@ body {
   overflow: hidden;
 }
 
+.d-flex > main.main {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 /* Tabs Styling */
 .tabs {
   display: flex;
