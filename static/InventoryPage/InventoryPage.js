@@ -36,19 +36,58 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// Toggle batch details function
+// Toggle batch details function with smooth animation
 function toggleBatches(stockId) {
   const batchRow = document.getElementById(`stockslist_batches-${stockId}`);
+  const batchContainer = batchRow.querySelector('.batch-container');
   const icon = document.getElementById(`stockslist_icon-${stockId}`);
   const expandBtn = icon.closest(".expand-btn");
+  const stockRow = expandBtn.closest('tr');
+  const tableContainer = document.querySelector('.table-container');
 
-  if (batchRow.style.display === "none" || batchRow.style.display === "") {
+  const isExpanded = batchRow.style.display === "table-row";
+
+  if (!isExpanded) {
+    // Expanding
     batchRow.style.display = "table-row";
     expandBtn.classList.add("expanded");
-    loadBatches(stockId);
+    
+    // Trigger reflow to enable transition
+    void batchContainer.offsetHeight;
+    
+    batchContainer.classList.add("expanded");
+    batchRow.classList.add("expanded");
+    
+    // Load batches if needed
+    if (typeof loadBatches === 'function') {
+      loadBatches(stockId);
+    }
+    
+    // Smooth scroll to show the expanded content
+    setTimeout(() => {
+      const rowTop = stockRow.offsetTop;
+      const containerScroll = tableContainer.scrollTop;
+      const containerHeight = tableContainer.clientHeight;
+      const batchHeight = batchRow.offsetHeight;
+      
+      // Check if batch details are not fully visible
+      if (rowTop + batchHeight > containerScroll + containerHeight) {
+        tableContainer.scrollTo({
+          top: rowTop - 100,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   } else {
-    batchRow.style.display = "none";
+    // Collapsing
     expandBtn.classList.remove("expanded");
+    batchContainer.classList.remove("expanded");
+    batchRow.classList.remove("expanded");
+    
+    // Wait for transition to complete before hiding
+    setTimeout(() => {
+      batchRow.style.display = "none";
+    }, 400);
   }
 }
 

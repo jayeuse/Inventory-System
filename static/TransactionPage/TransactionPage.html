@@ -51,36 +51,29 @@
               </div>
             </div>
 
-            <div class="info-banner">
-              <i class="bi bi-info-circle"></i>
-              <p>
-                <em
-                  >This is a read-only view of all inventory transactions. Stock In, Stock Out, and Adjust operations are tracked here.</em
-                >
-              </p>
-            </div>
-
             <!-- Transaction Table -->
-            <table>
-              <thead>
-                <tr>
-                  <th>Transaction ID</th>
-                  <th>Type</th>
-                  <th>Product Name</th>
-                  <th>Batch ID</th>
-                  <th>Qty Change</th>
-                  <th>On Hand</th>
-                  <th>Remarks</th>
-                  <th>Performed By</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody id="transactions_tableBody">
-                <tr>
-                  <td> </td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Transaction ID</th>
+                    <th>Type</th>
+                    <th>Product Name</th>
+                    <th>Batch ID</th>
+                    <th>Qty Change</th>
+                    <th>On Hand</th>
+                    <th>Remarks</th>
+                    <th>Performed By</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="transactions_tableBody">
+                  <tr>
+                    <td> </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
             <div class="pagination">
               <button class="pagination-btn" id="transactions_prevBtn">

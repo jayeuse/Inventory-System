@@ -64,18 +64,19 @@
             </div>
 
             <!-- Stock Table -->
-            <table>
-              <thead>
-                <tr>
-                  <th style="width: 50px"></th>
-                  <th>Stock ID</th>
-                  <th>Product ID</th>
-                  <th>Product Name</th>
-                  <th>Total On Hand</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="stocks-table-body">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 50px"></th>
+                    <th>Stock ID</th>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
+                    <th>Total On Hand</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="stocks-table-body">
                 <!-- Stock Item 1 -->
                 <tr class="stock-row">
                   <td>
@@ -104,7 +105,6 @@
                 >
                   <td colspan="6">
                     <div class="batch-container">
-                      <h4 class="batch-title">Batch Details for STK-001</h4>
                       <table class="batch-table">
                         <thead>
                           <tr>
@@ -192,7 +192,6 @@
                 >
                   <td colspan="6">
                     <div class="batch-container">
-                      <h4 class="batch-title">Batch Details for STK-002</h4>
                       <table class="batch-table">
                         <thead>
                           <tr>
@@ -230,7 +229,8 @@
                   </td>
                 </tr>
               </tbody>
-            </table>
+              </table>
+            </div>
 
             <div class="pagination">
               <button class="pagination-btn" id="stockslist_prevBtn">

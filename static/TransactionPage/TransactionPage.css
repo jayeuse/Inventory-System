@@ -44,7 +44,12 @@ body {
 
 .main {
   padding: 48px 32px;
-  max-width: 1600px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.d-flex > main.main {
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -91,6 +96,12 @@ body {
 
 .tab-content.active {
   display: block;
+}
+
+#history-content .card {
+  height: 858px;
+  display: flex;
+  flex-direction: column;
 }
 
 .card {
@@ -167,41 +178,12 @@ select {
   padding-right: 35px;
 }
 
-.info-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--primary-lighter);
-  border: 1px solid var(--primary-light);
-  border-radius: var(--radius);
-  padding: 10px 16px;
-  margin-bottom: 16px;
-}
 
-.info-banner i {
-  font-size: 18px;
-  color: var(--primary-color);
-  flex-shrink: 0;
-}
-
-.info-banner p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #475569;
-}
-
-.info-banner em {
-  font-style: italic;
-}
 
 table {
   width: 100%;
   border-collapse: collapse;
   background: #ffffff;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border);
 }
 
 thead {
@@ -209,6 +191,10 @@ thead {
   color: var(--primary-color);
   border-bottom: 1px solid var(--primary-light);
   background: rgba(139, 95, 191, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 th,
@@ -273,6 +259,14 @@ tbody tr:hover {
   justify-content: space-between;
   align-items: center;
   margin-top: 18px;
+}
+
+.table-container {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #ffffff;
+  position: relative;
 }
 
 .pagination-btn {

@@ -97,6 +97,7 @@ body {
   padding: 24px;
   animation: fadeIn 0.3s ease;
   transition: all 0.25s ease;
+  height: 858px;
 }
 
 .card:hover {
@@ -239,31 +240,88 @@ select {
   font-style: italic;
 }
 
+/* Table Container with Fixed Height */
+.table-container {
+  height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #ffffff;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+.table-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--primary-lighter);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #7a4fa8;
+}
+
 table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   background: #ffffff;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--border);
+  margin: 0;
+  border: 0;
 }
 
 thead {
   font-size: 13px;
   color: var(--primary-color);
-  border-bottom: 1px solid var(--primary-light);
+  border-bottom: 2px solid var(--primary-light);
   background: rgba(139, 95, 191, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  display: table-header-group;
+}
+
+tbody {
+  width: 100%;
+  display: table-row-group;
 }
 
 th,
 td {
-  padding: 12px 10px;
+  padding: 10px 12px;
   text-align: left;
+  box-sizing: border-box;
+}
+
+/* Hide overflow for product name column (4th column) */
+td:nth-child(4) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0;
 }
 
 th {
   text-align: left;
   font-weight: 600;
+}
+
+tbody tr {
+  width: 100%;
+  display: table-row;
 }
 
 tbody tr.stock-row {
@@ -281,7 +339,7 @@ tbody tr.batch-details {
 }
 
 tbody tr.batch-details td {
-  padding: 16px 24px;
+  padding: 0;
 }
 
 .expand-btn {
@@ -310,27 +368,48 @@ tbody tr.batch-details td {
 }
 
 .batch-container {
-  padding: 24px 32px;
+  padding: 0;
   background: var(--primary-lighter);
   border-top: 2px solid var(--primary-light);
   border-bottom: 2px solid var(--primary-light);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out;
 }
 
-.batch-title {
-  margin: 0 0 20px 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--primary-color);
-  letter-spacing: 0.3px;
+.batch-container.expanded {
+  max-height: 1000px;
+  opacity: 1;
+  padding: 10px;
+}
+
+/* Override any headings inside batch container */
+.batch-container h1,
+.batch-container h2,
+.batch-container h3,
+.batch-container h4,
+.batch-container h5,
+.batch-container h6,
+.batch-container .batch-title {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--secondary-color) !important;
+  margin: 0 0 8px 0 !important;
+  padding: 4px 8px !important;
+  background: rgba(108, 155, 207, 0.08);
+  border-radius: 4px;
+  display: inline-block;
+  line-height: 1.4 !important;
 }
 
 .batch-table {
   width: 100%;
+  table-layout: fixed;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
+  border-radius: 6px;
   background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .batch-table thead {
@@ -338,13 +417,22 @@ tbody tr.batch-details td {
   color: var(--secondary-color);
 }
 
-.batch-table th,
+.batch-table th {
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .batch-table td {
-  padding: 14px 16px;
+  padding: 10px 12px;
+  font-size: 13px;
 }
 
 .batch-table tbody tr {
   border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
 }
 
 .batch-table tbody tr:last-child {
@@ -352,18 +440,18 @@ tbody tr.batch-details td {
 }
 
 .batch-table tbody tr:hover {
-  background: rgba(217, 230, 245, 0.4);
+  background: rgba(217, 230, 245, 0.5);
 }
 
 /* Status Badges */
 .status-badge {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 16px;
+  font-size: 12px;
   font-weight: 600;
   text-align: center;
-  width: 120px;
+  min-width: 100px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -402,12 +490,12 @@ tbody tr.batch-details td {
 /* Batch Status Badges */
 .batch-status {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 10px;
   font-weight: 600;
   text-align: center;
-  width: 120px;
+  min-width: 85px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -440,14 +528,14 @@ tbody tr.batch-details td {
 /* Action Buttons in Batch Table */
 .action-btn {
   border: none;
-  border-radius: var(--radius);
-  padding: 8px 16px;
-  font-size: 13px;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 11px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
   font-weight: 500;
 }
 
