@@ -161,6 +161,7 @@ function disableArchiveButtons() {
 
 // Disable create/edit buttons for Clerk users
 function disableCreateEditButtons() {
+  // EXCLUDE cart-related buttons: #addToCartBtn, #placeAllOrdersBtn
   const buttons = document.querySelectorAll(
     '#addSupplierBtn, #addProductBtn, #addCategoryBtn, #toggleCategoryForm, #toggleSubcategoryForm, ' +
     '.edit-btn, #saveSupplierBtn, #saveProductBtn, #addCategoryBtn, #addSubCategoryBtn, ' +
@@ -168,6 +169,11 @@ function disableCreateEditButtons() {
   );
   
   buttons.forEach(btn => {
+    // Skip cart buttons
+    if (btn.id === 'addToCartBtn' || btn.id === 'placeAllOrdersBtn') {
+      return;
+    }
+    
     btn.disabled = true;
     btn.style.opacity = '0.5';
     btn.style.cursor = 'not-allowed';
@@ -246,9 +252,14 @@ function applyPageSpecificPermissions() {
         }
       });
 
-      // Disable create/add order buttons inside orders page
+      // Disable create/add order buttons EXCEPT cart buttons
       const addOrderBtns = document.querySelectorAll('#addOrderBtn, .create-order-btn, #confirmAddOrderBtn');
       addOrderBtns.forEach(btn => {
+        // Skip cart buttons
+        if (btn.id === 'addToCartBtn' || btn.id === 'placeAllOrdersBtn') {
+          return;
+        }
+        
         try { if ('disabled' in btn) btn.disabled = true; } catch (err) { /* ignore */ }
         btn.style.opacity = '0.5';
         btn.style.cursor = 'not-allowed';
@@ -317,6 +328,12 @@ function observeDynamicContent() {
       if (mutation.addedNodes.length > 0) {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === 1) { // Element node
+            // Skip cart-related buttons
+            if (node.id === 'addToCartBtn' || node.id === 'placeAllOrdersBtn' || 
+                node.id === 'multipleOrdersList' || node.id === 'ordersCount') {
+              return;
+            }
+            
             if (node.classList?.contains('archive-btn') || 
                 node.classList?.contains('edit-btn') ||
                 node.classList?.contains('unarchive-btn') ||

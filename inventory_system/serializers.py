@@ -248,7 +248,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             'quantity_received',
         ]
         extra_kwargs = {
-            'order': {'write_only': True},
+            'order': {'write_only': True, 'required': False},
             'product': {'write_only': True},
             'supplier': {'write_only': True},
         }
@@ -273,10 +273,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
         return value
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
+    items = OrderItemSerializer(many=True)
     total_items = serializers.SerializerMethodField()
     date_ordered = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Order
         fields = [
@@ -288,10 +288,17 @@ class OrderSerializer(serializers.ModelSerializer):
             'items',
             'total_items',
         ]
-    
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items', [])
+        order = super().create(validated_data)
+        for item_data in items_data:
+            OrderItem.objects.create(order=order, **item_data)
+        return order
+
     def get_total_items(self, obj):
         return obj.items.count()
-    
+
     def get_date_ordered(self, obj):
         """Format date_ordered to readable format"""
         if obj.date_ordered:
