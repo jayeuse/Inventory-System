@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.db import models
 from django.utils.timezone import localtime
 from django.contrib.auth.models import User
-from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog, UserInformation
+from .models import Supplier, SupplierProduct, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog, UserInformation
 
 class CategorySerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
@@ -61,9 +61,28 @@ class SubcategorySerializer(serializers.ModelSerializer):
             return local_time.strftime('%b %d, %Y %I:%M %p')
         return None
 
-class SupplierSerializer(serializers.ModelSerializer):
+class SupplierProductSerializer(serializers.ModelSerializer):
+    """Serializer for the SupplierProduct many-to-many relationship"""
     product_id = serializers.CharField(source='product.product_id', read_only=True)
     product_name = serializers.CharField(source='product.product_name', read_only=True)
+    
+    class Meta:
+        model = SupplierProduct
+        fields = [
+            'supplier_product_id',
+            'product',
+            'product_id',
+            'product_name',
+        ]
+        extra_kwargs = {
+            'product': {'write_only': True},
+        }
+
+
+class SupplierSerializer(serializers.ModelSerializer):
+    # Many-to-many: List of products this supplier provides
+    products_supplied = SupplierProductSerializer(source='supplierproduct_set', many=True, read_only=True)
+    products_count = serializers.SerializerMethodField()
     archived_at = serializers.SerializerMethodField()
     
     class Meta:
@@ -75,16 +94,19 @@ class SupplierSerializer(serializers.ModelSerializer):
             'address',
             'email',
             'phone_number',
-            'product',
-            'product_id',
-            'product_name',
             'status',
+            'products_supplied',
+            'products_count',
             'archived_at',
             'archive_reason',
             'archived_by',
         ]
 
         read_only_fields = ['archived_at', 'archived_by',]
+
+    def get_products_count(self, obj):
+        """Return count of products this supplier provides"""
+        return obj.products.count()
 
     def get_archived_at(self, obj):
         if obj.archived_at:

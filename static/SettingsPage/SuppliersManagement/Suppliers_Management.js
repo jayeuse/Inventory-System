@@ -69,6 +69,12 @@ document.addEventListener("DOMContentLoaded", function() {
         if (i < paginatedSuppliers.length) {
           // Actual supplier data
           const supplier = paginatedSuppliers[i];
+          // Build products list from many-to-many relationship
+          const productsSupplied = supplier.products_supplied || [];
+          const productNames = productsSupplied.map(p => p.product_name).join(', ') || '-';
+          const productCount = supplier.products_count || productsSupplied.length || 0;
+          const productDisplay = productCount > 0 ? `${productCount} product(s)` : '-';
+          
           row.innerHTML = `
             <td class="truncate-cell truncate-140" title="${supplier.supplier_id || ''}">${truncateText(supplier.supplier_id, 20)}</td>
             <td class="truncate-cell truncate-200" title="${supplier.supplier_name || ''}">${truncateText(supplier.supplier_name, 32)}</td>
@@ -77,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <td class="email-cell" title="${supplier.email || ''}">${truncateText(supplier.email, 28)}</td>
             <td class="truncate-cell truncate-160" title="${supplier.phone_number || ''}">${truncateText(supplier.phone_number, 24)}</td>
             <td class="truncate-cell truncate-140" title="${supplier.status || ''}">${truncateText(supplier.status, 20)}</td>
-            <td class="supply-cell" data-product-id="${supplier.product_id}" title="${supplier.product_name || ''}">${truncateText(supplier.product_name, 24)}</td>
+            <td class="supply-cell" title="${productNames}">${productDisplay}</td>
             <td class="actions-cell">
               <div class="op-buttons">
                 <button class="action-btn edit-btn">
@@ -138,6 +144,12 @@ document.addEventListener("DOMContentLoaded", function() {
           if (i < paginatedSuppliers.length) {
             // Actual archived supplier data
             const supplier = paginatedSuppliers[i];
+            // Build products list from many-to-many relationship
+            const productsSupplied = supplier.products_supplied || [];
+            const productNames = productsSupplied.map(p => p.product_name).join(', ') || '-';
+            const productCount = supplier.products_count || productsSupplied.length || 0;
+            const productDisplay = productCount > 0 ? `${productCount} product(s)` : '-';
+            
             row.innerHTML = `
               <td class="truncate-cell truncate-140" title="${supplier.supplier_id || ''}">${truncateText(supplier.supplier_id, 20)}</td>
               <td class="truncate-cell truncate-200" title="${supplier.supplier_name || ''}">${truncateText(supplier.supplier_name, 32)}</td>
@@ -146,7 +158,7 @@ document.addEventListener("DOMContentLoaded", function() {
               <td class="email-cell" title="${supplier.email || ''}">${truncateText(supplier.email, 28)}</td>
               <td class="truncate-cell truncate-160" title="${supplier.phone_number || ''}">${truncateText(supplier.phone_number, 24)}</td>
               <td class="truncate-cell truncate-140" title="${supplier.status || ''}">${truncateText(supplier.status, 20)}</td>
-              <td class="supply-cell" data-product-id="${supplier.product_id}" title="${supplier.product_name || ''}">${truncateText(supplier.product_name, 24)}</td>
+              <td class="supply-cell" title="${productNames}">${productDisplay}</td>
               <td class="truncate-cell truncate-200" title="${supplier.archive_reason || '-'}">${truncateText(supplier.archive_reason, 30)}</td>
               <td class="truncate-cell truncate-160" title="${supplier.archived_at || '-'}">${truncateText(supplier.archived_at || '-', 28)}</td>
               <td class="actions-cell">

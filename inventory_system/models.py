@@ -157,12 +157,12 @@ class Supplier(models.Model):
     email = models.EmailField(blank=True, null=True, db_column='email')
     phone_number = models.CharField(max_length=20, blank=True, null=True, db_column='phone_number')
     address = models.TextField(blank=True, null=True, db_column='address')
-    product = models.ForeignKey(
+    
+    # Many-to-many relationship with Product through SupplierProduct
+    products = models.ManyToManyField(
         Product,
-        on_delete=models.CASCADE,
-        db_column='product_id',
-        to_field='product_id',
-        related_name='products'
+        through='SupplierProduct',
+        related_name='suppliers'
     )
 
     STATUS_CHOICES = [

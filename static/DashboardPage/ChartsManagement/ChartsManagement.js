@@ -97,7 +97,7 @@ async function fetchCategoryDistribution() {
 }
 
 async function fetchTopSuppliers() {
-	const url = '/api/dashboard/top-suppliers/?top=5';
+	const url = '/api/dashboard/top-suppliers/?top=3';
 	try {
 		const res = await fetch(url, { method: 'GET', headers: getHeaders(), cache: 'no-cache' });
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);

@@ -90,8 +90,8 @@ def dashboard_top_suppliers(request):
         top = int(request.query_params.get('top', 5))
     except (TypeError, ValueError):
         top = 5
-    # Annotate suppliers with the number of distinct products they supply.
-    qs = Supplier.objects.annotate(products_supplied=Count('product', distinct=True)).order_by('-products_supplied')[:top]
+    # Annotate suppliers with the number of distinct products they supply (via many-to-many).
+    qs = Supplier.objects.annotate(products_supplied=Count('products', distinct=True)).order_by('-products_supplied')[:top]
     # Use values() to build simple dicts for serialization
     data = [{'supplier_name': s.supplier_name or 'Unknown', 'products_supplied': int(getattr(s, 'products_supplied', 0) or 0)} for s in qs]
     serializer = DashboardSupplierSerializer(data, many=True)
