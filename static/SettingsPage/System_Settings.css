@@ -1086,6 +1086,130 @@ tbody tr:hover {
   box-shadow: 0 4px 8px rgba(255, 158, 158, 0.3);
 }
 
+/* Multi-Select Dropdown Styles */
+.multi-select-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.multi-select-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 42px;
+}
+
+.multi-select-trigger:hover {
+  border-color: var(--primary-color);
+}
+
+.multi-select-trigger.active {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(139, 95, 191, 0.15);
+}
+
+.multi-select-trigger i {
+  transition: transform 0.2s ease;
+  color: var(--muted);
+}
+
+.multi-select-trigger.active i {
+  transform: rotate(180deg);
+}
+
+.multi-select-text {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.multi-select-text.has-selection {
+  color: #1e293b;
+}
+
+.multi-select-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+}
+
+.multi-select-options.show {
+  display: block;
+}
+
+.multi-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 14px;
+}
+
+.multi-select-option:hover {
+  background: var(--primary-lighter);
+}
+
+.multi-select-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.multi-select-option label {
+  cursor: pointer;
+  flex: 1;
+  margin: 0;
+  font-weight: normal;
+}
+
+.selected-products-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.selected-product-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.selected-product-tag .remove-tag {
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.selected-product-tag .remove-tag:hover {
+  opacity: 1;
+}
+
 /* Category Management Styles */
 .layout {
   display: flex;

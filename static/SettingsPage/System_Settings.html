@@ -628,10 +628,17 @@
             />
           </div>
           <div class="form-group">
-            <label for="supplierProduct">Supplying Product</label>
-            <select id="supplierProduct", class="supplierProduct">
-              <option value="">Select a Product</option>
-            </select>
+            <label>Supplying Products</label>
+            <div class="multi-select-dropdown" id="supplierProductDropdown">
+              <div class="multi-select-trigger" id="supplierProductTrigger">
+                <span class="multi-select-text">Select Products</span>
+                <i class="bi bi-chevron-down"></i>
+              </div>
+              <div class="multi-select-options" id="supplierProductOptions">
+                <!-- Products will be populated here -->
+              </div>
+            </div>
+            <div class="selected-products-display" id="selectedProductsDisplay"></div>
           </div>
           <div class="form-group">
             <label for="supplierStatus">Status</label>
@@ -860,9 +867,17 @@
             />
           </div>
           <div class="form-group">
-            <label for="editSupplierProduct">Product</label>
-              <select id="editSupplierProduct" class="input">
-              </select>
+            <label>Supplying Products</label>
+            <div class="multi-select-dropdown" id="editSupplierProductDropdown">
+              <div class="multi-select-trigger" id="editSupplierProductTrigger">
+                <span class="multi-select-text">Select Products</span>
+                <i class="bi bi-chevron-down"></i>
+              </div>
+              <div class="multi-select-options" id="editSupplierProductOptions">
+                <!-- Products will be populated here -->
+              </div>
+            </div>
+            <div class="selected-products-display" id="editSelectedProductsDisplay"></div>
           </div>
           <div class="form-group">
             <label for="editSupplierStatus">Status</label>

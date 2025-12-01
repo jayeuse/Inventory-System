@@ -455,6 +455,10 @@ if (categoryPaginationContainer) {
         clearCategoryForm();
         await loadCategories();
         await populateCategoriesDropdown();
+        // Refresh Product Management category dropdowns
+        if (typeof window.populateProductDropdowns === 'function') {
+          await window.populateProductDropdowns();
+        }
       } else {
         const errorData = await response.json();
         alert('Error: ' + JSON.stringify(errorData))
@@ -501,6 +505,10 @@ if (categoryPaginationContainer) {
         addSubcategoryModal.style.display = 'none';
         clearSubcategoryForm();
         await loadCategories();
+        // Refresh Product Management subcategory dropdowns
+        if (typeof window.populateProductDropdowns === 'function') {
+          await window.populateProductDropdowns();
+        }
       } else {
         const errorData = await response.json();
         alert('Error: ' + JSON.stringify(errorData))

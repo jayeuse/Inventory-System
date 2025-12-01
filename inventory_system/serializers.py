@@ -84,6 +84,13 @@ class SupplierSerializer(serializers.ModelSerializer):
     products_supplied = SupplierProductSerializer(source='supplierproduct_set', many=True, read_only=True)
     products_count = serializers.SerializerMethodField()
     archived_at = serializers.SerializerMethodField()
+    # Write-only field for accepting product IDs when creating/updating
+    products = serializers.ListField(
+        child=serializers.CharField(),
+        write_only=True,
+        required=False,
+        allow_empty=True
+    )
     
     class Meta:
         model = Supplier
@@ -97,6 +104,7 @@ class SupplierSerializer(serializers.ModelSerializer):
             'status',
             'products_supplied',
             'products_count',
+            'products',  # Write-only field for product IDs
             'archived_at',
             'archive_reason',
             'archived_by',
@@ -113,6 +121,56 @@ class SupplierSerializer(serializers.ModelSerializer):
             local_time = localtime(obj.archived_at)
             return local_time.strftime('%b %d, %Y %I:%M %p')
         return None
+
+    def create(self, validated_data):
+        """Handle creating supplier with products"""
+        product_ids = validated_data.pop('products', [])
+        supplier = super().create(validated_data)
+        
+        # Create SupplierProduct relationships
+        for product_id in product_ids:
+            try:
+                product = Product.objects.get(product_id=product_id)
+                SupplierProduct.objects.get_or_create(
+                    supplier=supplier,
+                    product=product
+                )
+            except Product.DoesNotExist:
+                pass  # Skip invalid product IDs
+        
+        return supplier
+
+    def update(self, instance, validated_data):
+        """Handle updating supplier with products"""
+        product_ids = validated_data.pop('products', None)
+        supplier = super().update(instance, validated_data)
+        
+        # Only update products if the field was provided
+        if product_ids is not None:
+            # Remove existing relationships not in the new list
+            existing_products = set(instance.products.values_list('product_id', flat=True))
+            new_products = set(product_ids)
+            
+            # Remove products no longer associated
+            products_to_remove = existing_products - new_products
+            SupplierProduct.objects.filter(
+                supplier=supplier,
+                product__product_id__in=products_to_remove
+            ).delete()
+            
+            # Add new product associations
+            products_to_add = new_products - existing_products
+            for product_id in products_to_add:
+                try:
+                    product = Product.objects.get(product_id=product_id)
+                    SupplierProduct.objects.get_or_create(
+                        supplier=supplier,
+                        product=product
+                    )
+                except Product.DoesNotExist:
+                    pass  # Skip invalid product IDs
+        
+        return supplier
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.category_name', read_only=True)

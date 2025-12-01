@@ -637,6 +637,10 @@ document.addEventListener('DOMContentLoaded', function () {
         alert('Product added successfully');
         if (addProductModal) addProductModal.style.display = 'none';
         await loadProductsList();
+        // Refresh Supplier Management product dropdowns
+        if (typeof window.populateSupplierProductDropdown === 'function') {
+          await window.populateSupplierProductDropdown();
+        }
       } else {
         const err = await res.json();
         alert('Error saving product: ' + JSON.stringify(err));
@@ -854,6 +858,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Expose loader so other scripts (or manual triggers) can refresh lists
   window.loadProductsList = loadProductsList;
+
+  // Expose dropdown refresh function so Category Management can refresh dropdowns after adding categories/subcategories
+  window.populateProductDropdowns = populateProductDropdowns;
 
   // Tab switching is handled by initializeProductTabs() above
 

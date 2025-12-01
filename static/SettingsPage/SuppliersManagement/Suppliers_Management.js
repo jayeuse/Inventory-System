@@ -72,6 +72,7 @@ document.addEventListener("DOMContentLoaded", function() {
           // Build products list from many-to-many relationship
           const productsSupplied = supplier.products_supplied || [];
           const productNames = productsSupplied.map(p => p.product_name).join(', ') || '-';
+          const productIds = productsSupplied.map(p => p.product_id).join(',');
           const productCount = supplier.products_count || productsSupplied.length || 0;
           const productDisplay = productCount > 0 ? `${productCount} product(s)` : '-';
           
@@ -83,7 +84,7 @@ document.addEventListener("DOMContentLoaded", function() {
             <td class="email-cell" title="${supplier.email || ''}">${truncateText(supplier.email, 28)}</td>
             <td class="truncate-cell truncate-160" title="${supplier.phone_number || ''}">${truncateText(supplier.phone_number, 24)}</td>
             <td class="truncate-cell truncate-140" title="${supplier.status || ''}">${truncateText(supplier.status, 20)}</td>
-            <td class="supply-cell" title="${productNames}">${productDisplay}</td>
+            <td class="supply-cell" title="${productNames}" data-product-ids="${productIds}">${productDisplay}</td>
             <td class="actions-cell">
               <div class="op-buttons">
                 <button class="action-btn edit-btn">
@@ -246,36 +247,223 @@ document.addEventListener("DOMContentLoaded", function() {
 
   loadSuppliers();
   
-  // Populate Supplier Product Dropdown
+  // Track selected products for add and edit modals
+  let selectedProducts = [];
+  let editSelectedProducts = [];
+  let productsCache = [];
+
+  // Populate Supplier Product Multi-Select Dropdown
   async function populateProductDropdown() {
     try {
       const response = await fetch('/api/products/');
       const products = await response.json();
-      const productSelect = document.getElementById('supplierProduct');
-      productSelect.innerHTML = `
-        <option value="">Select a Product</option>
-      `;
-      products.forEach(product => {
-        productSelect.innerHTML += `
-          <option value="${product.product_id}">${product.product_name}</option>
-        `;
-      });
+      productsCache = products;
+      
+      // Populate Add Supplier multi-select
+      const addProductOptions = document.getElementById('supplierProductOptions');
+      if (addProductOptions) {
+        addProductOptions.innerHTML = '';
+        products.forEach(product => {
+          const option = document.createElement('div');
+          option.className = 'multi-select-option';
+          option.innerHTML = `
+            <input type="checkbox" id="product_${product.product_id}" value="${product.product_id}" data-name="${product.product_name}">
+            <label for="product_${product.product_id}">${product.product_name}</label>
+          `;
+          addProductOptions.appendChild(option);
+        });
+      }
 
-      const editProductSelect = document.getElementById('editSupplierProduct');
-      editProductSelect.innerHTML = `
-      <option value="">Select a Product</option>
-      `;
-      products.forEach(product => {
-        editProductSelect.innerHTML += `
-          <option value="${product.product_id}">${product.product_name}</option>
-        `;
-      })
+      // Populate Edit Supplier multi-select
+      const editProductOptions = document.getElementById('editSupplierProductOptions');
+      if (editProductOptions) {
+        editProductOptions.innerHTML = '';
+        products.forEach(product => {
+          const option = document.createElement('div');
+          option.className = 'multi-select-option';
+          option.innerHTML = `
+            <input type="checkbox" id="edit_product_${product.product_id}" value="${product.product_id}" data-name="${product.product_name}">
+            <label for="edit_product_${product.product_id}">${product.product_name}</label>
+          `;
+          editProductOptions.appendChild(option);
+        });
+      }
+
+      // Initialize multi-select event handlers
+      initializeMultiSelect('supplierProductDropdown', 'supplierProductTrigger', 'supplierProductOptions', 'selectedProductsDisplay', false);
+      initializeMultiSelect('editSupplierProductDropdown', 'editSupplierProductTrigger', 'editSupplierProductOptions', 'editSelectedProductsDisplay', true);
+
     } catch (error){
       console.error('Error loading products: ', error)
     }
   }
 
+  // Initialize multi-select dropdown functionality
+  function initializeMultiSelect(dropdownId, triggerId, optionsId, displayId, isEdit) {
+    const trigger = document.getElementById(triggerId);
+    const options = document.getElementById(optionsId);
+    const display = document.getElementById(displayId);
+
+    if (!trigger || !options) return;
+
+    // Toggle dropdown
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isOpen = options.classList.contains('show');
+      
+      // Close all other dropdowns first
+      document.querySelectorAll('.multi-select-options').forEach(opt => opt.classList.remove('show'));
+      document.querySelectorAll('.multi-select-trigger').forEach(trig => trig.classList.remove('active'));
+      
+      if (!isOpen) {
+        options.classList.add('show');
+        trigger.classList.add('active');
+      }
+    });
+
+    // Handle checkbox changes
+    options.addEventListener('change', function(e) {
+      if (e.target.type === 'checkbox') {
+        updateSelectedProducts(optionsId, displayId, isEdit);
+      }
+    });
+
+    // Handle tag removal
+    if (display) {
+      display.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-tag')) {
+          const productId = e.target.dataset.productId;
+          const checkbox = options.querySelector(`input[value="${productId}"]`);
+          if (checkbox) {
+            checkbox.checked = false;
+            updateSelectedProducts(optionsId, displayId, isEdit);
+          }
+        }
+      });
+    }
+  }
+
+  // Update selected products display
+  function updateSelectedProducts(optionsId, displayId, isEdit) {
+    const options = document.getElementById(optionsId);
+    const display = document.getElementById(displayId);
+    const trigger = options.previousElementSibling;
+    const triggerText = trigger.querySelector('.multi-select-text');
+
+    const checkedBoxes = options.querySelectorAll('input[type="checkbox"]:checked');
+    const selected = [];
+
+    checkedBoxes.forEach(cb => {
+      selected.push({
+        id: cb.value,
+        name: cb.dataset.name
+      });
+    });
+
+    // Update the tracked array
+    if (isEdit) {
+      editSelectedProducts = selected;
+    } else {
+      selectedProducts = selected;
+    }
+
+    // Update trigger text
+    if (selected.length === 0) {
+      triggerText.textContent = 'Select Products';
+      triggerText.classList.remove('has-selection');
+    } else if (selected.length === 1) {
+      triggerText.textContent = selected[0].name;
+      triggerText.classList.add('has-selection');
+    } else {
+      triggerText.textContent = `${selected.length} products selected`;
+      triggerText.classList.add('has-selection');
+    }
+
+    // Update display tags
+    if (display) {
+      display.innerHTML = selected.map(p => `
+        <span class="selected-product-tag">
+          ${p.name}
+          <span class="remove-tag" data-product-id="${p.id}">&times;</span>
+        </span>
+      `).join('');
+    }
+  }
+
+  // Clear product selections
+  function clearProductSelections(isEdit) {
+    const optionsId = isEdit ? 'editSupplierProductOptions' : 'supplierProductOptions';
+    const displayId = isEdit ? 'editSelectedProductsDisplay' : 'selectedProductsDisplay';
+    const options = document.getElementById(optionsId);
+    const display = document.getElementById(displayId);
+    const trigger = options?.previousElementSibling;
+
+    if (options) {
+      options.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    }
+    if (display) {
+      display.innerHTML = '';
+    }
+    if (trigger) {
+      const triggerText = trigger.querySelector('.multi-select-text');
+      if (triggerText) {
+        triggerText.textContent = 'Select Products';
+        triggerText.classList.remove('has-selection');
+      }
+    }
+
+    if (isEdit) {
+      editSelectedProducts = [];
+    } else {
+      selectedProducts = [];
+    }
+  }
+
+  // Set product selections for edit modal
+  function setProductSelections(productIds) {
+    const options = document.getElementById('editSupplierProductOptions');
+    const display = document.getElementById('editSelectedProductsDisplay');
+    
+    if (!options) return;
+
+    // Clear existing selections
+    options.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+    // Check the products that should be selected
+    productIds.forEach(id => {
+      const checkbox = options.querySelector(`input[value="${id}"]`);
+      if (checkbox) {
+        checkbox.checked = true;
+      }
+    });
+
+    // Update the display
+    updateSelectedProducts('editSupplierProductOptions', 'editSelectedProductsDisplay', true);
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.multi-select-dropdown')) {
+      document.querySelectorAll('.multi-select-options').forEach(opt => opt.classList.remove('show'));
+      document.querySelectorAll('.multi-select-trigger').forEach(trig => trig.classList.remove('active'));
+    }
+  });
+
   populateProductDropdown();
+
+  // Expose dropdown refresh function so Product Management can refresh dropdowns after adding products
+  window.populateSupplierProductDropdown = populateProductDropdown;
+
+  // Expose setProductSelections for use by edit handler in System_Settings.js
+  window.setEditSupplierProductSelections = setProductSelections;
+
+  // Expose clearProductSelections for use when closing modals
+  window.clearSupplierProductSelections = clearProductSelections;
+  
+  // Helper function to clear edit modal products specifically
+  window.clearEditSupplierProducts = function() {
+    clearProductSelections('editSupplierProductOptions', 'editSupplierProductTrigger', true);
+  };
 
   // Inserting Suppliers
   document.getElementById('saveSupplierBtn').addEventListener('click', async function () {
@@ -285,8 +473,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const supplierAddress = document.getElementById('supplierAddress').value;
     const supplierEmail = document.getElementById('supplierEmail').value;
     const supplierPhoneNumber = document.getElementById('supplierPhoneNumber').value;
-    const supplierProduct = document.getElementById('supplierProduct').value;
     const supplierStatus = document.getElementById('supplierStatus').value;
+
+    // Get selected product IDs from multi-select
+    const productIds = selectedProducts.map(p => p.id);
 
     const data = {
       supplier_name: supplierName,
@@ -294,7 +484,7 @@ document.addEventListener("DOMContentLoaded", function() {
       address: supplierAddress,
       email: supplierEmail,
       phone_number: supplierPhoneNumber,
-      product: supplierProduct,
+      products: productIds,  // Send array of product IDs
       status: supplierStatus
     };
 
@@ -311,6 +501,14 @@ document.addEventListener("DOMContentLoaded", function() {
       if (response.ok){
         alert('Supplier Added Successfully!')
         document.getElementById('addSupplierModal').style.display = 'none';
+        // Clear form and selections
+        document.getElementById('supplierName').value = '';
+        document.getElementById('supplierContactPerson').value = '';
+        document.getElementById('supplierAddress').value = '';
+        document.getElementById('supplierEmail').value = '';
+        document.getElementById('supplierPhoneNumber').value = '';
+        document.getElementById('supplierStatus').value = 'Active';
+        clearProductSelections(false);
         await loadSuppliers();
       } else {
         const errorData = await response.json();
@@ -334,8 +532,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const editSupplierAddress = document.getElementById('editSupplierAddress').value;
     const editSupplierEmail = document.getElementById('editSupplierEmail').value;
     const editSupplierPhoneNumber = document.getElementById('editSupplierPhoneNumber').value;
-    const editSupplierProduct = document.getElementById('editSupplierProduct').value;
     const editSupplierStatus = document.getElementById('editSupplierStatus').value;
+
+    // Get selected product IDs from multi-select
+    const productIds = editSelectedProducts.map(p => p.id);
 
     const data = {
       supplier_name: editSupplierName,
@@ -343,7 +543,7 @@ document.addEventListener("DOMContentLoaded", function() {
       address: editSupplierAddress,
       email: editSupplierEmail,
       phone_number: editSupplierPhoneNumber,
-      product: editSupplierProduct,
+      products: productIds,  // Send array of product IDs
       status: editSupplierStatus
     };
 
@@ -374,6 +574,7 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById('cancelSupplierEditBtn').addEventListener('click', function(){
     document.getElementById('editSupplierModal').style.display = 'none';
     currentEditSupplierId = null;
+    clearProductSelections(true);
   })
 
   const closeEditSupplierBtn = document.getElementById('closeEditSupplierBtn');
@@ -381,6 +582,7 @@ document.addEventListener("DOMContentLoaded", function() {
     closeEditSupplierBtn.addEventListener('click', function(){
       document.getElementById('editSupplierModal').style.display = 'none';
       currentEditSupplierId = null;
+      clearProductSelections(true);
     });
   }
 

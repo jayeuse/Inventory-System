@@ -292,10 +292,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Close modal functions for new modals
   if (cancelEditBtn) {
-    cancelEditBtn.addEventListener(
-      "click",
-      () => (editSupplierModal.style.display = "none")
-    );
+    cancelEditBtn.addEventListener("click", () => {
+      editSupplierModal.style.display = "none";
+      if (typeof window.clearEditSupplierProducts === 'function') {
+        window.clearEditSupplierProducts();
+      }
+    });
   }
 
   if (cancelArchiveBtn) {
@@ -344,7 +346,12 @@ document.addEventListener("DOMContentLoaded", function () {
   window.onclick = (e) => {
     if (e.target === supplierModal) supplierModal.style.display = "none";
     if (e.target === productModal) productModal.style.display = "none";
-    if (e.target === editSupplierModal) editSupplierModal.style.display = "none";
+    if (e.target === editSupplierModal) {
+      editSupplierModal.style.display = "none";
+      if (typeof window.clearEditSupplierProducts === 'function') {
+        window.clearEditSupplierProducts();
+      }
+    }
     if (e.target === archiveModal) archiveModal.style.display = "none";
     if (e.target === unarchiveModal) unarchiveModal.style.display = "none";
     if (e.target === editProductModal) editProductModal.style.display = "none";
@@ -481,12 +488,17 @@ function attachActionButtonListeners() {
           document.getElementById("editSupplierEmail").value = row.querySelector("td:nth-child(5)").textContent.trim();
           document.getElementById("editSupplierPhoneNumber").value = row.querySelector("td:nth-child(6)").textContent.trim();
           
-          // Get product ID from data attribute instead of text content
-          const productCell = row.querySelector("td:nth-child(7)");
-          const productId = productCell.getAttribute("data-product-id");
-          document.getElementById("editSupplierProduct").value = productId;
+          // Get product IDs from data attribute and set multi-select
+          const productCell = row.querySelector("td:nth-child(8)");
+          const productIdsStr = productCell.getAttribute("data-product-ids") || '';
+          const productIds = productIdsStr ? productIdsStr.split(',').filter(id => id) : [];
           
-          document.getElementById("editSupplierStatus").value = row.querySelector("td:nth-child(8)").textContent.trim().toLowerCase();
+          // Use the setProductSelections function from Suppliers_Management.js
+          if (typeof window.setEditSupplierProductSelections === 'function') {
+            window.setEditSupplierProductSelections(productIds);
+          }
+          
+          document.getElementById("editSupplierStatus").value = row.querySelector("td:nth-child(7)").textContent.trim();
 
           editSupplierModal.style.display = "flex";
         } else if (id && id.includes("CAT")) {
