@@ -172,6 +172,12 @@ class SupplierSerializer(serializers.ModelSerializer):
         
         return supplier
 
+class ProductSupplierSerializer(serializers.ModelSerializer):
+    """Serializer for suppliers associated with a product"""
+    class Meta:
+        model = Supplier
+        fields = ['supplier_id', 'supplier_name']
+
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.category_name', read_only=True)
     category_id = serializers.CharField(source='category.category_id', read_only=True)
@@ -179,6 +185,7 @@ class ProductSerializer(serializers.ModelSerializer):
     subcategory_id = serializers.CharField(source='subcategory.subcategory_id', read_only=True)
     last_updated = serializers.SerializerMethodField()
     archived_at = serializers.SerializerMethodField()
+    suppliers = ProductSupplierSerializer(many=True, read_only=True)
     
     class Meta:
         model = Product
@@ -202,6 +209,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'archived_at',
             'archive_reason',
             'archived_by',
+            'suppliers',
         ]
         extra_kwargs = {
             'category': {'write_only': True},
