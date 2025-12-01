@@ -400,10 +400,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const archivedCategoriesTable = document.getElementById('archivedCategoriesTable');
     const activeCategoriesWrapper = document.getElementById('activeCategoriesWrapper');
     const archivedCategoriesWrapper = document.getElementById('archivedCategoriesWrapper');
-    const formSection = document.querySelector('#categories-content .form-section');
+    const addCategoryModalBtn = document.getElementById('addCategoryModalBtn');
+    const addSubcategoryModalBtn = document.getElementById('addSubcategoryModalBtn');
 
-    // Set initial state - show form section and active table
-    if (formSection) formSection.style.display = 'block';
+    // Set initial state - show add buttons and active table
+    if (addCategoryModalBtn) addCategoryModalBtn.style.display = 'inline-flex';
+    if (addSubcategoryModalBtn) addSubcategoryModalBtn.style.display = 'inline-flex';
     if (activeCategoriesTable) activeCategoriesTable.style.display = 'table';
     if (archivedCategoriesTable) archivedCategoriesTable.style.display = 'none';
     if (activeCategoriesWrapper) activeCategoriesWrapper.style.display = 'block';
@@ -420,13 +422,15 @@ document.addEventListener("DOMContentLoaded", function () {
           archivedCategoriesTable.style.display = 'none';
           if (activeCategoriesWrapper) activeCategoriesWrapper.style.display = 'block';
           if (archivedCategoriesWrapper) archivedCategoriesWrapper.style.display = 'none';
-          if (formSection) formSection.style.display = 'block'; // Show form section
+          if (addCategoryModalBtn) addCategoryModalBtn.style.display = 'inline-flex';
+          if (addSubcategoryModalBtn) addSubcategoryModalBtn.style.display = 'inline-flex';
         } else {
           activeCategoriesTable.style.display = 'none';
           archivedCategoriesTable.style.display = 'table';
           if (activeCategoriesWrapper) activeCategoriesWrapper.style.display = 'none';
           if (archivedCategoriesWrapper) archivedCategoriesWrapper.style.display = 'block';
-          if (formSection) formSection.style.display = 'none'; // Hide form section when viewing archives
+          if (addCategoryModalBtn) addCategoryModalBtn.style.display = 'none';
+          if (addSubcategoryModalBtn) addSubcategoryModalBtn.style.display = 'none';
         }
       });
     });

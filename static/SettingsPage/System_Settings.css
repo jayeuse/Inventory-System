@@ -787,6 +787,19 @@ select:focus {
   flex-grow: 1;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.action-buttons .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
 .input,
 select {
   padding: 10px 14px;

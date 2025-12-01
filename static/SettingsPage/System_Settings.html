@@ -429,147 +429,149 @@
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
+              <div class="action-buttons">
+                <button class="btn btn-outline" id="addCategoryModalBtn">
+                  <i class="bi bi-plus-lg"></i> Add Category
+                </button>
+                <button class="btn btn-outline" id="addSubcategoryModalBtn">
+                  <i class="bi bi-plus-lg"></i> Add Subcategory
+                </button>
+              </div>
             </div>
 
-            <div class="layout">
-              <div class="table-section">
-                <div class="table-wrapper" id="activeCategoriesWrapper">
-                  <table id="activeCategoriesTable">
-                    <thead>
-                      <tr>
-                        <th>Category ID</th>
-                        <th>Category Name</th>
-                        <th>Description</th>
-                        <th>Products</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="category-table-body">
-                      <tr class="subcategory-row hidden">
-                        <td colspan="5">
-                          <table class="subcategory-table">
-                            <thead>
-                              <tr>
-                                <th>Subcategory ID</th>
-                                <th>Subcategory Name</th>
-                                <th>Description</th>
-                                <th>Product Count</th>
-                              </tr>
-                            </thead>
-                            <tbody id="subcategory-table-body">
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+            <div class="table-wrapper" id="activeCategoriesWrapper">
+              <table id="activeCategoriesTable">
+                <thead>
+                  <tr>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Products</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="category-table-body">
+                  <tr class="subcategory-row hidden">
+                    <td colspan="5">
+                      <table class="subcategory-table">
+                        <thead>
+                          <tr>
+                            <th>Subcategory ID</th>
+                            <th>Subcategory Name</th>
+                            <th>Description</th>
+                            <th>Product Count</th>
+                          </tr>
+                        </thead>
+                        <tbody id="subcategory-table-body">
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-                <div class="table-wrapper" id="archivedCategoriesWrapper" style="display: none;">
-                  <table id="archivedCategoriesTable">
-                    <thead>
-                      <tr>
-                        <th>Category ID</th>
-                        <th>Category Name</th>
-                        <th>Description</th>
-                        <th>Products</th>
-                        <th>Archive Reason</th>
-                        <th>Archive Date</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="archivedCategoriesTableBody">
-                    </tbody>
-                  </table>
-                </div>
+            <div class="table-wrapper" id="archivedCategoriesWrapper" style="display: none;">
+              <table id="archivedCategoriesTable">
+                <thead>
+                  <tr>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Products</th>
+                    <th>Archive Reason</th>
+                    <th>Archive Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="archivedCategoriesTableBody">
+                </tbody>
+              </table>
+            </div>
 
-                <div class="pagination">
-                  <button class="pagination-btn">
-                    <i class="bi bi-chevron-left"></i> Previous
-                  </button>
-                  <button class="pagination-btn">
-                    Next <i class="bi bi-chevron-right"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-section">
-                <div class="form-container">
-                  <div class="form-content">
-                    <h3>Add Category</h3>
-                    <div class="form-fields">
-                      <div class="form-group">
-                        <label for="category-name">Category Name</label>
-                        <input
-                          type="text"
-                          class="input"
-                          id="category-name"
-                          placeholder="Enter category name"
-                        />
-                      </div>
-                      <div class="form-group">
-                        <label for="category-description">Description</label>
-                        <textarea
-                          class="input"
-                          id="category-description"
-                          placeholder="Enter description"
-                        ></textarea>
-                      </div>
-                    </div>
-                    <div class="button-container">
-                      <button type="button" class="btn btn-secondary">
-                        Clear
-                      </button>
-                      <button type="button" id="addCategoryBtn" class="btn btn-outline">
-                        Add Category
-                      </button>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <h3>Add Subcategory</h3>
-                    <div class="form-fields">
-                      <div class="form-group">
-                        <label for="category-classification"
-                          >Category Classification</label
-                        >
-                        <select class="input" id="category-classification">
-                          <option value="">Select Classification</option>
-                        </select>
-                      </div>
-                      <div class="form-group">
-                        <label for="subcategory-name">Subcategory Name</label>
-                        <input
-                          type="text"
-                          class="input"
-                          id="subcategory-name"
-                          placeholder="Enter subcategory name"
-                        />
-                      </div>
-                      <div class="form-group">
-                        <label for="subcategory-description">Description</label>
-                        <textarea
-                          class="input"
-                          id="subcategory-description"
-                          placeholder="Enter description"
-                        ></textarea>
-                      </div>
-                    </div>
-                    <div class="button-container">
-                      <button type="button" class="btn btn-secondary">
-                        Clear
-                      </button>
-                      <button type="button" id="addSubCategoryBtn" class="btn btn-outline">
-                        Add Subcategory
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="pagination">
+              <button class="pagination-btn">
+                <i class="bi bi-chevron-left"></i> Previous
+              </button>
+              <button class="pagination-btn">
+                Next <i class="bi bi-chevron-right"></i>
+              </button>
             </div>
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div id="addCategoryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add Category</h2>
+          <button class="close-btn" id="closeAddCategoryBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="category-name">Category Name</label>
+            <input
+              type="text"
+              class="input"
+              id="category-name"
+              placeholder="Enter category name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="category-description">Description</label>
+            <textarea
+              class="input"
+              id="category-description"
+              placeholder="Enter description"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelAddCategoryBtn">Cancel</button>
+          <button class="btn" id="addCategoryBtn"><i class="fas fa-save"></i> Save Category</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Subcategory Modal -->
+    <div id="addSubcategoryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add Subcategory</h2>
+          <button class="close-btn" id="closeAddSubcategoryBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="category-classification">Category Classification</label>
+            <select class="input" id="category-classification">
+              <option value="">Select Classification</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="subcategory-name">Subcategory Name</label>
+            <input
+              type="text"
+              class="input"
+              id="subcategory-name"
+              placeholder="Enter subcategory name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="subcategory-description">Description</label>
+            <textarea
+              class="input"
+              id="subcategory-description"
+              placeholder="Enter description"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelAddSubcategoryBtn">Cancel</button>
+          <button class="btn" id="addSubCategoryBtn"><i class="fas fa-save"></i> Save Subcategory</button>
+        </div>
+      </div>
     </div>
 
     <!-- Add Supplier Modal -->
