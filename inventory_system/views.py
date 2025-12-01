@@ -1,15 +1,17 @@
 from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from .serializers import (
     ArchiveLogSerializer,
     CategorySerializer, 
@@ -27,7 +29,6 @@ from .serializers import (
     DashboardSupplierSerializer,
     DashboardStockStatusSerializer,
 )
-from rest_framework.permissions import AllowAny
 from django.db.models import Sum, Count, F
 import os
 
@@ -59,13 +60,17 @@ def serve_static_html(request, file_path):
     else:
         return HttpResponse("File not found", status = 404)
 
+@login_required
 def dashboard_view(request):
+    # Redirect Clerk users to POS system
+    if hasattr(request.user, 'user_information') and request.user.user_information.role == 'Clerk':
+        return redirect('http://localhost:5173')
     return serve_static_html(request, 'DashboardPage/DashboardPage.html')
 
 
 # --- Dashboard aggregate endpoints ---
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def dashboard_categories(request):
     """Return category distribution based on total_on_hand across product stocks."""
     qs = ProductStocks.objects.values(category_name=F('product__category__category_name')).annotate(count=Sum('total_on_hand')).order_by('-count')
@@ -78,7 +83,7 @@ def dashboard_categories(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def dashboard_top_suppliers(request):
     """Return top suppliers by number of products supplied. Query param `top` optional."""
     try:
@@ -94,7 +99,7 @@ def dashboard_top_suppliers(request):
 
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def dashboard_stock_status(request):
     """Return counts grouped by ProductStocks.status for the stock status donut chart."""
     qs = ProductStocks.objects.values(status_label=F('status')).annotate(count=Count('pk')).order_by('-count')
@@ -103,7 +108,7 @@ def dashboard_stock_status(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def dashboard_stats(request):
     """Return dashboard statistics: total products count and pending orders count."""
     # Count active products (exclude archived)
@@ -121,15 +126,19 @@ def dashboard_stats(request):
 def login_view(request):
     return serve_static_html(request, 'LoginPage/LoginPage.html')
 
+@login_required
 def products_view(request):
     return serve_static_html(request, 'ProductPage/ProductPage.html')
 
+@login_required
 def inventory_view(request):
     return serve_static_html(request, 'InventoryPage/InventoryPage.html')
 
+@login_required
 def transactions_view(request):
     return serve_static_html(request, 'TransactionPage/TransactionPage.html')
 
+@login_required
 def settings_view(request):
     return serve_static_html(request, 'SettingsPage/System_Settings.html')
 
