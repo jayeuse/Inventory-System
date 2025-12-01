@@ -61,13 +61,20 @@
                 <i class="bi bi-clock-fill"></i> Timezone
               </h3>
               <div class="setting-group">
+                <div class="current-time-display">
+                  <div class="time-value" id="currentTime">--:--:--</div>
+                  <div class="date-value" id="currentDate">Loading...</div>
+                </div>
                 <div class="select-wrapper">
-                  <select>
-                    <option>UTC+8 Philippine Time</option>
-                    <option>UTC-5 Eastern Time</option>
-                    <option>UTC+0 Greenwich Mean Time</option>
-                    <option>UTC+1 Central European Time</option>
-                    <option>UTC+9 Japan Standard Time</option>
+                  <select id="timezoneSelect">
+                    <option value="Asia/Manila">UTC+8 Philippine Time</option>
+                    <option value="America/New_York">UTC-5 Eastern Time</option>
+                    <option value="UTC">UTC+0 Greenwich Mean Time</option>
+                    <option value="Europe/Paris">UTC+1 Central European Time</option>
+                    <option value="Asia/Tokyo">UTC+9 Japan Standard Time</option>
+                    <option value="Asia/Singapore">UTC+8 Singapore Time</option>
+                    <option value="Australia/Sydney">UTC+11 Sydney Time</option>
+                    <option value="Europe/London">UTC+0 London Time</option>
                   </select>
                 </div>
               </div>
@@ -78,30 +85,84 @@
                 <i class="bi bi-currency-dollar"></i> Currency
               </h3>
               <div class="setting-group">
+                <div class="currency-display">
+                  <span class="currency-symbol" id="currentCurrencySymbol">₱</span>
+                  <span class="currency-name" id="currentCurrencyName">Philippine Peso</span>
+                </div>
+                <div class="exchange-rate-info" id="exchangeRateInfo">
+                  <i class="bi bi-info-circle"></i>
+                  <span id="exchangeRateText">Base currency (no conversion)</span>
+                </div>
                 <div class="select-wrapper">
-                  <select>
-                    <option>PHP - Philippine Peso</option>
-                    <option>USD - US Dollar</option>
-                    <option>EUR - Euro</option>
-                    <option>GBP - British Pound</option>
-                    <option>JPY - Japanese Yen</option>
+                  <select id="currencySelect">
+                    <option value="PHP">₱ PHP - Philippine Peso</option>
+                    <option value="USD">$ USD - US Dollar</option>
+                    <option value="EUR">€ EUR - Euro</option>
+                    <option value="GBP">£ GBP - British Pound</option>
+                    <option value="JPY">¥ JPY - Japanese Yen</option>
+                    <option value="KRW">₩ KRW - Korean Won</option>
+                    <option value="CNY">¥ CNY - Chinese Yuan</option>
+                    <option value="SGD">S$ SGD - Singapore Dollar</option>
                   </select>
                 </div>
+                <p class="setting-note">
+                  <i class="bi bi-lightbulb"></i>
+                  Display currency only. All prices are stored in PHP.
+                </p>
               </div>
             </div>
 
             <div class="card-2">
               <h3 class="card-title">
-                <i class="bi bi-hdd-fill"></i> Data Management
+                <i class="bi bi-download"></i> Data Management
               </h3>
-              <div class="backup-section">
-                <div class="backup-content">
-                  <div class="backup-icon"><i class="bi bi-hdd-fill"></i></div>
-                  <p class="backup-text">
-                    Create a backup of your system data to prevent data loss
-                  </p>
+              <div class="data-management-section">
+                <p class="data-management-description">
+                  <i class="bi bi-info-circle"></i>
+                  Export your system data to CSV or create a full backup for safekeeping.
+                </p>
+                
+                <div class="export-options">
+                  <div class="export-group">
+                    <h4 class="export-group-title">Export Individual Data</h4>
+                    <div class="export-buttons-grid">
+                      <button class="export-btn" onclick="exportProducts()">
+                        <i class="bi bi-box-seam"></i>
+                        <span>Products</span>
+                      </button>
+                      <button class="export-btn" onclick="exportSuppliers()">
+                        <i class="bi bi-truck"></i>
+                        <span>Suppliers</span>
+                      </button>
+                      <button class="export-btn" onclick="exportCategories()">
+                        <i class="bi bi-folder"></i>
+                        <span>Categories</span>
+                      </button>
+                      <button class="export-btn" onclick="exportInventory()">
+                        <i class="bi bi-clipboard-data"></i>
+                        <span>Inventory</span>
+                      </button>
+                      <button class="export-btn" onclick="exportOrders()">
+                        <i class="bi bi-cart"></i>
+                        <span>Orders</span>
+                      </button>
+                      <button class="export-btn" onclick="exportTransactions()">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <span>Transactions</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="export-divider"></div>
+                  
+                  <div class="export-group full-backup">
+                    <h4 class="export-group-title">Full System Backup</h4>
+                    <p class="backup-note">Creates a complete JSON backup of all system data</p>
+                    <button class="btn btn-primary full-backup-btn" onclick="exportAllData()">
+                      <i class="bi bi-hdd-fill"></i> Create Full Backup
+                    </button>
+                  </div>
                 </div>
-                <button class="btn btn-primary">Create Backup Data</button>
               </div>
             </div>
           </div>
@@ -1376,6 +1437,8 @@
       });
     </script>
     <script src="/static/utils/csrf.js"></script>
+    <script src="/static/utils/currency.js"></script>
+    <script src="/static/utils/export.js"></script>
     <script src="/static/utils/permissions.js"></script>
     <script src="/static/SettingsPage/LogoutManagement/LogoutManagement.js"></script>
     <script src="/static/SettingsPage/System_Settings.js"></script>

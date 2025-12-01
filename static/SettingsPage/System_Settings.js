@@ -18,6 +18,12 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  // ========== REAL-TIME CLOCK FUNCTIONALITY ==========
+  initializeTimezone();
+  
+  // ========== CURRENCY FUNCTIONALITY ==========
+  initializeCurrencySettings();
+  
   // System Settings Theme Options
   const themeOptions = document.querySelectorAll(".theme-option");
 
@@ -559,4 +565,153 @@ function toggleSubcategories(button) {
     loadSubCategories(categoryId, subcatTbody);
   }
 
+}
+
+// ========== TIMEZONE & REAL-TIME CLOCK FUNCTIONALITY ==========
+let currentTimezone = 'Asia/Manila'; // Default to Philippine Time
+let clockInterval = null;
+
+function initializeTimezone() {
+  const timezoneSelect = document.getElementById('timezoneSelect');
+  const savedTimezone = localStorage.getItem('selectedTimezone');
+  
+  // Load saved timezone or use default
+  if (savedTimezone) {
+    currentTimezone = savedTimezone;
+    if (timezoneSelect) {
+      timezoneSelect.value = savedTimezone;
+    }
+  }
+  
+  // Start the clock
+  updateClock();
+  clockInterval = setInterval(updateClock, 1000);
+  
+  // Listen for timezone changes
+  if (timezoneSelect) {
+    timezoneSelect.addEventListener('change', function() {
+      currentTimezone = this.value;
+      localStorage.setItem('selectedTimezone', currentTimezone);
+      updateClock();
+      console.log(`Timezone changed to: ${currentTimezone}`);
+    });
+  }
+}
+
+function updateClock() {
+  const timeElement = document.getElementById('currentTime');
+  const dateElement = document.getElementById('currentDate');
+  
+  if (!timeElement || !dateElement) return;
+  
+  try {
+    const now = new Date();
+    
+    // Format time with the selected timezone
+    const timeOptions = {
+      timeZone: currentTimezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    };
+    
+    const dateOptions = {
+      timeZone: currentTimezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+    
+    const timeString = now.toLocaleTimeString('en-US', timeOptions);
+    const dateString = now.toLocaleDateString('en-US', dateOptions);
+    
+    timeElement.textContent = timeString;
+    dateElement.textContent = dateString;
+    
+  } catch (error) {
+    console.error('Error updating clock:', error);
+    timeElement.textContent = '--:--:--';
+    dateElement.textContent = 'Invalid timezone';
+  }
+}
+
+// Get the current timezone for use in other parts of the app
+function getCurrentTimezone() {
+  return currentTimezone;
+}
+
+// Format a date to the selected timezone
+function formatDateToTimezone(date, options = {}) {
+  const defaultOptions = {
+    timeZone: currentTimezone,
+    ...options
+  };
+  return new Date(date).toLocaleString('en-US', defaultOptions);
+}
+
+// Export functions for global access
+window.getCurrentTimezone = getCurrentTimezone;
+window.formatDateToTimezone = formatDateToTimezone;
+
+// ========== CURRENCY SETTINGS FUNCTIONALITY ==========
+function initializeCurrencySettings() {
+  // Initialize the currency utility (loads from localStorage)
+  if (typeof initializeCurrency === 'function') {
+    initializeCurrency();
+  }
+  
+  // Update the display elements
+  updateCurrencyDisplay();
+  
+  // Listen for currency changes from the select
+  const currencySelect = document.getElementById('currencySelect');
+  if (currencySelect) {
+    currencySelect.addEventListener('change', function() {
+      if (typeof setCurrency === 'function') {
+        setCurrency(this.value);
+      }
+      updateCurrencyDisplay();
+    });
+  }
+}
+
+function updateCurrencyDisplay() {
+  const symbolElement = document.getElementById('currentCurrencySymbol');
+  const nameElement = document.getElementById('currentCurrencyName');
+  const rateInfoElement = document.getElementById('exchangeRateInfo');
+  const rateTextElement = document.getElementById('exchangeRateText');
+  
+  if (typeof getCurrencyConfig !== 'function') return;
+  
+  const config = getCurrencyConfig();
+  const currentCurrency = getCurrentCurrency ? getCurrentCurrency() : 'PHP';
+  
+  if (symbolElement) {
+    symbolElement.textContent = config.symbol;
+  }
+  
+  if (nameElement) {
+    nameElement.textContent = config.name;
+  }
+  
+  if (rateTextElement && typeof getExchangeRateDisplay === 'function') {
+    rateTextElement.textContent = getExchangeRateDisplay();
+  }
+  
+  // Update the visual style based on currency
+  if (rateInfoElement) {
+    if (currentCurrency === 'PHP') {
+      rateInfoElement.style.background = '#e8f5e9';
+      rateInfoElement.style.color = '#2e7d32';
+      rateInfoElement.style.borderColor = '#a5d6a7';
+    } else {
+      rateInfoElement.style.background = '#fff8e1';
+      rateInfoElement.style.color = '#f57c00';
+      rateInfoElement.style.borderColor = '#ffe082';
+    }
+  }
+  
+  console.log(`Currency display updated to: ${config.code}`);
 }

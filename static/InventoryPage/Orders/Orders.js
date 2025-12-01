@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize currency settings if available
+    if (typeof initializeCurrency === 'function') {
+        initializeCurrency();
+    }
     initializeOrders();
 });
 
@@ -111,15 +115,18 @@ function renderOrderItemsList() {
         return;
     }
     tempOrderItems.forEach((item, idx) => {
+        const priceDisplay = typeof formatCurrency === 'function' 
+            ? formatCurrency(item.purchasing_price) 
+            : '₱' + (item.purchasing_price?.toFixed(2) || '');
         const div = document.createElement('div');
         div.className = 'order-item-row';
         div.innerHTML = `
             <span>${item.product_name || item.product_id}</span>
             <span>Qty: ${item.quantity_ordered}</span>
-            <span>Price: ₱${item.purchasing_price?.toFixed(2) || ''}</span>
+            <span>Price: ${priceDisplay}</span>
             <span>Supplier: ${item.supplier || ''}</span>
             <span>By: ${item.ordered_by}</span>
-            <button class=\"btn btn-sm btn-danger\" onclick=\"removeOrderItem(${idx})\"><i class=\"fas fa-trash\"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="removeOrderItem(${idx})"><i class="fas fa-trash"></i></button>
         `;
         list.appendChild(div);
     });
