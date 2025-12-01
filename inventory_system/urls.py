@@ -23,7 +23,8 @@ router.register(r'users', views.UserInformationViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/', views.login_view, name='login'),
+    path('', views.login_view, name='login'),  # Landing page is now login
+    path('login/', views.login_view, name='login_alt'),  # Keep /login/ as alias
     path('dashboard/', views.dashboard_view, name = 'dashboard'),
     path('products/', views.products_view, name = 'products'),
     path('inventory/', views.inventory_view, name = 'inventory'),
