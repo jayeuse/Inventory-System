@@ -1310,72 +1310,30 @@
             ".sidebar-component .nav-label"
           );
 
-          // Get current page URL
-          const currentUrl = window.location.href.toLowerCase();
-          console.log("Current URL:", currentUrl);
-
           // Remove active class from all items first
           navIcons.forEach((icon) => icon.classList.remove("active"));
           navLabels.forEach((label) => label.classList.remove("active"));
 
-          // Hardcoded path matching for your specific URLs
-          let activeItem = null;
-
-          if (currentUrl.includes("/static/settingspage/system_settings.html")) {
-            activeItem = "settings";
-          } else if (
-            currentUrl.includes("/static/productpage/productsPos.html#products")
-          ) {
-            activeItem = "products";
-          } else if (
-            currentUrl.includes("/static/inventorypage/inventory_management.html")
-          ) {
-            activeItem = "inventory";
-          } else if (
-            currentUrl.includes("/static/transactionpage/transactions.html")
-          ) {
-            activeItem = "transactions";
-          } else if (
-            currentUrl.includes("/dashboard.html") ||
-            currentUrl.endsWith("/") ||
-            currentUrl.includes("/inventory-system/")
-          ) {
-            activeItem = "dashboard";
-          }
-
+          // This is the Settings page, so always set settings as active
+          let activeItem = "settings";
           console.log("Detected active item:", activeItem);
 
           // Set active state
-          if (activeItem) {
-            const activeIcon = document.querySelector(
-              `.sidebar-component .nav-icon[data-item="${activeItem}"]`
-            );
-            const activeLabel = document.querySelector(
-              `.sidebar-component .nav-label[data-item="${activeItem}"]`
-            );
+          const activeIcon = document.querySelector(
+            `.sidebar-component .nav-icon[data-item="${activeItem}"]`
+          );
+          const activeLabel = document.querySelector(
+            `.sidebar-component .nav-label[data-item="${activeItem}"]`
+          );
 
-            if (activeIcon) {
-              activeIcon.classList.add("active");
-              console.log("Activated icon:", activeItem);
-            }
+          if (activeIcon) {
+            activeIcon.classList.add("active");
+            console.log("Activated icon:", activeItem);
+          }
 
-            if (activeLabel) {
-              activeLabel.classList.add("active");
-              console.log("Activated label:", activeItem);
-            }
-          } else {
-            // Default to dashboard if no match found
-            const dashboardIcon = document.querySelector(
-              '.sidebar-component .nav-icon[data-item="dashboard"]'
-            );
-            const dashboardLabel = document.querySelector(
-              '.sidebar-component .nav-label[data-item="dashboard"]'
-            );
-            if (dashboardIcon && dashboardLabel) {
-              dashboardIcon.classList.add("active");
-              dashboardLabel.classList.add("active");
-            }
-            console.log("No specific match found, defaulting to dashboard");
+          if (activeLabel) {
+            activeLabel.classList.add("active");
+            console.log("Activated label:", activeItem);
           }
 
           // Add click handlers for navigation
