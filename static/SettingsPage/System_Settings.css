@@ -787,6 +787,46 @@ select:focus {
   flex-grow: 1;
 }
 
+/* Category management specific row styling */
+#categories-content .search-row {
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+#categories-content .search-controls {
+  display: flex;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#categories-content .search-input {
+  flex: 2 1 300px;
+  min-width: 240px;
+}
+
+#categories-content select {
+  flex: 1 1 200px;
+  min-width: 180px;
+  max-width: 220px;
+}
+
+#categories-content .action-buttons {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+}
+
+#categories-content .action-buttons .btn {
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+@media (max-width: 1200px) {
+  #categories-content .search-row {
+    flex-wrap: wrap;
+  }
+}
+
 .action-buttons {
   display: flex;
   gap: 10px;
