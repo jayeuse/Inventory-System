@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pharmacy Management System</title>
+    <title>Pharmacy Inventory System - Settings</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -41,23 +41,7 @@
         <!-- System Settings Content -->
         <div id="settings-content" class="tab-content active">
           <div class="settings-grid">
-            <div class="card-4">
-              <h3 class="card-title">
-                <i class="bi bi-palette-fill"></i> System Theme
-              </h3>
-              <div class="theme-options">
-                <div class="theme-option active">
-                  <div class="theme-icon"><i class="bi bi-sun-fill"></i></div>
-                  <div class="theme-name">Light Mode</div>
-                </div>
-                <div class="theme-option">
-                  <div class="theme-icon"><i class="bi bi-moon-fill"></i></div>
-                  <div class="theme-name">Dark Mode</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card-2">
+            <div class="card-settings-left">
               <h3 class="card-title">
                 <i class="bi bi-clock-fill"></i> Timezone
               </h3>
@@ -81,7 +65,7 @@
               </div>
             </div>
 
-            <div class="card-3">
+            <div class="card-settings-right">
               <h3 class="card-title">
                 <i class="bi bi-currency-dollar"></i> Currency
               </h3>
@@ -113,7 +97,7 @@
               </div>
             </div>
 
-            <div class="card-2">
+            <div class="card-settings-full">
               <h3 class="card-title">
                 <i class="bi bi-download"></i> Data Management
               </h3>
@@ -1310,72 +1294,30 @@
             ".sidebar-component .nav-label"
           );
 
-          // Get current page URL
-          const currentUrl = window.location.href.toLowerCase();
-          console.log("Current URL:", currentUrl);
-
           // Remove active class from all items first
           navIcons.forEach((icon) => icon.classList.remove("active"));
           navLabels.forEach((label) => label.classList.remove("active"));
 
-          // Hardcoded path matching for your specific URLs
-          let activeItem = null;
-
-          if (currentUrl.includes("/static/settingspage/system_settings.html")) {
-            activeItem = "settings";
-          } else if (
-            currentUrl.includes("/static/productpage/productsPos.html#products")
-          ) {
-            activeItem = "products";
-          } else if (
-            currentUrl.includes("/static/inventorypage/inventory_management.html")
-          ) {
-            activeItem = "inventory";
-          } else if (
-            currentUrl.includes("/static/transactionpage/transactions.html")
-          ) {
-            activeItem = "transactions";
-          } else if (
-            currentUrl.includes("/dashboard.html") ||
-            currentUrl.endsWith("/") ||
-            currentUrl.includes("/inventory-system/")
-          ) {
-            activeItem = "dashboard";
-          }
-
+          // This is the Settings page, so always set settings as active
+          let activeItem = "settings";
           console.log("Detected active item:", activeItem);
 
           // Set active state
-          if (activeItem) {
-            const activeIcon = document.querySelector(
-              `.sidebar-component .nav-icon[data-item="${activeItem}"]`
-            );
-            const activeLabel = document.querySelector(
-              `.sidebar-component .nav-label[data-item="${activeItem}"]`
-            );
+          const activeIcon = document.querySelector(
+            `.sidebar-component .nav-icon[data-item="${activeItem}"]`
+          );
+          const activeLabel = document.querySelector(
+            `.sidebar-component .nav-label[data-item="${activeItem}"]`
+          );
 
-            if (activeIcon) {
-              activeIcon.classList.add("active");
-              console.log("Activated icon:", activeItem);
-            }
+          if (activeIcon) {
+            activeIcon.classList.add("active");
+            console.log("Activated icon:", activeItem);
+          }
 
-            if (activeLabel) {
-              activeLabel.classList.add("active");
-              console.log("Activated label:", activeItem);
-            }
-          } else {
-            // Default to dashboard if no match found
-            const dashboardIcon = document.querySelector(
-              '.sidebar-component .nav-icon[data-item="dashboard"]'
-            );
-            const dashboardLabel = document.querySelector(
-              '.sidebar-component .nav-label[data-item="dashboard"]'
-            );
-            if (dashboardIcon && dashboardLabel) {
-              dashboardIcon.classList.add("active");
-              dashboardLabel.classList.add("active");
-            }
-            console.log("No specific match found, defaulting to dashboard");
+          if (activeLabel) {
+            activeLabel.classList.add("active");
+            console.log("Activated label:", activeItem);
           }
 
           // Add click handlers for navigation

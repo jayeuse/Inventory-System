@@ -1,0 +1,219 @@
+// Inventory System - Database ERD
+// Generated: December 2, 2025
+// Format: DBML (Database Markup Language)
+// View at: https://dbdiagram.io
+
+// ============================================
+// DJANGO BUILT-IN TABLES
+// ============================================
+
+Table auth_user {
+  id integer [pk, increment]
+  username varchar(150) [unique, not null]
+  password varchar(128) [not null]
+  email varchar(254)
+  first_name varchar(150)
+  last_name varchar(150)
+  is_active boolean [default: true]
+  is_staff boolean [default: false]
+  is_superuser boolean [default: false]
+  date_joined datetime [not null]
+  last_login datetime
+}
+
+Table django_content_type {
+  id integer [pk, increment]
+  app_label varchar(100) [not null]
+  model varchar(100) [not null]
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+Table user_information {
+  user_info_code uuid [pk]
+  user_info_id varchar(20) [unique, not null, note: 'Format: USR-XXXXX']
+  user_id integer [ref: - auth_user.id, not null]
+  middle_name varchar(100)
+  phone_number varchar(20)
+  address text
+  role varchar(20) [not null, default: 'Staff', note: 'Admin, Staff, Clerk']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  created_by integer [ref: > auth_user.id]
+}
+
+Table otp {
+  otp_code uuid [pk]
+  user_id integer [ref: > auth_user.id, not null]
+  otp varchar(6) [not null]
+  created_at datetime [not null]
+  expires_at datetime [not null]
+  is_used boolean [default: false]
+  is_verified boolean [default: false]
+}
+
+// ============================================
+// PRODUCT CATALOG
+// ============================================
+
+Table category {
+  category_code uuid [pk]
+  category_id varchar(15) [unique, not null, note: 'Format: CAT-XXXXX']
+  category_name varchar(100) [unique, not null]
+  category_description text
+  product_count integer [default: 0]
+  status varchar(20) [default: 'Active', note: 'Active, Inactive, Archived']
+  archived_at datetime
+  archive_reason text
+  archived_by integer [ref: > auth_user.id]
+}
+
+Table subcategory {
+  subcategory_code uuid [pk]
+  subcategory_id varchar(15) [unique, not null, note: 'Format: SC-XXXXX']
+  subcategory_name varchar(100) [unique, not null]
+  category_id varchar(15) [ref: > category.category_id, not null]
+  subcategory_description text
+  product_count integer [default: 0]
+  status varchar(20) [default: 'Active', note: 'Active, Inactive, Archived']
+  archived_at datetime
+  archive_reason text
+  archived_by integer [ref: > auth_user.id]
+}
+
+Table product {
+  product_code uuid [pk]
+  product_id varchar(20) [unique, not null, note: 'Format: PRD-XXXXX']
+  brand_name varchar(255) [not null]
+  generic_name varchar(255) [not null]
+  product_name varchar(255) [note: 'Auto: brand_name - generic_name']
+  category_id varchar(15) [ref: > category.category_id, not null]
+  subcategory_id varchar(15) [ref: > subcategory.subcategory_id, not null]
+  price decimal(10,2) [not null]
+  unit_of_measurement varchar(50) [not null]
+  expiry_threshold_days integer [default: 30]
+  low_stock_threshold integer [default: 10]
+  status varchar(20) [default: 'Active', note: 'Active, Inactive, Archived']
+  last_updated datetime [not null]
+  archived_at datetime
+  archive_reason text
+  archived_by integer [ref: > auth_user.id]
+}
+
+// ============================================
+// SUPPLIER MANAGEMENT
+// ============================================
+
+Table supplier {
+  supplier_code uuid [pk]
+  supplier_id varchar(15) [unique, not null, note: 'Format: SUP-XXXXX']
+  supplier_name varchar(255) [unique, not null]
+  contact_person text
+  email varchar(254)
+  phone_number varchar(20)
+  address text
+  status varchar(20) [default: 'Active', note: 'Active, Inactive, Archived']
+  archived_at datetime
+  archive_reason text
+  archived_by integer [ref: > auth_user.id]
+}
+
+Table supplier_product {
+  supplier_product_code uuid [pk]
+  supplier_product_id varchar(30) [unique, not null, note: 'Format: SUP-XXXXX-PRD-XXXXX-XXXXX']
+  product_id varchar(20) [ref: > product.product_id, not null]
+  supplier_id varchar(15) [ref: > supplier.supplier_id, not null]
+}
+
+// ============================================
+// INVENTORY MANAGEMENT
+// ============================================
+
+Table product_stocks {
+  stock_code uuid [pk]
+  stock_id varchar(30) [unique, not null, note: 'Format: PRD-XXXXX-STK-XXXXX']
+  product_id varchar(20) [ref: > product.product_id, not null]
+  total_on_hand integer [default: 0]
+  status varchar(20) [default: 'Normal', note: 'Normal, Near Expiry, Expired, Low Stock, Out of Stock']
+}
+
+Table product_batch {
+  batch_code uuid [pk]
+  batch_id varchar(30) [unique, not null, note: 'Format: PRD-XXXXX-BAT-XXXXX']
+  stock_id varchar(30) [ref: > product_stocks.stock_id, not null]
+  on_hand integer [default: 0]
+  expiry_date date [not null]
+  status varchar(20) [default: 'Normal', note: 'Normal, Near Expiry, Expired, Low Stock, Out of Stock']
+
+  indexes {
+    expiry_date
+  }
+}
+
+// ============================================
+// ORDER MANAGEMENT
+// ============================================
+
+Table order {
+  order_code uuid [pk]
+  order_id varchar(20) [unique, not null, note: 'Format: ORD-YYYY-XXXXX']
+  ordered_by text [not null]
+  date_ordered datetime [not null]
+  date_received datetime
+  status varchar(20) [default: 'Pending', note: 'Pending, Partially Received, Received, Cancelled']
+}
+
+Table order_item {
+  order_item_code uuid [pk]
+  order_item_id varchar(30) [unique, not null, note: 'Format: ITM-XXXXX']
+  order_id varchar(20) [ref: > order.order_id, not null]
+  product_id varchar(20) [ref: > product.product_id, not null]
+  supplier_id varchar(15) [ref: > supplier.supplier_id, not null]
+  quantity_ordered integer [not null]
+}
+
+Table receive_order {
+  receive_order_code uuid [pk]
+  receive_order_id varchar(30) [unique, not null, note: 'Format: RCV-XXXXX']
+  order_id varchar(20) [ref: > order.order_id, not null]
+  order_item_id varchar(30) [ref: > order_item.order_item_id, not null]
+  quantity_received integer [not null]
+  date_received datetime [not null]
+  received_by text [not null]
+  expiry_date date [note: 'Actual expiry from packaging']
+  remarks text
+}
+
+// ============================================
+// TRANSACTION LOGGING
+// ============================================
+
+Table transaction {
+  transaction_code uuid [pk]
+  transaction_id varchar(20) [unique, not null, note: 'Format: TXN-YYYY-XXXXX']
+  transaction_type varchar(20) [not null, note: 'IN, OUT, ADJ']
+  product_id varchar(20) [ref: > product.product_id, not null]
+  batch_id varchar(30) [ref: > product_batch.batch_id]
+  quantity_change integer [not null]
+  on_hand integer [not null]
+  remarks text
+  performed_by text [not null]
+  date_of_transaction datetime [not null]
+}
+
+// ============================================
+// ARCHIVE SYSTEM
+// ============================================
+
+Table archive_log {
+  archive_code uuid [pk]
+  archive_id varchar(30) [unique, not null, note: 'Format: ARC-XXXXX']
+  content_type_id integer [ref: > django_content_type.id, not null]
+  object_id varchar(50) [not null]
+  archived_by integer [ref: > auth_user.id]
+  archived_at datetime [not null]
+  reason text
+  snapshot json [note: 'Snapshot of archived object']
+}

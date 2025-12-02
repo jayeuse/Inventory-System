@@ -23,19 +23,6 @@ document.addEventListener("DOMContentLoaded", function () {
   
   // ========== CURRENCY FUNCTIONALITY ==========
   initializeCurrencySettings();
-  
-  // System Settings Theme Options
-  const themeOptions = document.querySelectorAll(".theme-option");
-
-  themeOptions.forEach((option) => {
-    option.addEventListener("click", function () {
-      themeOptions.forEach((opt) => opt.classList.remove("active"));
-      this.classList.add("active");
-
-      const theme = this.querySelector(".theme-name").textContent;
-      console.log(`Theme changed to: ${theme}`);
-    });
-  });
 
   // Supplier Management Modal
   const supplierModal = document.getElementById("addSupplierModal");
