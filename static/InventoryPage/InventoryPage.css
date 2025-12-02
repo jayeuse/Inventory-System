@@ -381,7 +381,7 @@ tbody tr.batch-details td {
 .batch-container.expanded {
   max-height: 1000px;
   opacity: 1;
-  padding: 10px;
+  padding: 18px 22px;
 }
 
 /* Override any headings inside batch container */
@@ -418,7 +418,7 @@ tbody tr.batch-details td {
 }
 
 .batch-table th {
-  padding: 6px 10px;
+  padding: 10px 16px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -426,7 +426,7 @@ tbody tr.batch-details td {
 }
 
 .batch-table td {
-  padding: 10px 12px;
+  padding: 14px 18px;
   font-size: 13px;
 }
 
