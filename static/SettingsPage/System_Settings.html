@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="/static/SettingsPage/System_Settings.css" />
     <link rel="stylesheet" href="/static/SettingsPage/ArchiveList/ArchiveList.css" />
     <link rel="stylesheet" href="/static/SettingsPage/ProductManagement/Product_Management.css">
+    <link rel="stylesheet" href="/static/utils/notifications.css" />
   </head>
   <body>
     <div class="d-flex settings-shell">
@@ -61,13 +62,20 @@
                 <i class="bi bi-clock-fill"></i> Timezone
               </h3>
               <div class="setting-group">
+                <div class="current-time-display">
+                  <div class="time-value" id="currentTime">--:--:--</div>
+                  <div class="date-value" id="currentDate">Loading...</div>
+                </div>
                 <div class="select-wrapper">
-                  <select>
-                    <option>UTC+8 Philippine Time</option>
-                    <option>UTC-5 Eastern Time</option>
-                    <option>UTC+0 Greenwich Mean Time</option>
-                    <option>UTC+1 Central European Time</option>
-                    <option>UTC+9 Japan Standard Time</option>
+                  <select id="timezoneSelect">
+                    <option value="Asia/Manila">UTC+8 Philippine Time</option>
+                    <option value="America/New_York">UTC-5 Eastern Time</option>
+                    <option value="UTC">UTC+0 Greenwich Mean Time</option>
+                    <option value="Europe/Paris">UTC+1 Central European Time</option>
+                    <option value="Asia/Tokyo">UTC+9 Japan Standard Time</option>
+                    <option value="Asia/Singapore">UTC+8 Singapore Time</option>
+                    <option value="Australia/Sydney">UTC+11 Sydney Time</option>
+                    <option value="Europe/London">UTC+0 London Time</option>
                   </select>
                 </div>
               </div>
@@ -78,30 +86,84 @@
                 <i class="bi bi-currency-dollar"></i> Currency
               </h3>
               <div class="setting-group">
+                <div class="currency-display">
+                  <span class="currency-symbol" id="currentCurrencySymbol">₱</span>
+                  <span class="currency-name" id="currentCurrencyName">Philippine Peso</span>
+                </div>
+                <div class="exchange-rate-info" id="exchangeRateInfo">
+                  <i class="bi bi-info-circle"></i>
+                  <span id="exchangeRateText">Base currency (no conversion)</span>
+                </div>
                 <div class="select-wrapper">
-                  <select>
-                    <option>PHP - Philippine Peso</option>
-                    <option>USD - US Dollar</option>
-                    <option>EUR - Euro</option>
-                    <option>GBP - British Pound</option>
-                    <option>JPY - Japanese Yen</option>
+                  <select id="currencySelect">
+                    <option value="PHP">₱ PHP - Philippine Peso</option>
+                    <option value="USD">$ USD - US Dollar</option>
+                    <option value="EUR">€ EUR - Euro</option>
+                    <option value="GBP">£ GBP - British Pound</option>
+                    <option value="JPY">¥ JPY - Japanese Yen</option>
+                    <option value="KRW">₩ KRW - Korean Won</option>
+                    <option value="CNY">¥ CNY - Chinese Yuan</option>
+                    <option value="SGD">S$ SGD - Singapore Dollar</option>
                   </select>
                 </div>
+                <p class="setting-note">
+                  <i class="bi bi-lightbulb"></i>
+                  Display currency only. All prices are stored in PHP.
+                </p>
               </div>
             </div>
 
             <div class="card-2">
               <h3 class="card-title">
-                <i class="bi bi-hdd-fill"></i> Data Management
+                <i class="bi bi-download"></i> Data Management
               </h3>
-              <div class="backup-section">
-                <div class="backup-content">
-                  <div class="backup-icon"><i class="bi bi-hdd-fill"></i></div>
-                  <p class="backup-text">
-                    Create a backup of your system data to prevent data loss
-                  </p>
+              <div class="data-management-section">
+                <p class="data-management-description">
+                  <i class="bi bi-info-circle"></i>
+                  Export your system data to CSV or create a full backup for safekeeping.
+                </p>
+                
+                <div class="export-options">
+                  <div class="export-group">
+                    <h4 class="export-group-title">Export Individual Data</h4>
+                    <div class="export-buttons-grid">
+                      <button class="export-btn" onclick="exportProducts()">
+                        <i class="bi bi-box-seam"></i>
+                        <span>Products</span>
+                      </button>
+                      <button class="export-btn" onclick="exportSuppliers()">
+                        <i class="bi bi-truck"></i>
+                        <span>Suppliers</span>
+                      </button>
+                      <button class="export-btn" onclick="exportCategories()">
+                        <i class="bi bi-folder"></i>
+                        <span>Categories</span>
+                      </button>
+                      <button class="export-btn" onclick="exportInventory()">
+                        <i class="bi bi-clipboard-data"></i>
+                        <span>Inventory</span>
+                      </button>
+                      <button class="export-btn" onclick="exportOrders()">
+                        <i class="bi bi-cart"></i>
+                        <span>Orders</span>
+                      </button>
+                      <button class="export-btn" onclick="exportTransactions()">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <span>Transactions</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div class="export-divider"></div>
+                  
+                  <div class="export-group full-backup">
+                    <h4 class="export-group-title">Full System Backup</h4>
+                    <p class="backup-note">Creates a complete JSON backup of all system data</p>
+                    <button class="btn btn-primary full-backup-btn" onclick="exportAllData()">
+                      <i class="bi bi-hdd-fill"></i> Create Full Backup
+                    </button>
+                  </div>
                 </div>
-                <button class="btn btn-primary">Create Backup Data</button>
               </div>
             </div>
           </div>
@@ -368,147 +430,149 @@
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
+              <div class="action-buttons">
+                <button class="btn btn-outline" id="addCategoryModalBtn">
+                  <i class="bi bi-plus-lg"></i> Add Category
+                </button>
+                <button class="btn btn-outline" id="addSubcategoryModalBtn">
+                  <i class="bi bi-plus-lg"></i> Add Subcategory
+                </button>
+              </div>
             </div>
 
-            <div class="layout">
-              <div class="table-section">
-                <div class="table-wrapper" id="activeCategoriesWrapper">
-                  <table id="activeCategoriesTable">
-                    <thead>
-                      <tr>
-                        <th>Category ID</th>
-                        <th>Category Name</th>
-                        <th>Description</th>
-                        <th>Products</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="category-table-body">
-                      <tr class="subcategory-row hidden">
-                        <td colspan="5">
-                          <table class="subcategory-table">
-                            <thead>
-                              <tr>
-                                <th>Subcategory ID</th>
-                                <th>Subcategory Name</th>
-                                <th>Description</th>
-                                <th>Product Count</th>
-                              </tr>
-                            </thead>
-                            <tbody id="subcategory-table-body">
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+            <div class="table-wrapper" id="activeCategoriesWrapper">
+              <table id="activeCategoriesTable">
+                <thead>
+                  <tr>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Products</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="category-table-body">
+                  <tr class="subcategory-row hidden">
+                    <td colspan="5">
+                      <table class="subcategory-table">
+                        <thead>
+                          <tr>
+                            <th>Subcategory ID</th>
+                            <th>Subcategory Name</th>
+                            <th>Description</th>
+                            <th>Product Count</th>
+                          </tr>
+                        </thead>
+                        <tbody id="subcategory-table-body">
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-                <div class="table-wrapper" id="archivedCategoriesWrapper" style="display: none;">
-                  <table id="archivedCategoriesTable">
-                    <thead>
-                      <tr>
-                        <th>Category ID</th>
-                        <th>Category Name</th>
-                        <th>Description</th>
-                        <th>Products</th>
-                        <th>Archive Reason</th>
-                        <th>Archive Date</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="archivedCategoriesTableBody">
-                    </tbody>
-                  </table>
-                </div>
+            <div class="table-wrapper" id="archivedCategoriesWrapper" style="display: none;">
+              <table id="archivedCategoriesTable">
+                <thead>
+                  <tr>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Products</th>
+                    <th>Archive Reason</th>
+                    <th>Archive Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="archivedCategoriesTableBody">
+                </tbody>
+              </table>
+            </div>
 
-                <div class="pagination">
-                  <button class="pagination-btn">
-                    <i class="bi bi-chevron-left"></i> Previous
-                  </button>
-                  <button class="pagination-btn">
-                    Next <i class="bi bi-chevron-right"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-section">
-                <div class="form-container">
-                  <div class="form-content">
-                    <h3>Add Category</h3>
-                    <div class="form-fields">
-                      <div class="form-group">
-                        <label for="category-name">Category Name</label>
-                        <input
-                          type="text"
-                          class="input"
-                          id="category-name"
-                          placeholder="Enter category name"
-                        />
-                      </div>
-                      <div class="form-group">
-                        <label for="category-description">Description</label>
-                        <textarea
-                          class="input"
-                          id="category-description"
-                          placeholder="Enter description"
-                        ></textarea>
-                      </div>
-                    </div>
-                    <div class="button-container">
-                      <button type="button" class="btn btn-secondary">
-                        Clear
-                      </button>
-                      <button type="button" id="addCategoryBtn" class="btn btn-outline">
-                        Add Category
-                      </button>
-                    </div>
-
-                    <div class="divider"></div>
-
-                    <h3>Add Subcategory</h3>
-                    <div class="form-fields">
-                      <div class="form-group">
-                        <label for="category-classification"
-                          >Category Classification</label
-                        >
-                        <select class="input" id="category-classification">
-                          <option value="">Select Classification</option>
-                        </select>
-                      </div>
-                      <div class="form-group">
-                        <label for="subcategory-name">Subcategory Name</label>
-                        <input
-                          type="text"
-                          class="input"
-                          id="subcategory-name"
-                          placeholder="Enter subcategory name"
-                        />
-                      </div>
-                      <div class="form-group">
-                        <label for="subcategory-description">Description</label>
-                        <textarea
-                          class="input"
-                          id="subcategory-description"
-                          placeholder="Enter description"
-                        ></textarea>
-                      </div>
-                    </div>
-                    <div class="button-container">
-                      <button type="button" class="btn btn-secondary">
-                        Clear
-                      </button>
-                      <button type="button" id="addSubCategoryBtn" class="btn btn-outline">
-                        Add Subcategory
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="pagination">
+              <button class="pagination-btn">
+                <i class="bi bi-chevron-left"></i> Previous
+              </button>
+              <button class="pagination-btn">
+                Next <i class="bi bi-chevron-right"></i>
+              </button>
             </div>
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div id="addCategoryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add Category</h2>
+          <button class="close-btn" id="closeAddCategoryBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="category-name">Category Name</label>
+            <input
+              type="text"
+              class="input"
+              id="category-name"
+              placeholder="Enter category name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="category-description">Description</label>
+            <textarea
+              class="input"
+              id="category-description"
+              placeholder="Enter description"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelAddCategoryBtn">Cancel</button>
+          <button class="btn" id="addCategoryBtn"><i class="fas fa-save"></i> Save Category</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Subcategory Modal -->
+    <div id="addSubcategoryModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Add Subcategory</h2>
+          <button class="close-btn" id="closeAddSubcategoryBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="category-classification">Category Classification</label>
+            <select class="input" id="category-classification">
+              <option value="">Select Classification</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="subcategory-name">Subcategory Name</label>
+            <input
+              type="text"
+              class="input"
+              id="subcategory-name"
+              placeholder="Enter subcategory name"
+            />
+          </div>
+          <div class="form-group">
+            <label for="subcategory-description">Description</label>
+            <textarea
+              class="input"
+              id="subcategory-description"
+              placeholder="Enter description"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelAddSubcategoryBtn">Cancel</button>
+          <button class="btn" id="addSubCategoryBtn"><i class="fas fa-save"></i> Save Subcategory</button>
+        </div>
+      </div>
     </div>
 
     <!-- Add Supplier Modal -->
@@ -565,10 +629,17 @@
             />
           </div>
           <div class="form-group">
-            <label for="supplierProduct">Supplying Product</label>
-            <select id="supplierProduct", class="supplierProduct">
-              <option value="">Select a Product</option>
-            </select>
+            <label>Supplying Products</label>
+            <div class="multi-select-dropdown" id="supplierProductDropdown">
+              <div class="multi-select-trigger" id="supplierProductTrigger">
+                <span class="multi-select-text">Select Products</span>
+                <i class="bi bi-chevron-down"></i>
+              </div>
+              <div class="multi-select-options" id="supplierProductOptions">
+                <!-- Products will be populated here -->
+              </div>
+            </div>
+            <div class="selected-products-display" id="selectedProductsDisplay"></div>
           </div>
           <div class="form-group">
             <label for="supplierStatus">Status</label>
@@ -797,9 +868,17 @@
             />
           </div>
           <div class="form-group">
-            <label for="editSupplierProduct">Product</label>
-              <select id="editSupplierProduct" class="input">
-              </select>
+            <label>Supplying Products</label>
+            <div class="multi-select-dropdown" id="editSupplierProductDropdown">
+              <div class="multi-select-trigger" id="editSupplierProductTrigger">
+                <span class="multi-select-text">Select Products</span>
+                <i class="bi bi-chevron-down"></i>
+              </div>
+              <div class="multi-select-options" id="editSupplierProductOptions">
+                <!-- Products will be populated here -->
+              </div>
+            </div>
+            <div class="selected-products-display" id="editSelectedProductsDisplay"></div>
           </div>
           <div class="form-group">
             <label for="editSupplierStatus">Status</label>
@@ -1375,7 +1454,10 @@
         }
       });
     </script>
+    <script src="/static/utils/notifications.js"></script>
     <script src="/static/utils/csrf.js"></script>
+    <script src="/static/utils/currency.js"></script>
+    <script src="/static/utils/export.js"></script>
     <script src="/static/utils/permissions.js"></script>
     <script src="/static/SettingsPage/LogoutManagement/LogoutManagement.js"></script>
     <script src="/static/SettingsPage/System_Settings.js"></script>

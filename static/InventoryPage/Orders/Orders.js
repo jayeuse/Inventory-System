@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize currency settings if available
+    if (typeof initializeCurrency === 'function') {
+        initializeCurrency();
+    }
     initializeOrders();
 });
 
@@ -16,44 +20,42 @@ window.filteredOrders = filteredOrders;
 // --- Add Order Modal Logic ---
 let tempOrderItems = [];
 let suppliersCache = [];
+let productsCache = [];  // Cache products with their suppliers and prices
 
 async function loadSuppliers(productId) {
-    // Fetch all suppliers and populate the dropdown (deduplicated by supplier_id)
+    // If productId is provided, filter suppliers for that product from cache
     const supplierSelect = document.getElementById('supplierId');
     if (!supplierSelect) return;
     supplierSelect.innerHTML = '';
-    try {
-        const resp = await fetch('/api/suppliers/');
-        if (!resp.ok) throw new Error('Failed to fetch suppliers');
-        const data = await resp.json();
-        const suppliersRaw = Array.isArray(data) ? data : (data.results || []);
-        // Deduplicate suppliers by supplier_id
-        const supplierMap = {};
-        suppliersRaw.forEach(s => {
-            if (!supplierMap[s.supplier_id]) {
-                supplierMap[s.supplier_id] = s;
-            }
-        });
-        const suppliers = Object.values(supplierMap);
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select supplier';
-        supplierSelect.appendChild(placeholder);
-        if (suppliers.length === 0) {
-            const none = document.createElement('option');
-            none.value = '';
-            none.textContent = 'No suppliers found';
-            supplierSelect.appendChild(none);
-        } else {
-            suppliers.forEach(supplier => {
+    
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Select supplier';
+    supplierSelect.appendChild(placeholder);
+    
+    if (productId) {
+        // Find the product in cache and get its suppliers
+        const product = productsCache.find(p => p.product_id === productId);
+        if (product && product.suppliers && product.suppliers.length > 0) {
+            product.suppliers.forEach(supplier => {
+                // Only show active suppliers
                 const opt = document.createElement('option');
                 opt.value = supplier.supplier_id;
                 opt.textContent = supplier.supplier_name;
                 supplierSelect.appendChild(opt);
             });
+        } else {
+            const none = document.createElement('option');
+            none.value = '';
+            none.textContent = 'No suppliers for this product';
+            supplierSelect.appendChild(none);
         }
-    } catch (err) {
-        supplierSelect.innerHTML = '<option value="">Error loading suppliers</option>';
+    } else {
+        // No product selected - show message
+        const none = document.createElement('option');
+        none.value = '';
+        none.textContent = 'Select a product first';
+        supplierSelect.appendChild(none);
     }
 }
 
@@ -74,8 +76,7 @@ function resetAddOrderModal() {
         orderedByInput.readOnly = false; // Editable on modal reset
     }
     const supplierSelect = document.getElementById('supplierId');
-    if (supplierSelect) supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
-    loadSuppliers(); // Always load suppliers when resetting modal
+    if (supplierSelect) supplierSelect.innerHTML = '<option value="">Select a product first</option>';
     updateOrdersCount();
     updatePlaceAllOrdersBtn();
 }
@@ -111,15 +112,18 @@ function renderOrderItemsList() {
         return;
     }
     tempOrderItems.forEach((item, idx) => {
+        const priceDisplay = typeof formatCurrency === 'function' 
+            ? formatCurrency(item.purchasing_price) 
+            : '₱' + (item.purchasing_price?.toFixed(2) || '');
         const div = document.createElement('div');
         div.className = 'order-item-row';
         div.innerHTML = `
             <span>${item.product_name || item.product_id}</span>
             <span>Qty: ${item.quantity_ordered}</span>
-            <span>Price: ₱${item.purchasing_price?.toFixed(2) || ''}</span>
+            <span>Price: ${priceDisplay}</span>
             <span>Supplier: ${item.supplier || ''}</span>
             <span>By: ${item.ordered_by}</span>
-            <button class=\"btn btn-sm btn-danger\" onclick=\"removeOrderItem(${idx})\"><i class=\"fas fa-trash\"></i></button>
+            <button class="btn btn-sm btn-danger" onclick="removeOrderItem(${idx})"><i class="fas fa-trash"></i></button>
         `;
         list.appendChild(div);
     });
@@ -164,10 +168,10 @@ async function handleAddOrderItem() {
     if (orderedByInput) {
         orderedByInput.readOnly = true;
     }
+    // Reset supplier dropdown - need to select a product first
     const supplierSelect = document.getElementById('supplierId');
     if (supplierSelect) {
-        supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
-        loadSuppliers();
+        supplierSelect.innerHTML = '<option value="">Select a product first</option>';
     }
 }
 
@@ -327,9 +331,13 @@ async function loadProducts() {
 
         const data = await res.json();
         const products = Array.isArray(data) ? data : (data.results || []);
+        
+        // Cache products with their prices and suppliers
+        productsCache = products;
 
         const productSelect = document.getElementById('productName');
         const productIdInput = document.getElementById('productId');
+        const purchasingPriceInput = document.getElementById('purchasingPrice');
         if (!productSelect) return;
 
         // Clear existing hardcoded options
@@ -345,12 +353,27 @@ async function loadProducts() {
             const label = p.product_name || ((p.brand_name || '') + (p.generic_name ? ' (' + p.generic_name + ')' : ''));
             opt.value = p.product_id || p.productId || '';
             opt.textContent = label + (opt.value ? ` — ${opt.value}` : '');
+            // Store price in data attribute
+            opt.dataset.price = p.price_per_unit || '';
             productSelect.appendChild(opt);
         });
 
-        // Sync productId input when selection changes
+        // Sync productId input, price, and suppliers when selection changes
         productSelect.addEventListener('change', function () {
-            if (productIdInput) productIdInput.value = this.value || '';
+            const selectedProductId = this.value;
+            
+            // Update product ID input
+            if (productIdInput) productIdInput.value = selectedProductId || '';
+            
+            // Auto-fill purchasing price from product's unit price
+            if (purchasingPriceInput) {
+                const selectedOption = this.options[this.selectedIndex];
+                const price = selectedOption.dataset.price || '';
+                purchasingPriceInput.value = price;
+            }
+            
+            // Filter suppliers for the selected product
+            loadSuppliers(selectedProductId);
         });
     } catch (err) {
         console.error('Error loading products:', err);
@@ -786,12 +809,14 @@ async function handleReceiveOrder() {
         // Collect all received items
         const receiveRecords = [];
         let hasAnyReceived = false;
+        let validationError = null;
 
-        order.items.forEach((item, index) => {
+        for (let index = 0; index < order.items.length; index++) {
+            const item = order.items[index];
             const receivedQtyInput = document.getElementById(`receivedQty${index}`);
             const expiryDateInput = document.getElementById(`expiryDate${index}`);
             const remarksInput = document.getElementById(`remarks${index}`);
-            if (!receivedQtyInput) return;
+            if (!receivedQtyInput) continue;
 
             const receivedQty = parseInt(receivedQtyInput.value) || 0;
             const expiryDate = expiryDateInput ? expiryDateInput.value : null;
@@ -804,8 +829,8 @@ async function handleReceiveOrder() {
                 
                 // Validate quantity - check against remaining, not total ordered
                 if (receivedQty > remaining) {
-                    alert(`Cannot receive more than remaining for ${item.product_name}. Remaining: ${remaining}, Attempting: ${receivedQty}`);
-                    throw new Error('Invalid quantity');
+                    validationError = `Cannot receive more than remaining for ${item.product_name}. Remaining: ${remaining}, Attempting: ${receivedQty}`;
+                    break;
                 }
 
                 const receiveRecord = {
@@ -828,7 +853,13 @@ async function handleReceiveOrder() {
 
                 receiveRecords.push(receiveRecord);
             }
-        });
+        }
+
+        // Check for validation errors
+        if (validationError) {
+            alert(validationError);
+            return;
+        }
 
         if (!hasAnyReceived) {
             alert('Please enter at least one received quantity greater than 0');
@@ -895,6 +926,11 @@ async function handleReceiveOrder() {
         
         // Reload orders to reflect updated status and quantities
         await loadOrders();
+        
+        // Reload stocks to show newly received items
+        if (typeof window.loadStocks === 'function') {
+            await window.loadStocks();
+        }
 
     } catch (error) {
         console.error('Error receiving order:', error);
@@ -956,13 +992,5 @@ function updatePaginationControls(totalPages) {
     }
 }
 
-// --- Add event to update suppliers when product changes ---
-document.addEventListener('DOMContentLoaded', function() {
-    // Always load all suppliers on product change (optional, can be removed if not needed)
-    const productNameSelect = document.getElementById('productName');
-    if (productNameSelect) {
-        productNameSelect.addEventListener('change', function() {
-            loadSuppliers();
-        });
-    }
-});
+// Note: Product change event listener is now handled in loadProducts() function
+// to filter suppliers and auto-fill price based on selected product

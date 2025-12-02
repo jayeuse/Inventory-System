@@ -346,10 +346,92 @@ if (categoryPaginationContainer) {
 
   populateCategoriesDropdown();
 
+  // ========== ADD CATEGORY MODAL HANDLERS ==========
+  const addCategoryModal = document.getElementById('addCategoryModal');
+  const addCategoryModalBtn = document.getElementById('addCategoryModalBtn');
+  const closeAddCategoryBtn = document.getElementById('closeAddCategoryBtn');
+  const cancelAddCategoryBtn = document.getElementById('cancelAddCategoryBtn');
+
+  if (addCategoryModalBtn) {
+    addCategoryModalBtn.addEventListener('click', () => {
+      addCategoryModal.style.display = 'flex';
+    });
+  }
+
+  if (closeAddCategoryBtn) {
+    closeAddCategoryBtn.addEventListener('click', () => {
+      addCategoryModal.style.display = 'none';
+      clearCategoryForm();
+    });
+  }
+
+  if (cancelAddCategoryBtn) {
+    cancelAddCategoryBtn.addEventListener('click', () => {
+      addCategoryModal.style.display = 'none';
+      clearCategoryForm();
+    });
+  }
+
+  // ========== ADD SUBCATEGORY MODAL HANDLERS ==========
+  const addSubcategoryModal = document.getElementById('addSubcategoryModal');
+  const addSubcategoryModalBtn = document.getElementById('addSubcategoryModalBtn');
+  const closeAddSubcategoryBtn = document.getElementById('closeAddSubcategoryBtn');
+  const cancelAddSubcategoryBtn = document.getElementById('cancelAddSubcategoryBtn');
+
+  if (addSubcategoryModalBtn) {
+    addSubcategoryModalBtn.addEventListener('click', () => {
+      populateCategoriesDropdown(); // Refresh categories dropdown
+      addSubcategoryModal.style.display = 'flex';
+    });
+  }
+
+  if (closeAddSubcategoryBtn) {
+    closeAddSubcategoryBtn.addEventListener('click', () => {
+      addSubcategoryModal.style.display = 'none';
+      clearSubcategoryForm();
+    });
+  }
+
+  if (cancelAddSubcategoryBtn) {
+    cancelAddSubcategoryBtn.addEventListener('click', () => {
+      addSubcategoryModal.style.display = 'none';
+      clearSubcategoryForm();
+    });
+  }
+
+  // Close modals when clicking outside
+  window.addEventListener('click', (e) => {
+    if (e.target === addCategoryModal) {
+      addCategoryModal.style.display = 'none';
+      clearCategoryForm();
+    }
+    if (e.target === addSubcategoryModal) {
+      addSubcategoryModal.style.display = 'none';
+      clearSubcategoryForm();
+    }
+  });
+
+  // Helper functions to clear forms
+  function clearCategoryForm() {
+    document.getElementById('category-name').value = '';
+    document.getElementById('category-description').value = '';
+  }
+
+  function clearSubcategoryForm() {
+    document.getElementById('category-classification').value = '';
+    document.getElementById('subcategory-name').value = '';
+    document.getElementById('subcategory-description').value = '';
+  }
+
   // Inserting Categories
   document.getElementById('addCategoryBtn').addEventListener('click', async function() {
     const categoryName = document.getElementById('category-name').value;
     const categoryDescription = document.getElementById('category-description').value;
+
+    if (!categoryName) {
+      alert('Please enter a category name.');
+      return;
+    }
 
     const data = {
       category_name: categoryName,
@@ -368,8 +450,15 @@ if (categoryPaginationContainer) {
       });
 
       if (response.ok){
-        alert('Category added Succesfully!');
+        alert('Category added Successfully!');
+        addCategoryModal.style.display = 'none';
+        clearCategoryForm();
         await loadCategories();
+        await populateCategoriesDropdown();
+        // Refresh Product Management category dropdowns
+        if (typeof window.populateProductDropdowns === 'function') {
+          await window.populateProductDropdowns();
+        }
       } else {
         const errorData = await response.json();
         alert('Error: ' + JSON.stringify(errorData))
@@ -384,6 +473,16 @@ if (categoryPaginationContainer) {
     const subCategoryClassfication = document.getElementById('category-classification').value;
     const subCategoryName = document.getElementById('subcategory-name').value;
     const subCategoryDescription = document.getElementById('subcategory-description').value;
+
+    if (!subCategoryClassfication) {
+      alert('Please select a category classification.');
+      return;
+    }
+
+    if (!subCategoryName) {
+      alert('Please enter a subcategory name.');
+      return;
+    }
 
     const data = {
       subcategory_name: subCategoryName,
@@ -402,8 +501,14 @@ if (categoryPaginationContainer) {
       });
 
       if (response.ok){
-        alert("Subcategory added Successfully!")
-        await loadSubCategories();
+        alert("Subcategory added Successfully!");
+        addSubcategoryModal.style.display = 'none';
+        clearSubcategoryForm();
+        await loadCategories();
+        // Refresh Product Management subcategory dropdowns
+        if (typeof window.populateProductDropdowns === 'function') {
+          await window.populateProductDropdowns();
+        }
       } else {
         const errorData = await response.json();
         alert('Error: ' + JSON.stringify(errorData))

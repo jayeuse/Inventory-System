@@ -204,10 +204,15 @@ document.addEventListener("DOMContentLoaded", function(){
       return;
     }
 
+    // Get current user's username for transaction attribution
+    const currentUser = window.userPermissions?.getCurrentUser();
+    const performedBy = currentUser?.username || "Unknown User";
+
     const data = {
       on_hand: on_hand,
       expiry_date: expiry_date,
-      transaction_remarks: remarks  // Add custom remarks for the transaction
+      transaction_remarks: remarks,  // Add custom remarks for the transaction
+      transaction_performed_by: performedBy  // Add current user for performed_by field
     }
 
     console.log("Sending PATCH request to:", `/api/product-batches/${batch_id}/`);
@@ -258,6 +263,9 @@ document.addEventListener("DOMContentLoaded", function(){
     }
 
   });
+
+  // Expose loadStocks globally so other modules (like Orders) can refresh stocks
+  window.loadStocks = loadStocks;
 })
 
 async function loadBatches(stockId){

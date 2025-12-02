@@ -2,6 +2,12 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('Product Management script loaded');
+  
+  // Initialize currency settings if available
+  if (typeof initializeCurrency === 'function') {
+    initializeCurrency();
+  }
+  
   let currentEditProductId = null;
   // caches for categories/subcategories so other handlers can reuse them
   let categoriesCache = [];
@@ -136,7 +142,9 @@ document.addEventListener('DOMContentLoaded', function () {
           // Actual product data
           const p = paginatedProducts[i];
           row.dataset.categoryName = p.category_name || '';
-          const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
+          const unitPriceDisplay = (p.price_per_unit !== undefined && p.price_per_unit !== null) 
+            ? (typeof formatCurrency === 'function' ? formatCurrency(p.price_per_unit) : '₱' + Number(p.price_per_unit).toFixed(2))
+            : '';
           
           row.innerHTML = `
             <td>${p.product_id || ''}</td>
@@ -144,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <td class="truncate-cell truncate-200" title="${p.generic_name || ''}">${truncateText(p.generic_name, 32)}</td>
             <td class="truncate-cell truncate-160" title="${p.category_name || ''}">${truncateText(p.category_name, 24)}</td>
             <td class="truncate-cell truncate-160" title="${p.subcategory_name || ''}">${truncateText(p.subcategory_name, 24)}</td>
-            <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
+            <td>${unitPriceDisplay} / ${p.unit_of_measurement || ''}</td>
             <td>${p.low_stock_threshold || ''} units</td>
             <td>${p.expiry_threshold_days || ''} days</td>
             <td class="last-update-cell" title="${p.last_updated || ''}">${truncateText(p.last_updated)}</td>
@@ -271,7 +279,9 @@ document.addEventListener('DOMContentLoaded', function () {
           // Actual product data
           const p = paginatedProducts[i];
           row.dataset.categoryName = p.category_name || '';
-          const unitPrice = (p.price_per_unit !== undefined && p.price_per_unit !== null) ? Number(p.price_per_unit).toFixed(2) : '';
+          const unitPriceDisplay = (p.price_per_unit !== undefined && p.price_per_unit !== null) 
+            ? (typeof formatCurrency === 'function' ? formatCurrency(p.price_per_unit) : '₱' + Number(p.price_per_unit).toFixed(2))
+            : '';
           const archiveReason = p.archive_reason || p.reason || '';
           const archivedDate = p.archived_at || p.archived_date || p.updated_at || p.date_archived || '';
 
@@ -281,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <td class="truncate-cell truncate-200" title="${p.generic_name || ''}">${truncateText(p.generic_name, 32)}</td>
             <td class="truncate-cell truncate-160" title="${p.category_name || ''}">${truncateText(p.category_name, 24)}</td>
             <td class="truncate-cell truncate-160" title="${p.subcategory_name || ''}">${truncateText(p.subcategory_name, 24)}</td>
-            <td>₱${unitPrice} / ${p.unit_of_measurement || ''}</td>
+            <td>${unitPriceDisplay} / ${p.unit_of_measurement || ''}</td>
             <td class="truncate-cell truncate-200" title="${archiveReason}">${truncateText(archiveReason, 28)}</td>
             <td class="truncate-cell truncate-140" title="${archivedDate}">${truncateText(archivedDate, 22)}</td>
             <td class="actions-cell">
@@ -627,6 +637,10 @@ document.addEventListener('DOMContentLoaded', function () {
         alert('Product added successfully');
         if (addProductModal) addProductModal.style.display = 'none';
         await loadProductsList();
+        // Refresh Supplier Management product dropdowns
+        if (typeof window.populateSupplierProductDropdown === 'function') {
+          await window.populateSupplierProductDropdown();
+        }
       } else {
         const err = await res.json();
         alert('Error saving product: ' + JSON.stringify(err));
@@ -837,8 +851,16 @@ document.addEventListener('DOMContentLoaded', function () {
     await loadProductsList();
   })();
 
+  // Listen for currency changes to refresh the display
+  window.addEventListener('currencyChanged', function() {
+    loadProductsList();
+  });
+
   // Expose loader so other scripts (or manual triggers) can refresh lists
   window.loadProductsList = loadProductsList;
+
+  // Expose dropdown refresh function so Category Management can refresh dropdowns after adding categories/subcategories
+  window.populateProductDropdowns = populateProductDropdowns;
 
   // Tab switching is handled by initializeProductTabs() above
 

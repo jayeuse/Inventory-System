@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
+  // Initialize currency settings if available
+  if (typeof initializeCurrency === 'function') {
+    initializeCurrency();
+  }
+
   // Tab navigation functionality
   const tabs = document.querySelectorAll(".tab");
   const pages = document.querySelectorAll(".page-content");
@@ -195,13 +200,16 @@ document.addEventListener("DOMContentLoaded", function () {
         if (i < pageItems.length) {
           // Actual product data
           const p = pageItems[i];
+          const priceDisplay = (p.price_per_unit !== undefined && p.price_per_unit !== null) 
+            ? (typeof formatCurrency === 'function' ? formatCurrency(p.price_per_unit) : '₱' + Number(p.price_per_unit).toFixed(2)) + ' / ' + (p.unit_of_measurement || '') 
+            : '-';
           tr.innerHTML = `
             <td>${p.product_id || '-'}</td>
             <td>${p.brand_name || '-'}</td>
             <td>${p.generic_name || '-'}</td>
             <td>${p.category_name || '-'}</td>
             <td>${p.subcategory_name || '-'}</td>
-            <td>${(p.price_per_unit !== undefined && p.price_per_unit !== null) ? '₱' + Number(p.price_per_unit).toFixed(2) + ' / ' + (p.unit_of_measurement || '') : '-'}</td>
+            <td>${priceDisplay}</td>
             <td>${p.last_updated || '-'}</td>
           `;
         } else {
@@ -225,6 +233,37 @@ document.addEventListener("DOMContentLoaded", function () {
     if (prevBtn) prevBtn.disabled = currentPage <= 1;
     if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
   }
+
+  // Listen for currency changes to refresh the display
+  window.addEventListener('currencyChanged', function() {
+    renderCurrentView();
+  });
+
+  // Listen for localStorage changes from other tabs/pages
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'selectedCurrency') {
+      // Re-initialize currency with new value and refresh display
+      if (typeof initializeCurrency === 'function') {
+        initializeCurrency();
+      }
+      renderCurrentView();
+    }
+  });
+
+  // Re-check currency when page becomes visible (returning from Settings)
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+      const storedCurrency = localStorage.getItem('selectedCurrency');
+      const currentCurrency = typeof getCurrentCurrency === 'function' ? getCurrentCurrency() : 'PHP';
+      
+      if (storedCurrency && storedCurrency !== currentCurrency) {
+        if (typeof initializeCurrency === 'function') {
+          initializeCurrency();
+        }
+        renderCurrentView();
+      }
+    }
+  });
 
   // Initial fetch
   // Populate categories and fetch products

@@ -1,8 +1,8 @@
 from django.core.management.base import BaseCommand
-from inventory_system.models import Category, Subcategory, Product, Supplier, Order, OrderItem, ReceiveOrder
+from inventory_system.models import Category, Subcategory, Product, Supplier, SupplierProduct, ProductStocks, ProductBatch, Order, OrderItem, ReceiveOrder
 from django.utils import timezone
 from django.db import transaction as db_transaction
-from datetime import timedelta
+from datetime import timedelta, date
 import random
 import traceback
 
@@ -20,6 +20,12 @@ class Command(BaseCommand):
             'products_skipped': 0,
             'suppliers_created': 0,
             'suppliers_skipped': 0,
+            'supplier_products_created': 0,
+            'supplier_products_skipped': 0,
+            'stocks_created': 0,
+            'stocks_skipped': 0,
+            'batches_created': 0,
+            'total_stock_units': 0,
             'orders_created': 0,
             'order_items_created': 0,
             'receive_orders_created': 0,
@@ -56,6 +62,12 @@ class Command(BaseCommand):
         self.stdout.write(f'Products Skipped: {self.stats["products_skipped"]}')
         self.stdout.write(f'Suppliers Created: {self.stats["suppliers_created"]}')
         self.stdout.write(f'Suppliers Skipped: {self.stats["suppliers_skipped"]}')
+        self.stdout.write(f'Supplier-Product Links Created: {self.stats["supplier_products_created"]}')
+        self.stdout.write(f'Supplier-Product Links Skipped: {self.stats["supplier_products_skipped"]}')
+        self.stdout.write(f'Product Stocks Created: {self.stats["stocks_created"]}')
+        self.stdout.write(f'Product Stocks Skipped: {self.stats["stocks_skipped"]}')
+        self.stdout.write(f'Product Batches Created: {self.stats["batches_created"]}')
+        self.stdout.write(f'Total Stock Units: {self.stats["total_stock_units"]:,}')
         self.stdout.write(f'Orders Created: {self.stats["orders_created"]}')
         self.stdout.write(f'Order Items Created: {self.stats["order_items_created"]}')
         self.stdout.write(f'Receive Orders Created: {self.stats["receive_orders_created"]}')
@@ -360,6 +372,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('STEP 3: Inserting Suppliers'))
         self.stdout.write('-' * 80)
         
+        # Suppliers now supply MULTIPLE products (many-to-many relationship)
         suppliers_data = [
             {
                 'name': 'PharmaCare Distributors Inc.',
@@ -367,7 +380,6 @@ class Command(BaseCommand):
                 'email': 'jmartinez@pharmacare.com',
                 'phone': '+1-555-0101',
                 'address': '123 Medical Plaza, Healthcare District, Metro Manila',
-                'product_brand': 'Amoxil'
             },
             {
                 'name': 'MediSupply Solutions',
@@ -375,7 +387,6 @@ class Command(BaseCommand):
                 'email': 'schen@medisupply.com',
                 'phone': '+1-555-0102',
                 'address': '456 Pharmacy Street, Business Park, Quezon City',
-                'product_brand': 'Tylenol'
             },
             {
                 'name': 'Global Health Products Corp.',
@@ -383,7 +394,6 @@ class Command(BaseCommand):
                 'email': 'mrodriguez@globalhealthprod.com',
                 'phone': '+1-555-0103',
                 'address': '789 Wellness Avenue, Medical Center, Makati City',
-                'product_brand': 'Centrum'
             },
             {
                 'name': 'Vital Med Supplies',
@@ -391,7 +401,6 @@ class Command(BaseCommand):
                 'email': 'etan@vitalmed.com',
                 'phone': '+1-555-0104',
                 'address': '321 Healthcare Road, Industrial Zone, Pasig City',
-                'product_brand': 'Norvasc'
             },
             {
                 'name': 'Prime Pharma Wholesale',
@@ -399,7 +408,6 @@ class Command(BaseCommand):
                 'email': 'dwong@primepharma.com',
                 'phone': '+1-555-0105',
                 'address': '654 Drug Lane, Commerce Hub, Mandaluyong City',
-                'product_brand': 'Ventolin'
             },
             {
                 'name': 'HealthFirst Trading Co.',
@@ -407,7 +415,6 @@ class Command(BaseCommand):
                 'email': 'lgarcia@healthfirst.com',
                 'phone': '+1-555-0106',
                 'address': '987 Medical Supply Drive, Export Processing Zone, Cavite',
-                'product_brand': 'Omron'
             },
             {
                 'name': 'MedEquip International',
@@ -415,7 +422,6 @@ class Command(BaseCommand):
                 'email': 'rkim@medequip.com',
                 'phone': '+1-555-0107',
                 'address': '147 Equipment Boulevard, Tech Park, Taguig City',
-                'product_brand': 'BD'
             },
             {
                 'name': 'Wellness Distributors Ltd.',
@@ -423,116 +429,33 @@ class Command(BaseCommand):
                 'email': 'jsantos@wellnessdist.com',
                 'phone': '+1-555-0108',
                 'address': '258 Nutrition Street, Health District, Pasay City',
-                'product_brand': 'Similac'
-            },
-            {
-                'name': 'CarePlus Medical Supply',
-                'contact_person': 'Thomas Lee',
-                'email': 'tlee@careplus.com',
-                'phone': '+1-555-0109',
-                'address': '369 Care Avenue, Medical Complex, Manila',
-                'product_brand': 'Band-Aid'
-            },
-            {
-                'name': 'Advanced Pharma Solutions',
-                'contact_person': 'Maria Reyes',
-                'email': 'mreyes@advancedpharma.com',
-                'phone': '+1-555-0110',
-                'address': '741 Innovation Drive, Science Park, Laguna',
-                'product_brand': 'Glucophage'
-            },
-            {
-                'name': 'MediCare Wholesale Hub',
-                'contact_person': 'Kevin Ng',
-                'email': 'kng@medicarehub.com',
-                'phone': '+1-555-0111',
-                'address': '852 Distribution Center, Logistics Park, Bulacan',
-                'product_brand': 'Cetaphil'
-            },
-            {
-                'name': 'Quality Health Imports',
-                'contact_person': 'Angela Cruz',
-                'email': 'acruz@qualityhealth.com',
-                'phone': '+1-555-0112',
-                'address': '963 Import Street, Port Area, Manila',
-                'product_brand': 'Nitrile Pro'
-            },
-            {
-                'name': 'Reliable Medical Trading',
-                'contact_person': 'Daniel Park',
-                'email': 'dpark@reliablemed.com',
-                'phone': '+1-555-0113',
-                'address': '159 Trading Post, Commercial District, Caloocan City',
-                'product_brand': 'QuickTest'
-            },
-            {
-                'name': 'Premier Wellness Group',
-                'contact_person': 'Christine Lim',
-                'email': 'clim@premierwellness.com',
-                'phone': '+1-555-0114',
-                'address': '357 Wellness Plaza, Health Zone, Alabang',
-                'product_brand': 'Whey Pro'
-            },
-            {
-                'name': 'Essential Meds Corporation',
-                'contact_person': 'Jason Fernandez',
-                'email': 'jfernandez@essentialmeds.com',
-                'phone': '+1-555-0115',
-                'address': '486 Essential Road, Pharmaceutical Hub, Paranaque City',
-                'product_brand': 'Zithromax'
             },
         ]
         
         for supplier_data in suppliers_data:
             try:
                 with db_transaction.atomic():
-                    # Find product by brand name
-                    product = Product.objects.filter(brand_name=supplier_data['product_brand']).first()
-                    
-                    if not product:
-                        self.stdout.write(self.style.WARNING(
-                            f'○ Product not found for supplier {supplier_data["name"]}: '
-                            f'{supplier_data["product_brand"]}, skipping'
-                        ))
-                        self.stats['suppliers_skipped'] += 1
-                        continue
-                    
                     # Check if supplier exists
                     existing_supplier = Supplier.objects.filter(supplier_name=supplier_data['name']).first()
                     
                     if existing_supplier:
-                        if existing_supplier.product != product:
-                            self.stdout.write(self.style.WARNING(
-                                f'○ Supplier "{supplier_data["name"]}" exists with different product '
-                                f'({existing_supplier.product.brand_name}). Skipping.'
-                            ))
-                        else:
-                            self.log_verbose(
-                                self.style.WARNING(f'○ Supplier already exists: {supplier_data["name"]}'),
-                                verbose
-                            )
+                        self.log_verbose(
+                            self.style.WARNING(f'○ Supplier already exists: {supplier_data["name"]}'),
+                            verbose
+                        )
                         self.stats['suppliers_skipped'] += 1
                     else:
-                        # Validate email format
-                        if '@' not in supplier_data['email']:
-                            self.stats['errors'] += 1
-                            self.stdout.write(self.style.ERROR(
-                                f'✗ Invalid email for supplier {supplier_data["name"]}: {supplier_data["email"]}'
-                            ))
-                            continue
-                        
                         Supplier.objects.create(
                             supplier_name=supplier_data['name'],
                             contact_person=supplier_data['contact_person'],
                             email=supplier_data['email'],
                             phone_number=supplier_data['phone'],
                             address=supplier_data['address'],
-                            product=product,
                             status='Active',
                         )
                         self.stats['suppliers_created'] += 1
                         self.stdout.write(self.style.SUCCESS(
-                            f'✓ Created supplier: {supplier_data["name"]} → supplies {product.brand_name}'
+                            f'✓ Created supplier: {supplier_data["name"]}'
                         ))
                         
             except Exception as e:
@@ -547,11 +470,346 @@ class Command(BaseCommand):
             f'{self.stats["suppliers_skipped"]} skipped\n'
         ))
         
+        # Step 4: Create Supplier-Product relationships (many-to-many)
+        self.stdout.write(self.style.SUCCESS('STEP 4: Creating Supplier-Product Relationships'))
+        self.stdout.write('-' * 80)
+        
+        # Define which suppliers carry which products
+        # Each supplier specializes in certain categories but may overlap
+        supplier_product_mappings = {
+            'PharmaCare Distributors Inc.': [
+                # Antibiotics specialist + some pain relief
+                'Amoxil', 'Zithromax', 'Cipro', 'Tylenol', 'Advil', 'Aleve'
+            ],
+            'MediSupply Solutions': [
+                # Pain relief + vitamins + some antibiotics
+                'Tylenol', 'Advil', 'Centrum', 'Nature Made', 'Calcium Plus', 'Amoxil'
+            ],
+            'Global Health Products Corp.': [
+                # Vitamins, supplements, wellness
+                'Centrum', 'Nature Made', 'Calcium Plus', 'Ginkgo Plus', 'Omega-3', 
+                'Whey Pro', 'Ensure'
+            ],
+            'Vital Med Supplies': [
+                # Cardiovascular + respiratory + diabetes
+                'Norvasc', 'Losartan', 'Ventolin', 'Claritin', 'Glucophage', 'Lantus'
+            ],
+            'Prime Pharma Wholesale': [
+                # Respiratory + GI + some cardiovascular
+                'Ventolin', 'Claritin', 'Omeprazole', 'Imodium', 'Norvasc', 'Losartan'
+            ],
+            'HealthFirst Trading Co.': [
+                # Medical supplies + diagnostic equipment
+                'Band-Aid', 'Medipore', 'Tegaderm', 'BD', 'Terumo', 
+                'Omron', 'Accu-Chek', 'Digital', 'Nitrile Pro', 'N95 Premium', 'Surgical Plus'
+            ],
+            'MedEquip International': [
+                # Diagnostic equipment + syringes + test kits
+                'Omron', 'Accu-Chek', 'Digital', 'BD', 'Terumo',
+                'QuickTest', 'PregnaSure'
+            ],
+            'Wellness Distributors Ltd.': [
+                # Personal care + baby care + wellness
+                'Cetaphil', 'Neutrogena', 'Aveeno', 'Colgate', 'Listerine', 'Oral-B',
+                'Similac', 'Pampers', "Johnson's", 'Whey Pro', 'Ensure'
+            ],
+        }
+        
+        for supplier_name, product_brands in supplier_product_mappings.items():
+            try:
+                supplier = Supplier.objects.filter(supplier_name=supplier_name).first()
+                if not supplier:
+                    self.stdout.write(self.style.WARNING(
+                        f'○ Supplier not found: {supplier_name}, skipping products'
+                    ))
+                    continue
+                
+                for brand in product_brands:
+                    try:
+                        product = Product.objects.filter(brand_name=brand).first()
+                        if not product:
+                            self.log_verbose(
+                                self.style.WARNING(f'  ○ Product not found: {brand}'),
+                                verbose
+                            )
+                            continue
+                        
+                        # Check if relationship already exists
+                        existing = SupplierProduct.objects.filter(
+                            supplier=supplier, 
+                            product=product
+                        ).first()
+                        
+                        if existing:
+                            self.stats['supplier_products_skipped'] += 1
+                            self.log_verbose(
+                                self.style.WARNING(
+                                    f'  ○ Link already exists: {supplier_name} → {brand}'
+                                ),
+                                verbose
+                            )
+                        else:
+                            SupplierProduct.objects.create(
+                                supplier=supplier,
+                                product=product
+                            )
+                            self.stats['supplier_products_created'] += 1
+                            self.stdout.write(self.style.SUCCESS(
+                                f'  ✓ Linked: {supplier_name} → {brand}'
+                            ))
+                            
+                    except Exception as e:
+                        self.stats['errors'] += 1
+                        self.stdout.write(self.style.ERROR(
+                            f'  ✗ Error linking {supplier_name} to {brand}: {str(e)}'
+                        ))
+                        self.log_verbose(traceback.format_exc(), verbose)
+                        
+            except Exception as e:
+                self.stats['errors'] += 1
+                self.stdout.write(self.style.ERROR(
+                    f'✗ Error processing supplier {supplier_name}: {str(e)}'
+                ))
+                self.log_verbose(traceback.format_exc(), verbose)
+        
+        self.stdout.write(self.style.SUCCESS(
+            f'\n✅ Supplier-Product Links: {self.stats["supplier_products_created"]} created, '
+            f'{self.stats["supplier_products_skipped"]} skipped\n'
+        ))
+        
+        # Step 5: Create Product Stocks and Batches
+        self.stdout.write(self.style.SUCCESS('STEP 5: Creating Product Stocks and Batches'))
+        self.stdout.write('-' * 80)
+        
+        # Define stock scenarios for each product
+        # We'll create different scenarios: Normal (high stock), Low Stock, Near Expiry, Expired, Out of Stock
+        # Each product gets 1-4 batches with varying quantities and expiry dates
+        
+        today = date.today()
+        
+        # Stock configuration for products
+        # Format: 'brand_name': [(quantity, expiry_days_from_today), ...]
+        # Positive expiry_days = future, Negative = past (expired)
+        stock_configs = {
+            # HIGH STOCK - Normal items (thousands in stock)
+            'Amoxil': [(2500, 365), (1800, 180), (1200, 90)],  # 5,500 total - multiple batches
+            'Tylenol': [(5000, 545), (3000, 365), (2000, 180)],  # 10,000 total - very popular
+            'Advil': [(4000, 365), (2500, 270), (1500, 120)],  # 8,000 total
+            'Centrum': [(3000, 730), (2000, 545), (1500, 365)],  # 6,500 total - long shelf life
+            'Nature Made': [(2500, 545), (1800, 365)],  # 4,300 total
+            'Calcium Plus': [(2000, 545), (1500, 365)],  # 3,500 total
+            'Band-Aid': [(8000, 1095), (5000, 730)],  # 13,000 total - very long shelf life
+            'Nitrile Pro': [(10000, 1095), (6000, 730)],  # 16,000 total - bulk PPE
+            'Surgical Plus': [(15000, 730), (8000, 545)],  # 23,000 total - high volume PPE
+            'Colgate': [(4000, 545), (2500, 365)],  # 6,500 total
+            
+            # MEDIUM STOCK - Normal items
+            'Zithromax': [(800, 270), (600, 180)],  # 1,400 total
+            'Cipro': [(700, 300), (500, 180)],  # 1,200 total
+            'Aleve': [(1200, 365), (800, 180)],  # 2,000 total
+            'Norvasc': [(600, 365), (400, 270)],  # 1,000 total
+            'Losartan': [(550, 300), (450, 200)],  # 1,000 total
+            'Claritin': [(900, 365), (600, 180)],  # 1,500 total
+            'Omeprazole': [(800, 270), (500, 150)],  # 1,300 total
+            'Glucophage': [(700, 300), (500, 200)],  # 1,200 total
+            'Medipore': [(2000, 730), (1500, 545)],  # 3,500 total
+            'Tegaderm': [(1500, 730), (1000, 545)],  # 2,500 total
+            'BD': [(5000, 1095), (3000, 730)],  # 8,000 total
+            'Terumo': [(4000, 1095), (2500, 730)],  # 6,500 total
+            'N95 Premium': [(3000, 730), (2000, 545)],  # 5,000 total
+            'Cetaphil': [(800, 545), (500, 365)],  # 1,300 total
+            'Neutrogena': [(700, 545), (400, 365)],  # 1,100 total
+            'Aveeno': [(600, 545), (400, 365)],  # 1,000 total
+            'Listerine': [(1000, 730), (600, 545)],  # 1,600 total
+            'Oral-B': [(2000, 1095), (1500, 730)],  # 3,500 total
+            'Ginkgo Plus': [(500, 545), (300, 365)],  # 800 total
+            'Omega-3': [(600, 545), (400, 365)],  # 1,000 total
+            # Note: 'Whey Pro' and 'Ensure' are handled as OUT OF STOCK below
+            
+            # LOW STOCK - Items that need reordering (below threshold of 10)
+            'Ventolin': [(5, 180), (3, 90)],  # 8 total - LOW STOCK! Critical respiratory med
+            'Imodium': [(4, 150), (2, 60)],  # 6 total - LOW STOCK!
+            'Lantus': [(3, 120), (2, 60)],  # 5 total - LOW STOCK! Critical diabetes med
+            'Omron': [(2, 730)],  # 2 total - LOW STOCK! Expensive equipment
+            'Accu-Chek': [(3, 730)],  # 3 total - LOW STOCK! Expensive equipment
+            'Digital': [(4, 730), (2, 545)],  # 6 total - LOW STOCK!
+            'QuickTest': [(5, 90), (3, 45)],  # 8 total - LOW STOCK! High demand test kits
+            
+            # NEAR EXPIRY - Items expiring within 30 days
+            'PregnaSure': [(150, 25), (80, 15)],  # 230 total but NEAR EXPIRY
+            'Similac': [(200, 20), (100, 10)],  # 300 total but NEAR EXPIRY - baby formula
+            "Johnson's": [(180, 28), (120, 18)],  # 300 total but NEAR EXPIRY
+            
+            # EXPIRED STOCK - Items that have already expired (need disposal)
+            'Pampers': [(50, -5), (30, -15)],  # 80 total - ALL EXPIRED (need urgent disposal)
+        }
+        
+        # Products that should be OUT OF STOCK (zero inventory)
+        # These products exist but have no stock at all
+        out_of_stock_products = ['Whey Pro', 'Ensure']
+        
+        # Get all active products
+        all_products = Product.objects.filter(status='Active')
+        
+        for product in all_products:
+            try:
+                with db_transaction.atomic():
+                    # Check if stock already exists
+                    existing_stock = ProductStocks.objects.filter(product=product).first()
+                    
+                    if existing_stock:
+                        self.stats['stocks_skipped'] += 1
+                        self.log_verbose(
+                            self.style.WARNING(f'○ Stock already exists for: {product.brand_name}'),
+                            verbose
+                        )
+                        continue
+                    
+                    # Check if this product should be OUT OF STOCK
+                    if product.brand_name in out_of_stock_products:
+                        # Create stock entry with 0 quantity
+                        product_stock = ProductStocks.objects.create(
+                            product=product,
+                            total_on_hand=0,
+                            status='Out of Stock'
+                        )
+                        self.stats['stocks_created'] += 1
+                        self.stdout.write(self.style.SUCCESS(
+                            f'✓ Created stock for {product.brand_name}: 0 units (Out of Stock) 🚫 OUT OF STOCK'
+                        ))
+                        continue
+                    
+                    # Get stock configuration for this product
+                    config = stock_configs.get(product.brand_name, None)
+                    
+                    if config is None:
+                        # Default config for products not explicitly defined
+                        # Give them medium stock with good expiry dates
+                        config = [(random.randint(500, 1500), random.randint(180, 365))]
+                    
+                    # Calculate total quantity
+                    total_quantity = sum(qty for qty, _ in config)
+                    
+                    # Determine the overall stock status based on configuration
+                    # Check for expired, near expiry, low stock conditions
+                    has_expired = any(days < 0 for _, days in config)
+                    has_near_expiry = any(0 <= days <= 30 for _, days in config)
+                    is_low_stock = total_quantity <= product.low_stock_threshold
+                    is_out_of_stock = total_quantity == 0
+                    
+                    if is_out_of_stock:
+                        stock_status = 'Out of Stock'
+                    elif has_expired:
+                        stock_status = 'Expired'
+                    elif has_near_expiry:
+                        stock_status = 'Near Expiry'
+                    elif is_low_stock:
+                        stock_status = 'Low Stock'
+                    else:
+                        stock_status = 'Normal'
+                    
+                    # Create the ProductStocks entry
+                    product_stock = ProductStocks.objects.create(
+                        product=product,
+                        total_on_hand=total_quantity,
+                        status=stock_status
+                    )
+                    self.stats['stocks_created'] += 1
+                    self.stats['total_stock_units'] += total_quantity
+                    
+                    status_indicator = ''
+                    if stock_status == 'Low Stock':
+                        status_indicator = ' ⚠️ LOW'
+                    elif stock_status == 'Near Expiry':
+                        status_indicator = ' ⏰ NEAR EXPIRY'
+                    elif stock_status == 'Expired':
+                        status_indicator = ' ❌ EXPIRED'
+                    elif stock_status == 'Out of Stock':
+                        status_indicator = ' 🚫 OUT OF STOCK'
+                    
+                    self.stdout.write(self.style.SUCCESS(
+                        f'✓ Created stock for {product.brand_name}: {total_quantity:,} units ({stock_status}){status_indicator}'
+                    ))
+                    
+                    # Create batches for this product
+                    for batch_qty, expiry_days in config:
+                        try:
+                            expiry_date = today + timedelta(days=expiry_days)
+                            
+                            # Determine batch status
+                            if expiry_days < 0:
+                                batch_status = 'Expired'
+                            elif expiry_days <= 30:
+                                batch_status = 'Near Expiry'
+                            elif batch_qty <= product.low_stock_threshold:
+                                batch_status = 'Low Stock'
+                            else:
+                                batch_status = 'Normal'
+                            
+                            batch = ProductBatch.objects.create(
+                                product_stock=product_stock,
+                                on_hand=batch_qty,
+                                expiry_date=expiry_date,
+                                status=batch_status
+                            )
+                            self.stats['batches_created'] += 1
+                            
+                            expiry_str = expiry_date.strftime('%Y-%m-%d')
+                            days_label = f'{expiry_days} days' if expiry_days >= 0 else f'{abs(expiry_days)} days ago'
+                            
+                            self.log_verbose(
+                                self.style.SUCCESS(
+                                    f'  → Batch: {batch_qty:,} units, expires {expiry_str} ({days_label}) [{batch_status}]'
+                                ),
+                                verbose
+                            )
+                            
+                        except Exception as e:
+                            self.stats['errors'] += 1
+                            self.stdout.write(self.style.ERROR(
+                                f'  ✗ Error creating batch for {product.brand_name}: {str(e)}'
+                            ))
+                            self.log_verbose(traceback.format_exc(), verbose)
+                    
+            except Exception as e:
+                self.stats['errors'] += 1
+                self.stdout.write(self.style.ERROR(
+                    f'✗ Error creating stock for {product.brand_name}: {str(e)}'
+                ))
+                self.log_verbose(traceback.format_exc(), verbose)
+        
+        # Print stock summary
+        self.stdout.write(self.style.SUCCESS(
+            f'\n✅ Product Stocks: {self.stats["stocks_created"]} created, '
+            f'{self.stats["stocks_skipped"]} skipped'
+        ))
+        self.stdout.write(self.style.SUCCESS(
+            f'✅ Product Batches: {self.stats["batches_created"]} created'
+        ))
+        self.stdout.write(self.style.SUCCESS(
+            f'✅ Total Stock Units: {self.stats["total_stock_units"]:,}\n'
+        ))
+        
+        # Stock status summary
+        normal_count = ProductStocks.objects.filter(status='Normal').count()
+        low_count = ProductStocks.objects.filter(status='Low Stock').count()
+        near_expiry_count = ProductStocks.objects.filter(status='Near Expiry').count()
+        expired_count = ProductStocks.objects.filter(status='Expired').count()
+        out_of_stock_count = ProductStocks.objects.filter(status='Out of Stock').count()
+        
+        self.stdout.write(self.style.SUCCESS('Stock Status Distribution:'))
+        self.stdout.write(f'  • Normal: {normal_count}')
+        self.stdout.write(f'  • Low Stock: {low_count}')
+        self.stdout.write(f'  • Near Expiry: {near_expiry_count}')
+        self.stdout.write(f'  • Expired: {expired_count}')
+        self.stdout.write(f'  • Out of Stock: {out_of_stock_count}')
+        self.stdout.write('')
+        
         # Insert Orders
         if skip_orders:
             self.stdout.write(self.style.WARNING('⊘ Skipping order creation (--skip-orders flag enabled)\n'))
         else:
-            self.stdout.write(self.style.SUCCESS('STEP 4: Inserting Orders, Order Items, and Receive Orders'))
+            self.stdout.write(self.style.SUCCESS('STEP 6: Inserting Orders, Order Items, and Receive Orders'))
             self.stdout.write('-' * 80)
             
             # Get all products and suppliers for orders
@@ -563,112 +821,133 @@ class Command(BaseCommand):
             elif not suppliers:
                 self.stdout.write(self.style.ERROR('✗ No active suppliers found. Cannot create orders.'))
             else:
-                # Define realistic pharmacy orders
+                # Define realistic pharmacy orders with specific suppliers
+                # Orders now specify which supplier to use for each product
                 orders_data = [
-                    # Order 1: Completed order - Medications restocking
+                    # Order 1: Completed order - Medications from PharmaCare
                     {
                         'ordered_by': 'Sarah Johnson, Head Pharmacist',
                         'date_ordered': timezone.now() - timedelta(days=15),
                         'status': 'Received',
                         'items': [
-                            {'product_brand': 'Amoxil', 'quantity': 500, 'received': [(300, 14), (200, 13)]},
-                            {'product_brand': 'Tylenol', 'quantity': 1000, 'received': [(1000, 14)]},
-                            {'product_brand': 'Advil', 'quantity': 750, 'received': [(750, 14)]},
+                            {'product_brand': 'Amoxil', 'supplier_name': 'PharmaCare Distributors Inc.', 'quantity': 500, 'received': [(300, 14), (200, 13)]},
+                            {'product_brand': 'Tylenol', 'supplier_name': 'PharmaCare Distributors Inc.', 'quantity': 1000, 'received': [(1000, 14)]},
+                            {'product_brand': 'Advil', 'supplier_name': 'PharmaCare Distributors Inc.', 'quantity': 750, 'received': [(750, 14)]},
                         ]
                     },
-                    # Order 2: Partially received order - Medical supplies
+                    # Order 2: Partially received - Medical supplies from HealthFirst
                     {
                         'ordered_by': 'Michael Chen, Inventory Manager',
                         'date_ordered': timezone.now() - timedelta(days=10),
                         'status': 'Partially Received',
                         'items': [
-                            {'product_brand': 'BD', 'quantity': 2000, 'received': [(1000, 8)]},
-                            {'product_brand': 'Band-Aid', 'quantity': 500, 'received': [(300, 8)]},
-                            {'product_brand': 'Nitrile Pro', 'quantity': 200, 'received': [(100, 7)]},
+                            {'product_brand': 'BD', 'supplier_name': 'HealthFirst Trading Co.', 'quantity': 2000, 'received': [(1000, 8)]},
+                            {'product_brand': 'Band-Aid', 'supplier_name': 'HealthFirst Trading Co.', 'quantity': 500, 'received': [(300, 8)]},
+                            {'product_brand': 'Nitrile Pro', 'supplier_name': 'HealthFirst Trading Co.', 'quantity': 200, 'received': [(100, 7)]},
                         ]
                     },
-                    # Order 3: Pending order - Vitamins and supplements
+                    # Order 3: Pending order - Vitamins from Global Health
                     {
                         'ordered_by': 'Emily Rodriguez, Assistant Pharmacist',
                         'date_ordered': timezone.now() - timedelta(days=5),
                         'status': 'Pending',
                         'items': [
-                            {'product_brand': 'Centrum', 'quantity': 300, 'received': []},
-                            {'product_brand': 'Nature Made', 'quantity': 400, 'received': []},
-                            {'product_brand': 'Omega-3', 'quantity': 250, 'received': []},
+                            {'product_brand': 'Centrum', 'supplier_name': 'Global Health Products Corp.', 'quantity': 300, 'received': []},
+                            {'product_brand': 'Nature Made', 'supplier_name': 'Global Health Products Corp.', 'quantity': 400, 'received': []},
+                            {'product_brand': 'Omega-3', 'supplier_name': 'Global Health Products Corp.', 'quantity': 250, 'received': []},
                         ]
                     },
-                    # Order 4: Completed order - Cardiovascular medications
+                    # Order 4: Completed - Cardiovascular meds from Vital Med
                     {
                         'ordered_by': 'Dr. Robert Kim',
                         'date_ordered': timezone.now() - timedelta(days=20),
                         'status': 'Received',
                         'items': [
-                            {'product_brand': 'Norvasc', 'quantity': 400, 'received': [(400, 19)]},
-                            {'product_brand': 'Losartan', 'quantity': 350, 'received': [(350, 19)]},
+                            {'product_brand': 'Norvasc', 'supplier_name': 'Vital Med Supplies', 'quantity': 400, 'received': [(400, 19)]},
+                            {'product_brand': 'Losartan', 'supplier_name': 'Vital Med Supplies', 'quantity': 350, 'received': [(350, 19)]},
                         ]
                     },
-                    # Order 5: Partially received order - Baby care and personal care
+                    # Order 5: Partially received - Baby care from Wellness Distributors
                     {
                         'ordered_by': 'Jennifer Santos, Store Manager',
                         'date_ordered': timezone.now() - timedelta(days=7),
                         'status': 'Partially Received',
                         'items': [
-                            {'product_brand': 'Similac', 'quantity': 100, 'received': [(50, 6)]},
-                            {'product_brand': 'Pampers', 'quantity': 150, 'received': [(75, 6)]},
-                            {'product_brand': 'Cetaphil', 'quantity': 200, 'received': []},
+                            {'product_brand': 'Similac', 'supplier_name': 'Wellness Distributors Ltd.', 'quantity': 100, 'received': [(50, 6)]},
+                            {'product_brand': 'Pampers', 'supplier_name': 'Wellness Distributors Ltd.', 'quantity': 150, 'received': [(75, 6)]},
+                            {'product_brand': 'Cetaphil', 'supplier_name': 'Wellness Distributors Ltd.', 'quantity': 200, 'received': []},
                         ]
                     },
-                    # Order 6: Completed order - Diagnostic equipment
+                    # Order 6: Completed - Diagnostic equipment from MedEquip
                     {
                         'ordered_by': 'Thomas Lee, Equipment Coordinator',
                         'date_ordered': timezone.now() - timedelta(days=25),
                         'status': 'Received',
                         'items': [
-                            {'product_brand': 'Omron', 'quantity': 20, 'received': [(20, 24)]},
-                            {'product_brand': 'Accu-Chek', 'quantity': 15, 'received': [(15, 24)]},
+                            {'product_brand': 'Omron', 'supplier_name': 'MedEquip International', 'quantity': 20, 'received': [(20, 24)]},
+                            {'product_brand': 'Accu-Chek', 'supplier_name': 'MedEquip International', 'quantity': 15, 'received': [(15, 24)]},
                         ]
                     },
-                    # Order 7: Pending order - COVID and test kits
+                    # Order 7: Pending - Test kits from MedEquip
                     {
                         'ordered_by': 'Dr. Maria Reyes',
                         'date_ordered': timezone.now() - timedelta(days=3),
                         'status': 'Pending',
                         'items': [
-                            {'product_brand': 'QuickTest', 'quantity': 500, 'received': []},
-                            {'product_brand': 'PregnaSure', 'quantity': 200, 'received': []},
+                            {'product_brand': 'QuickTest', 'supplier_name': 'MedEquip International', 'quantity': 500, 'received': []},
+                            {'product_brand': 'PregnaSure', 'supplier_name': 'MedEquip International', 'quantity': 200, 'received': []},
                         ]
                     },
-                    # Order 8: Completed order - Respiratory medications
+                    # Order 8: Completed - Respiratory meds from Prime Pharma (alternative supplier)
                     {
                         'ordered_by': 'Angela Cruz, Senior Pharmacist',
                         'date_ordered': timezone.now() - timedelta(days=18),
                         'status': 'Received',
                         'items': [
-                            {'product_brand': 'Ventolin', 'quantity': 150, 'received': [(150, 17)]},
-                            {'product_brand': 'Claritin', 'quantity': 300, 'received': [(300, 17)]},
+                            {'product_brand': 'Ventolin', 'supplier_name': 'Prime Pharma Wholesale', 'quantity': 150, 'received': [(150, 17)]},
+                            {'product_brand': 'Claritin', 'supplier_name': 'Prime Pharma Wholesale', 'quantity': 300, 'received': [(300, 17)]},
                         ]
                     },
-                    # Order 9: Partially received - Antibiotics restock
+                    # Order 9: Partially received - Mixed order from MediSupply (using alternative supplier)
                     {
                         'ordered_by': 'David Wong, Pharmacy Director',
                         'date_ordered': timezone.now() - timedelta(days=12),
                         'status': 'Partially Received',
                         'items': [
-                            {'product_brand': 'Zithromax', 'quantity': 400, 'received': [(200, 11)]},
-                            {'product_brand': 'Cipro', 'quantity': 350, 'received': [(150, 11)]},
-                            {'product_brand': 'Amoxil', 'quantity': 600, 'received': []},
+                            {'product_brand': 'Tylenol', 'supplier_name': 'MediSupply Solutions', 'quantity': 400, 'received': [(200, 11)]},
+                            {'product_brand': 'Advil', 'supplier_name': 'MediSupply Solutions', 'quantity': 350, 'received': [(150, 11)]},
+                            {'product_brand': 'Amoxil', 'supplier_name': 'MediSupply Solutions', 'quantity': 600, 'received': []},
                         ]
                     },
-                    # Order 10: Completed order - Wellness products
+                    # Order 10: Completed - Wellness products from Global Health
                     {
                         'ordered_by': 'Christine Lim, Wellness Coordinator',
                         'date_ordered': timezone.now() - timedelta(days=22),
                         'status': 'Received',
                         'items': [
-                            {'product_brand': 'Whey Pro', 'quantity': 50, 'received': [(50, 21)]},
-                            {'product_brand': 'Ensure', 'quantity': 100, 'received': [(100, 21)]},
-                            {'product_brand': 'Ginkgo Plus', 'quantity': 75, 'received': [(75, 21)]},
+                            {'product_brand': 'Whey Pro', 'supplier_name': 'Global Health Products Corp.', 'quantity': 50, 'received': [(50, 21)]},
+                            {'product_brand': 'Ensure', 'supplier_name': 'Global Health Products Corp.', 'quantity': 100, 'received': [(100, 21)]},
+                            {'product_brand': 'Ginkgo Plus', 'supplier_name': 'Global Health Products Corp.', 'quantity': 75, 'received': [(75, 21)]},
+                        ]
+                    },
+                    # Order 11: Pending - Vitamins from alternative supplier (MediSupply)
+                    {
+                        'ordered_by': 'Kevin Ng, Procurement Officer',
+                        'date_ordered': timezone.now() - timedelta(days=2),
+                        'status': 'Pending',
+                        'items': [
+                            {'product_brand': 'Centrum', 'supplier_name': 'MediSupply Solutions', 'quantity': 200, 'received': []},
+                            {'product_brand': 'Nature Made', 'supplier_name': 'MediSupply Solutions', 'quantity': 300, 'received': []},
+                        ]
+                    },
+                    # Order 12: Completed - Cardiovascular from alternative (Prime Pharma)
+                    {
+                        'ordered_by': 'Dr. Lisa Garcia',
+                        'date_ordered': timezone.now() - timedelta(days=30),
+                        'status': 'Received',
+                        'items': [
+                            {'product_brand': 'Norvasc', 'supplier_name': 'Prime Pharma Wholesale', 'quantity': 200, 'received': [(200, 29)]},
+                            {'product_brand': 'Losartan', 'supplier_name': 'Prime Pharma Wholesale', 'quantity': 250, 'received': [(250, 29)]},
                         ]
                     },
                 ]
@@ -701,18 +980,26 @@ class Command(BaseCommand):
                                         ))
                                         continue
                                     
-                                    # Find supplier for this product
-                                    supplier = Supplier.objects.filter(product=product).first()
+                                    # Find the specified supplier
+                                    supplier = Supplier.objects.filter(supplier_name=item_data['supplier_name']).first()
                                     
                                     if not supplier:
-                                        supplier = random.choice(suppliers)
-                                        self.log_verbose(
-                                            self.style.WARNING(
-                                                f'  ○ No direct supplier for {product.brand_name}, '
-                                                f'using {supplier.supplier_name}'
-                                            ),
-                                            verbose
-                                        )
+                                        self.stdout.write(self.style.WARNING(
+                                            f'  ○ Supplier not found: {item_data["supplier_name"]}, skipping item'
+                                        ))
+                                        continue
+                                    
+                                    # Verify supplier-product relationship exists
+                                    supplier_product = SupplierProduct.objects.filter(
+                                        supplier=supplier, 
+                                        product=product
+                                    ).first()
+                                    
+                                    if not supplier_product:
+                                        self.stdout.write(self.style.WARNING(
+                                            f'  ○ {supplier.supplier_name} does not supply {product.brand_name}, skipping item'
+                                        ))
+                                        continue
                                     
                                     # Validate quantity
                                     if item_data['quantity'] <= 0:

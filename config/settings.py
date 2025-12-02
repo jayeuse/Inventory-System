@@ -151,3 +151,6 @@ GMAIL_SENDER_EMAIL = 'me'  # Uses authenticated user's email, or specify: 'your-
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000']
+
+# Login Settings
+LOGIN_URL = '/login/'  # Redirect here when @login_required fails

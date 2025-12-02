@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.db import models
 from django.utils.timezone import localtime
 from django.contrib.auth.models import User
-from .models import Supplier, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog, UserInformation
+from .models import Supplier, SupplierProduct, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog, UserInformation
 
 class CategorySerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
@@ -61,10 +61,36 @@ class SubcategorySerializer(serializers.ModelSerializer):
             return local_time.strftime('%b %d, %Y %I:%M %p')
         return None
 
-class SupplierSerializer(serializers.ModelSerializer):
+class SupplierProductSerializer(serializers.ModelSerializer):
+    """Serializer for the SupplierProduct many-to-many relationship"""
     product_id = serializers.CharField(source='product.product_id', read_only=True)
     product_name = serializers.CharField(source='product.product_name', read_only=True)
+    
+    class Meta:
+        model = SupplierProduct
+        fields = [
+            'supplier_product_id',
+            'product',
+            'product_id',
+            'product_name',
+        ]
+        extra_kwargs = {
+            'product': {'write_only': True},
+        }
+
+
+class SupplierSerializer(serializers.ModelSerializer):
+    # Many-to-many: List of products this supplier provides
+    products_supplied = SupplierProductSerializer(source='supplierproduct_set', many=True, read_only=True)
+    products_count = serializers.SerializerMethodField()
     archived_at = serializers.SerializerMethodField()
+    # Write-only field for accepting product IDs when creating/updating
+    products = serializers.ListField(
+        child=serializers.CharField(),
+        write_only=True,
+        required=False,
+        allow_empty=True
+    )
     
     class Meta:
         model = Supplier
@@ -75,10 +101,10 @@ class SupplierSerializer(serializers.ModelSerializer):
             'address',
             'email',
             'phone_number',
-            'product',
-            'product_id',
-            'product_name',
             'status',
+            'products_supplied',
+            'products_count',
+            'products',  # Write-only field for product IDs
             'archived_at',
             'archive_reason',
             'archived_by',
@@ -86,11 +112,71 @@ class SupplierSerializer(serializers.ModelSerializer):
 
         read_only_fields = ['archived_at', 'archived_by',]
 
+    def get_products_count(self, obj):
+        """Return count of products this supplier provides"""
+        return obj.products.count()
+
     def get_archived_at(self, obj):
         if obj.archived_at:
             local_time = localtime(obj.archived_at)
             return local_time.strftime('%b %d, %Y %I:%M %p')
         return None
+
+    def create(self, validated_data):
+        """Handle creating supplier with products"""
+        product_ids = validated_data.pop('products', [])
+        supplier = super().create(validated_data)
+        
+        # Create SupplierProduct relationships
+        for product_id in product_ids:
+            try:
+                product = Product.objects.get(product_id=product_id)
+                SupplierProduct.objects.get_or_create(
+                    supplier=supplier,
+                    product=product
+                )
+            except Product.DoesNotExist:
+                pass  # Skip invalid product IDs
+        
+        return supplier
+
+    def update(self, instance, validated_data):
+        """Handle updating supplier with products"""
+        product_ids = validated_data.pop('products', None)
+        supplier = super().update(instance, validated_data)
+        
+        # Only update products if the field was provided
+        if product_ids is not None:
+            # Remove existing relationships not in the new list
+            existing_products = set(instance.products.values_list('product_id', flat=True))
+            new_products = set(product_ids)
+            
+            # Remove products no longer associated
+            products_to_remove = existing_products - new_products
+            SupplierProduct.objects.filter(
+                supplier=supplier,
+                product__product_id__in=products_to_remove
+            ).delete()
+            
+            # Add new product associations
+            products_to_add = new_products - existing_products
+            for product_id in products_to_add:
+                try:
+                    product = Product.objects.get(product_id=product_id)
+                    SupplierProduct.objects.get_or_create(
+                        supplier=supplier,
+                        product=product
+                    )
+                except Product.DoesNotExist:
+                    pass  # Skip invalid product IDs
+        
+        return supplier
+
+class ProductSupplierSerializer(serializers.ModelSerializer):
+    """Serializer for suppliers associated with a product"""
+    class Meta:
+        model = Supplier
+        fields = ['supplier_id', 'supplier_name']
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.category_name', read_only=True)
@@ -99,6 +185,7 @@ class ProductSerializer(serializers.ModelSerializer):
     subcategory_id = serializers.CharField(source='subcategory.subcategory_id', read_only=True)
     last_updated = serializers.SerializerMethodField()
     archived_at = serializers.SerializerMethodField()
+    suppliers = ProductSupplierSerializer(many=True, read_only=True)
     
     class Meta:
         model = Product
@@ -122,6 +209,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'archived_at',
             'archive_reason',
             'archived_by',
+            'suppliers',
         ]
         extra_kwargs = {
             'category': {'write_only': True},

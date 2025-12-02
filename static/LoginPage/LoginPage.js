@@ -330,8 +330,15 @@
             const data = await response.json();
             
             if (response.ok) {
-              // OTP verified successfully, redirect to dashboard
-              window.location.href = '/dashboard/';
+              // OTP verified successfully
+              // Check user role and redirect accordingly
+              if (data.user && data.user.role === 'Clerk') {
+                // Redirect Clerk users to POS system
+                window.location.href = 'http://localhost:5173';
+              } else {
+                // Redirect Admin/Staff to dashboard
+                window.location.href = '/dashboard/';
+              }
             } else {
               if (errorDiv) {
                 errorDiv.textContent = data.error || "Verification failed";
