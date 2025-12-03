@@ -92,13 +92,12 @@ function toggleBatches(stockId) {
 }
 
 // Open Edit Batch Modal
-function stockslist_openEditBatchModal(batchId, onHand, sku, expiryDate) {
+function stockslist_openEditBatchModal(batchId, onHand, expiryDate) {
   const modal = document.getElementById("stockslist_editBatchModal");
 
   // Populate modal fields
   document.getElementById("stockslist_edit_batchId").value = batchId;
   document.getElementById("stockslist_edit_onHand").value = parseInt(onHand);
-  document.getElementById("stockslist_edit_sku").value = sku;
   document.getElementById("stockslist_edit_expiryDate").value = expiryDate;
   document.getElementById("stockslist_edit_remarks").value = "";
 
@@ -114,7 +113,6 @@ function stockslist_closeEditBatchModal() {
   // Clear form
   document.getElementById("stockslist_edit_batchId").value = "";
   document.getElementById("stockslist_edit_onHand").value = "";
-  document.getElementById("stockslist_edit_sku").value = "";
   document.getElementById("stockslist_edit_expiryDate").value = "";
   document.getElementById("stockslist_edit_remarks").value = "";
 }

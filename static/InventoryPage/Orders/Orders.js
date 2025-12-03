@@ -931,6 +931,11 @@ async function handleReceiveOrder() {
         if (typeof window.loadStocks === 'function') {
             await window.loadStocks();
         }
+        
+        // Refresh inventory alerts (low stock alerts may be resolved)
+        if (window.InventoryAlerts && typeof window.InventoryAlerts.refresh === 'function') {
+            window.InventoryAlerts.refresh();
+        }
 
     } catch (error) {
         console.error('Error receiving order:', error);

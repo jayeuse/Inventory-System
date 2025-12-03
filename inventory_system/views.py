@@ -122,6 +122,128 @@ def dashboard_stats(request):
         'pending_orders': pending_orders
     })
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def inventory_alerts(request):
+    """
+    Return low stock and near expiry alerts based on product thresholds.
+    
+    Low Stock: ProductStocks where total_on_hand <= product.low_stock_threshold
+    Near Expiry: ProductBatch where expiry_date <= today + product.expiry_threshold_days
+    Expired: ProductBatch where expiry_date < today
+    Out of Stock: ProductStocks where total_on_hand = 0
+    """
+    from datetime import timedelta
+    
+    today = timezone.now().date()
+    alerts = []
+    
+    # Get all active product stocks with their products
+    product_stocks = ProductStocks.objects.select_related('product').exclude(
+        product__status='Archived'
+    )
+    
+    for stock in product_stocks:
+        product = stock.product
+        
+        # Out of Stock Alert
+        if stock.total_on_hand == 0:
+            alerts.append({
+                'id': f'out-{stock.stock_id}',
+                'type': 'out_of_stock',
+                'severity': 'critical',
+                'stock_id': stock.stock_id,
+                'product_id': product.product_id,
+                'product_name': product.product_name or f"{product.brand_name} - {product.generic_name}",
+                'message': f'Out of stock',
+                'current_stock': 0,
+                'threshold': product.low_stock_threshold,
+                'category': product.category.category_name if product.category else 'N/A',
+            })
+        # Low Stock Alert (but not out of stock)
+        elif stock.total_on_hand <= product.low_stock_threshold:
+            alerts.append({
+                'id': f'low-{stock.stock_id}',
+                'type': 'low_stock',
+                'severity': 'warning',
+                'stock_id': stock.stock_id,
+                'product_id': product.product_id,
+                'product_name': product.product_name or f"{product.brand_name} - {product.generic_name}",
+                'message': f'Low stock: {stock.total_on_hand} remaining (threshold: {product.low_stock_threshold})',
+                'current_stock': stock.total_on_hand,
+                'threshold': product.low_stock_threshold,
+                'category': product.category.category_name if product.category else 'N/A',
+            })
+    
+    # Get batches that are near expiry or expired
+    batches = ProductBatch.objects.select_related(
+        'product_stock', 'product_stock__product'
+    ).exclude(
+        product_stock__product__status='Archived'
+    ).filter(
+        on_hand__gt=0  # Only batches with stock
+    )
+    
+    for batch in batches:
+        product = batch.product_stock.product
+        expiry_threshold_date = today + timedelta(days=product.expiry_threshold_days)
+        
+        # Expired Alert
+        if batch.expiry_date < today:
+            alerts.append({
+                'id': f'expired-{batch.batch_id}',
+                'type': 'expired',
+                'severity': 'critical',
+                'stock_id': batch.product_stock.stock_id,
+                'product_id': product.product_id,
+                'product_name': product.product_name or f"{product.brand_name} - {product.generic_name}",
+                'batch_id': batch.batch_id,
+                'message': f'Expired on {batch.expiry_date.strftime("%b %d, %Y")}',
+                'expiry_date': batch.expiry_date.isoformat(),
+                'on_hand': batch.on_hand,
+                'category': product.category.category_name if product.category else 'N/A',
+            })
+        # Near Expiry Alert
+        elif batch.expiry_date <= expiry_threshold_date:
+            days_until_expiry = (batch.expiry_date - today).days
+            alerts.append({
+                'id': f'near-expiry-{batch.batch_id}',
+                'type': 'near_expiry',
+                'severity': 'warning',
+                'stock_id': batch.product_stock.stock_id,
+                'product_id': product.product_id,
+                'product_name': product.product_name or f"{product.brand_name} - {product.generic_name}",
+                'batch_id': batch.batch_id,
+                'message': f'Expires in {days_until_expiry} days ({batch.expiry_date.strftime("%b %d, %Y")})',
+                'expiry_date': batch.expiry_date.isoformat(),
+                'days_until_expiry': days_until_expiry,
+                'on_hand': batch.on_hand,
+                'category': product.category.category_name if product.category else 'N/A',
+            })
+    
+    # Sort alerts: critical first, then warning; within severity by type
+    severity_order = {'critical': 0, 'warning': 1}
+    type_order = {'expired': 0, 'out_of_stock': 1, 'near_expiry': 2, 'low_stock': 3}
+    alerts.sort(key=lambda x: (severity_order.get(x['severity'], 2), type_order.get(x['type'], 4)))
+    
+    # Summary counts
+    summary = {
+        'total': len(alerts),
+        'critical': len([a for a in alerts if a['severity'] == 'critical']),
+        'warning': len([a for a in alerts if a['severity'] == 'warning']),
+        'low_stock': len([a for a in alerts if a['type'] == 'low_stock']),
+        'out_of_stock': len([a for a in alerts if a['type'] == 'out_of_stock']),
+        'near_expiry': len([a for a in alerts if a['type'] == 'near_expiry']),
+        'expired': len([a for a in alerts if a['type'] == 'expired']),
+    }
+    
+    return Response({
+        'summary': summary,
+        'alerts': alerts
+    })
+
+
 @ensure_csrf_cookie
 def login_view(request):
     return serve_static_html(request, 'LoginPage/LoginPage.html')

@@ -10,6 +10,10 @@ document.addEventListener("DOMContentLoaded", function(){
   let currentSearchTerm = '';
   let currentStatusFilter = 'all';
 
+  // Check for expand_stock URL parameter (from alerts)
+  const urlParams = new URLSearchParams(window.location.search);
+  const expandStockId = urlParams.get('expand_stock');
+  let hasExpandedFromUrl = false; // Flag to prevent multiple expansions
 
   async function loadStocks() {
     console.log("Reloading Stocks...");
@@ -22,10 +26,49 @@ document.addEventListener("DOMContentLoaded", function(){
       
       // Display current page
       displayStocks();
+      
+      // If expand_stock parameter exists and we haven't expanded yet, search and expand that stock
+      if (expandStockId && !hasExpandedFromUrl) {
+        hasExpandedFromUrl = true;
+        handleExpandStockFromUrl(expandStockId);
+      }
     } catch (error){
       console.error("Network Error: ", error)
     }
   }
+  
+  // Handle expanding a stock from URL parameter - uses search to filter and then expands
+  function handleExpandStockFromUrl(stockId) {
+    // Put stock ID in search bar to filter
+    const searchInput = document.getElementById('stockslist_searchInput');
+    if (searchInput) {
+      searchInput.value = stockId;
+      currentSearchTerm = stockId;
+      currentPage = 1;
+      displayStocks();
+    }
+    
+    // Wait for DOM to update, then expand the stock
+    setTimeout(() => {
+      const batchRow = document.getElementById(`stockslist_batches-${stockId}`);
+      
+      if (batchRow && typeof window.toggleBatches === 'function') {
+        // Expand the stock if not already expanded
+        if (batchRow.style.display !== 'table-row') {
+          window.toggleBatches(stockId);
+        }
+      }
+      
+      // Clean up the URL (remove the parameter but keep on inventory page)
+      window.history.replaceState({}, document.title, '/inventory/');
+    }, 300);
+  }
+  
+  // Expose function globally so alerts.js can call it
+  window.expandStockById = function(stockId) {
+    handleExpandStockFromUrl(stockId);
+  };
+
 
   function displayStocks() {
     const tbody = document.getElementById("stocks-table-body");
@@ -99,7 +142,6 @@ document.addEventListener("DOMContentLoaded", function(){
                     <tr>
                       <th>Batch ID</th>
                       <th>On Hand (per batch)</th>
-                      <th>SKU</th>
                       <th>Expiry Date</th>
                       <th>Status</th>
                       <th>Actions</th>
@@ -107,7 +149,7 @@ document.addEventListener("DOMContentLoaded", function(){
                   </thead>
                   <tbody id="batches-table-body">
                   <tr>
-                    <td colspan="6">
+                    <td colspan="5">
                     <em>No batch data loaded.</em>
                     </td>
                   </tr>
@@ -191,11 +233,10 @@ document.addEventListener("DOMContentLoaded", function(){
   document.getElementById("stockslist_saveBachEditBtn").addEventListener('click', async function() {
     const batch_id = document.getElementById("stockslist_edit_batchId").value;
     const on_hand = document.getElementById("stockslist_edit_onHand").value;
-    const sku = document.getElementById("stockslist_edit_sku");
     const expiry_date = document.getElementById("stockslist_edit_expiryDate").value;
     const remarks = document.getElementById("stockslist_edit_remarks").value.trim();
 
-    if (!on_hand || !sku || !expiry_date){
+    if (!on_hand || !expiry_date){
       alert("Please fill in all required fields.");
       return;
     }
@@ -256,6 +297,11 @@ document.addEventListener("DOMContentLoaded", function(){
         alert("Batch details updated Successfully!");
         stockslist_closeEditBatchModal();
         loadStocks();
+        
+        // Refresh inventory alerts to show any new low stock/near expiry notifications
+        if (window.InventoryAlerts && typeof window.InventoryAlerts.refresh === 'function') {
+          window.InventoryAlerts.refresh();
+        }
       }
     } catch (error){
       console.error("Network Error: ", error);
@@ -291,14 +337,13 @@ async function loadBatches(stockId){
       row.innerHTML = `
         <td>${batch.batch_id}</td>
         <td>${batch.on_hand}</td>
-        <td>SKU PLACEHOLDER</td>
         <td>${batch.expiry_date}</td>
         <td>
           <span class="${getBatchStatusClass(batch.status)}">${batch.status}</span>
         </td>
         <td>
           <button
-            class="action-btn edit-btn" onclick="stockslist_openEditBatchModal('${batch.batch_id}', ${batch.on_hand}, 'SKU PLACEHOLDER', '${batch.expiry_date}')">
+            class="action-btn edit-btn" onclick="stockslist_openEditBatchModal('${batch.batch_id}', ${batch.on_hand}, '${batch.expiry_date}')">
             <i class="bi bi-pencil"></i> Edit
           </button>
         </td>
