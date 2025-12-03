@@ -50,6 +50,9 @@ urlpatterns = [
     path('api/dashboard/top-suppliers/', views.dashboard_top_suppliers, name='api_dashboard_top_suppliers'),
     path('api/dashboard/stock-status/', views.dashboard_stock_status, name='api_dashboard_stock_status'),
     path('api/dashboard/stats/', views.dashboard_stats, name='api_dashboard_stats'),
+    
+    # Inventory alerts
+    path('api/alerts/', views.inventory_alerts, name='api_inventory_alerts'),
 
     path('api/', include(router.urls)),
 ]
