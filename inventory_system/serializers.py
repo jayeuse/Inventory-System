@@ -551,11 +551,11 @@ class UserInformationSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     
     # Write-only fields for creating user and profile together
-    username = serializers.CharField(write_only=True)
-    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
-    email = serializers.EmailField(write_only=True)
-    first_name = serializers.CharField(write_only=True)
-    last_name = serializers.CharField(write_only=True)
+    username = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'}, required=False)
+    email = serializers.EmailField(write_only=True, required=False)
+    first_name = serializers.CharField(write_only=True, required=False)
+    last_name = serializers.CharField(write_only=True, required=False)
     
     # Computed fields
     full_name = serializers.SerializerMethodField()
@@ -595,14 +595,26 @@ class UserInformationSerializer(serializers.ModelSerializer):
         return None
     
     def create(self, validated_data):
-        # Extract User fields
-        username = validated_data.pop('username')
-        password = validated_data.pop('password')
-        email = validated_data.pop('email')
-        first_name = validated_data.pop('first_name')
-        last_name = validated_data.pop('last_name')
+        # Extract User fields - these are required for creation
+        username = validated_data.pop('username', None)
+        password = validated_data.pop('password', None)
+        email = validated_data.pop('email', None)
+        first_name = validated_data.pop('first_name', None)
+        last_name = validated_data.pop('last_name', None)
         
-        # Create User
+        # Validate required fields for creation
+        if not username:
+            raise serializers.ValidationError({'username': 'This field is required.'})
+        if not password:
+            raise serializers.ValidationError({'password': 'This field is required.'})
+        if not email:
+            raise serializers.ValidationError({'email': 'This field is required.'})
+        if not first_name:
+            raise serializers.ValidationError({'first_name': 'This field is required.'})
+        if not last_name:
+            raise serializers.ValidationError({'last_name': 'This field is required.'})
+        
+        # Create User (this triggers signal that auto-creates UserInformation with default role)
         user = User.objects.create_user(
             username=username,
             password=password,
@@ -611,24 +623,33 @@ class UserInformationSerializer(serializers.ModelSerializer):
             last_name=last_name
         )
         
+        # Get the auto-created UserInformation and update it with our custom data
+        user_info = user.user_information
+        
         # Get created_by (only if authenticated)
         request = self.context.get('request')
-        created_by = None
         if request and hasattr(request, 'user') and request.user.is_authenticated:
-            created_by = request.user
+            user_info.created_by = request.user
         
-        # Create UserInformation
-        user_info = UserInformation.objects.create(
-            user=user,
-            created_by=created_by,
-            **validated_data
-        )
+        # Update with the provided data
+        for attr, value in validated_data.items():
+            setattr(user_info, attr, value)
+        user_info.save()
         
         return user_info
     
     def update(self, instance, validated_data):
         # Update User fields if provided
         user = instance.user
+        
+        # Update username if provided
+        new_username = validated_data.pop('username', None)
+        if new_username and new_username != user.username:
+            # Check if username is already taken
+            if User.objects.filter(username=new_username).exclude(pk=user.pk).exists():
+                raise serializers.ValidationError({'username': 'This username is already taken.'})
+            user.username = new_username
+        
         user.email = validated_data.pop('email', user.email)
         user.first_name = validated_data.pop('first_name', user.first_name)
         user.last_name = validated_data.pop('last_name', user.last_name)

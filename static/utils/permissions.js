@@ -55,6 +55,12 @@ function applyPermissions() {
 
   console.log('Applying permissions for role:', currentUserRole);
 
+  // Hide User Management tab for non-admin users (Admin only feature)
+  if (!isAdmin()) {
+    hideElement('.tab[data-tab="users"]');
+    hideElement('#users-content');
+  }
+
   // Hide settings tab for non-admin/staff users
   if (!isStaff()) {
     hideElement('.tab[data-tab="settings"]');
