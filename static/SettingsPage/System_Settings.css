@@ -1040,6 +1040,19 @@ tbody tr:hover {
   border: 1px solid rgba(116, 42, 42, 0.2);
 }
 
+/* User Role Styles */
+.status.admin-role {
+  background: #e8d9f5;
+  color: #6b3fa0;
+  border: 1px solid rgba(107, 63, 160, 0.3);
+}
+
+.status.clerk-role {
+  background: #d9e8f5;
+  color: #3a6ea5;
+  border: 1px solid rgba(58, 110, 165, 0.3);
+}
+
 .pagination {
   display: flex;
   justify-content: space-between;
