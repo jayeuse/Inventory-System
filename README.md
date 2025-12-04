@@ -1,248 +1,236 @@
-# Inventory System
+# Pharmacy Inventory Management System
 
-Django-based inventory management system with automatic database setup.
+A Django-based inventory management system designed for pharmacies. Features real-time stock tracking, batch management with expiry monitoring, order processing, transaction logging, and a modern web interface with role-based access control.
 
-Inventory System — Django-based inventory management for pharmacies. Provides a REST API, admin UI, automated database setup, sample-data utilities, and signal-driven stock and transaction automation.
+---
 
-Quick start (one-step):
+## 📋 Prerequisites
+
+Before running this system, ensure you have the following installed:
+
+- **Python 3.11+** - [Download Python](https://www.python.org/downloads/)
+- **PostgreSQL 14+** - [Download PostgreSQL](https://www.postgresql.org/download/)
+
+---
+
+## 🚀 Quick Start Guide
+
+### Step 1: Extract the Project
+
+Extract the zip file to your desired location:
+```
+Inventory-System/
+├── config/
+├── inventory_system/
+├── static/
+├── docs/
+├── manage.py
+├── requirements.txt
+├── setup.bat
+└── README.md
+```
+
+### Step 2: Configure Database Credentials
+
+Open `config/settings.py` and update the database settings with your PostgreSQL credentials:
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'inventory_system_db',
+        'USER': 'your_postgres_username',      # ← Change this
+        'PASSWORD': 'your_postgres_password',  # ← Change this
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+```
+
+### Step 3: Run Automated Setup
+
+Open a terminal/command prompt in the project folder and run:
 
 ```bash
-git clone <repository-url>
-cd inventory_system
 setup.bat
+```
+
+This will automatically:
+- ✅ Create a virtual environment
+- ✅ Install all dependencies
+- ✅ Create the database (no manual creation needed)
+- ✅ Run all migrations
+- ✅ Set up the database tables
+
+### Step 4: Create an Admin User
+
+```bash
 python manage.py createsuperuser
+```
+
+Follow the prompts to create your admin account.
+
+### Step 5: Load Sample Data (Optional)
+
+To populate the system with sample pharmacy data for testing:
+
+```bash
+python manage.py insert_sample_data
+```
+
+This creates:
+- 5 Categories & 27 Subcategories
+- 43 Products (medications, supplies, etc.)
+- 15 Suppliers
+- 10 Sample Orders with receive history
+- Auto-generated stocks, batches, and transactions
+
+### Step 6: Start the Server
+
+```bash
 python manage.py runserver
 ```
 
-## 🚀 Setup Instructions
+### Step 7: Access the System
 
-### Prerequisites
+Open your browser and navigate to:
 
-- Python 3.11+
-- PostgreSQL installed and running
-
-### Quick Setup
-For simple dependency setup (virtualenv, pip, PostgreSQL), see `SETUP.md`.
-
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd inventory_system
-   ```
-
-2. **Configure database credentials**
-
-   Edit `config/settings.py`:
-
-   ```python
-   DATABASES = {
-       'default': {
-           'ENGINE': 'django.db.backends.postgresql',
-           'NAME': 'inventory_system_db',
-           'USER': 'your_postgres_username',    # ← Update this
-           'PASSWORD': 'your_postgres_password', # ← Update this
-           'HOST': 'localhost',
-           'PORT': '5432',
-       }
-   }
-   ```
-
-3. **Run automated setup**
-
-   ```bash
-   setup.bat
-   ```
-
-   This will:
-
-   - Create virtual environment
-   - Install dependencies
-   - **Automatically create the database** (no manual creation needed!)
-   - Run migrations
-   - Set up all tables
-
-4. **Create admin user**
-
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-5. **Start the server**
-
-   ```bash
-   python manage.py runserver
-   ```
-
-6. **Access the application**
-   - API: http://localhost:8000/api/
-   - Admin: http://localhost:8000/admin/
+| Page | URL |
+|------|-----|
+| **Main Application** | http://localhost:8000/ |
+| **Admin Panel** | http://localhost:8000/admin/ |
+| **API Browser** | http://localhost:8000/api/ |
 
 ---
 
-## 📊 Sample Data Management
+## 🔐 Login & OTP Email Setup (Required)
 
-### Insert Sample Data
+The system uses **OTP (One-Time Password) verification** for login. After entering username/password, a 6-digit code is sent to the user's email address. **This requires Gmail API credentials to be configured.**
 
-Populate your database with realistic pharmacy inventory data:
+### Step 1: Get Gmail API Credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (or select existing)
+3. Navigate to **APIs & Services** → **Enable APIs and Services**
+4. Search for and enable the **Gmail API**
+5. Go to **APIs & Services** → **Credentials**
+6. Click **Create Credentials** → **OAuth client ID**
+7. Select **Desktop application** as the application type
+8. Download the credentials file
+
+### Step 2: Place the Credentials File
+
+Rename the downloaded file to `gmail_credentials.json` and place it in the `.credentials` folder:
+
+```
+Inventory-System/
+└── .credentials/
+    └── gmail_credentials.json   ← Place here (create folder if needed)
+```
+
+### Step 3: Authenticate with Gmail
+
+Run the authentication script:
 
 ```bash
-# Insert all sample data (categories, products, suppliers, orders)
-python manage.py insert_sample_data
-
-# With detailed logging
-python manage.py insert_sample_data --verbose
-
-# Skip orders (only create categories, products, suppliers)
-python manage.py insert_sample_data --skip-orders
-
-# Combine options
-python manage.py insert_sample_data --verbose --skip-orders
+python test_gmail_auth.py
 ```
 
-**What gets created:**
-- ✅ **5 Categories** (Medications, Medical Supplies, Personal Care, Laboratory Supplies, Wellness & Nutrition)
-- ✅ **27 Subcategories** (Antibiotics, Pain Relief, Diagnostic Equipment, etc.)
-- ✅ **43 Products** (Amoxil, Tylenol, Omron BP Monitor, etc.)
-- ✅ **15 Suppliers** (PharmaCare Distributors Inc., MediSupply Solutions, etc.)
-- ✅ **10 Orders** (Mix of Pending, Partially Received, and Completed)
-- ✅ **Auto-generated:**
-  - Product Stocks (created by signals)
-  - Product Batches (created by signals)
-  - Transactions (created by signals)
+- A browser window will open
+- Sign in with the Gmail account that will send OTP emails
+- Grant the requested permissions
+- Token will be saved automatically to `.credentials/token.json`
 
-**Expected Output:**
-```
-================================================================================
-PHARMACY INVENTORY SAMPLE DATA INSERTION
-================================================================================
-Verbose Mode: OFF
-Skip Orders: NO
-================================================================================
+### Step 4: Ensure Users Have Email Addresses
 
-STEP 1: Inserting Categories and Subcategories
---------------------------------------------------------------------------------
-✓ Created category: Medications
-  ✓ Created subcategory: Antibiotics
-  ✓ Created subcategory: Pain Relief
-  ...
-
-✅ Categories: 5 created, 0 skipped
-✅ Subcategories: 27 created, 0 skipped
-
-STEP 2: Inserting Products
---------------------------------------------------------------------------------
-✓ Created product: Amoxil - Amoxicillin 500mg (₱15.50/Capsule)
-✓ Created product: Tylenol - Paracetamol 500mg (₱8.50/Tablet)
-...
-
-✅ Products: 43 created, 0 skipped
-
-STEP 3: Inserting Suppliers
---------------------------------------------------------------------------------
-✓ Created supplier: PharmaCare Distributors Inc. → supplies Amoxil
-...
-
-✅ Suppliers: 15 created, 0 skipped
-
-STEP 4: Inserting Orders, Order Items, and Receive Orders
---------------------------------------------------------------------------------
-
-✓ Created order: ORD-2025-00001 by Sarah Johnson, Head Pharmacist
-  ✓ Order Item ITM-00001: Amoxil (Qty: 500)
-    ✓ Receive Order RCV-00001: 300 units received 14 days ago
-    ✓ Receive Order RCV-00002: 200 units received 13 days ago
-  ...
-
-✅ Orders: 10 created
-✅ Order Items: 27 created
-✅ Receive Orders: 18 created
-
-================================================================================
-INSERTION SUMMARY
-================================================================================
-Categories Created: 5
-Subcategories Created: 27
-Products Created: 43
-Suppliers Created: 15
-Orders Created: 10
-Order Items Created: 27
-Receive Orders Created: 18
-Errors Encountered: 0
-================================================================================
-
-🎉 ALL OPERATIONS COMPLETED SUCCESSFULLY!
-```
-
-### Erase Sample Data
-
-Clean up all sample data when you're done testing:
+All users **must** have a valid email address to receive OTP codes:
 
 ```bash
-# Erase all data (with confirmation prompt)
-python manage.py erase_sample_data
-
-# Force erase without confirmation (DANGEROUS!)
-python manage.py erase_sample_data --force
-
-# Keep categories and subcategories, delete everything else
-python manage.py erase_sample_data --keep-categories
-
-# Verbose mode
-python manage.py erase_sample_data --verbose
+python manage.py shell
 ```
 
-**Confirmation Prompt:**
-```
-⚠️  WARNING: This will DELETE ALL data from the database!
-This action CANNOT be undone!
+```python
+from django.contrib.auth.models import User
 
-Data to be deleted:
-  • Transactions: 18
-  • Receive Orders: 18
-  • Order Items: 27
-  • Orders: 10
-  • Product Batches: 18
-  • Product Stocks: 18
-  • Suppliers: 15
-  • Products: 43
-  • Subcategories: 27
-  • Categories: 5
-  • Archive Logs: 0
+# Check if your admin user has an email
+User.objects.get(username='your_admin_username').email
 
-Type "DELETE ALL DATA" to confirm:
+# Update email if missing
+user = User.objects.get(username='your_admin_username')
+user.email = 'your-email@example.com'
+user.save()
 ```
 
-**⚠️ Important Notes:**
-- Type exactly `DELETE ALL DATA` (case-sensitive) to confirm
-- Use `--force` flag to skip confirmation (be careful!)
-- Deletion is **permanent** and uses atomic transactions
-- Deletes in correct order to respect foreign key constraints
+> **Important:** OTP codes are valid for 10 minutes. See `docs/OTP_QUICK_START.md` for more details.
 
 ---
 
-## Alternative: Manual Setup
+## 📱 System Features
 
-If you prefer step-by-step:
+### Dashboard
+- Overview statistics (products, orders, stock levels)
+- Visual charts for inventory distribution
+- Low stock and expiry alerts
+
+### Products Management
+- Add/edit/archive products
+- Category and subcategory organization
+- Set low stock and expiry thresholds
+
+### Inventory Management
+- Real-time stock levels
+- Batch tracking with expiry dates
+- Stock status indicators (Normal, Low Stock, Near Expiry, Expired, Out of Stock)
+
+### Orders & Receiving
+- Create purchase orders
+- Partial and complete receiving
+- Automatic stock updates on receive
+
+### Transactions
+- Complete audit trail
+- Filter by type, date, product
+- Automatic transaction logging
+
+### Settings
+- System configuration
+- User management with roles (Admin, Staff, Clerk)
+- Supplier management
+
+### Notifications
+- Low stock alerts
+- Near expiry warnings
+- Real-time notification bell
+
+---
+
+## 🛠️ Manual Setup (Alternative)
+
+If `setup.bat` doesn't work, follow these steps manually:
 
 ```bash
-# 1. Create and activate virtual environment
-python -m venv env
-env\Scripts\activate
+# 1. Create virtual environment
+python -m venv .venv
 
-# 2. Install dependencies
+# 2. Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 3. Auto-create database and run migrations
+# 4. Initialize database
 python manage.py init_db
 
-# 4. Create admin user
+# 5. Create admin user
 python manage.py createsuperuser
 
-# 5. Insert sample data (optional)
+# 6. (Optional) Load sample data
 python manage.py insert_sample_data
 
-# 6. Run server
+# 7. Run server
 python manage.py runserver
 ```
 
@@ -250,147 +238,121 @@ python manage.py runserver
 
 ## 📋 Common Commands
 
-```bash
-# Database Management
-python manage.py init_db                    # Reset/recreate database
-python manage.py migrate                    # Run migrations
-python manage.py makemigrations             # Create new migrations
-
-# Sample Data
-python manage.py insert_sample_data         # Insert sample data
-python manage.py insert_sample_data --verbose  # With detailed logging
-python manage.py erase_sample_data          # Erase all sample data
-
-# User Management
-python manage.py createsuperuser            # Create admin user
-
-# Development Server
-python manage.py runserver                  # Start development server
-python manage.py test                       # Run tests
-```
+| Command | Description |
+|---------|-------------|
+| `python manage.py runserver` | Start the development server |
+| `python manage.py createsuperuser` | Create an admin user |
+| `python manage.py insert_sample_data` | Load sample pharmacy data |
+| `python manage.py erase_sample_data` | Clear all data from database |
+| `python manage.py init_db` | Reset and recreate database |
+| `python manage.py migrate` | Apply database migrations |
 
 ---
 
-## 🛠️ Troubleshooting
+## 🔧 Troubleshooting
 
-**"connection refused" or "password authentication failed"**
+### "Connection refused" or "Password authentication failed"
+- Ensure PostgreSQL is running
+- Verify credentials in `config/settings.py`
+- Check that PostgreSQL is listening on port 5432
 
-- Make sure PostgreSQL is running
-- Check username/password in `config/settings.py`
+### "Permission denied to create database"
+- Ensure your PostgreSQL user has `CREATEDB` permission
+- Or manually create the database:
+  ```sql
+  CREATE DATABASE inventory_system_db;
+  ```
 
-**"permission denied to create database"**
-
-- Ensure PostgreSQL user has `CREATEDB` permission
-- Or manually create database: `CREATE DATABASE inventory_system_db;`
-
-**"module not found"**
-
-- Make sure virtual environment is activated
+### "Module not found" errors
+- Ensure virtual environment is activated (you should see `(.venv)` in terminal)
 - Run: `pip install -r requirements.txt`
 
-**Sample data already exists**
+### Sample data already exists
+- Run `python manage.py erase_sample_data` first
+- The insert command skips existing records automatically
 
-- Run `python manage.py erase_sample_data` to clean up
-- Or skip existing data (command will show warnings)
+### Server won't start
+- Check if port 8000 is already in use
+- Try: `python manage.py runserver 8080` (different port)
 
----
-
-## 📚 API Endpoints
-
-After starting the server:
-
-- **Products**: `/api/products/`
-- **Categories**: `/api/categories/`
-- **Subcategories**: `/api/subcategories/`
-- **Suppliers**: `/api/suppliers/`
-- **Orders**: `/api/orders/`
-- **Order Items**: `/api/order-items/`
-- **Receive Orders**: `/api/receive-orders/`
-- **Product Stocks**: `/api/product-stocks/`
-- **Product Batches**: `/api/product-batches/`
-- **Transactions**: `/api/transactions/`
-- **Archive Logs**: `/api/archive-logs/`
-
-Browse all endpoints: http://localhost:8000/api/
-
----
-
-## 🎯 Features
-
-- **Automatic Database Setup** - No manual database creation required
-- **Sample Data Management** - Insert and erase realistic pharmacy data
-- **Inventory Management** - Products, categories, suppliers, stock tracking
-- **Order Processing** - Create orders and track receipts (partial/complete)
-- **Batch Tracking** - Monitor product batches with expiry dates
-- **Transaction Logging** - Complete audit trail with automatic recording
-- **Archive System** - Archive/unarchive records with full history
-- **Signal-driven Updates** - Automatic stock updates via Django signals
-- **REST API** - Full CRUD operations via Django REST Framework
-- **Admin Interface** - Built-in Django admin panel
-
----
-
-## 🔄 Workflow Example
-
-```bash
-# 1. Setup database
-python manage.py init_db
-
-# 2. Create admin user
-python manage.py createsuperuser
-
-# 3. Insert sample data for testing
-python manage.py insert_sample_data --verbose
-
-# 4. Start development server
-python manage.py runserver
-
-# 5. Test APIs and features
-# Visit http://localhost:8000/api/
-
-# 6. When done testing, clean up
-python manage.py erase_sample_data
-
-# 7. Ready for production data!
-```
+### OTP emails not being sent
+- Ensure `gmail_credentials.json` is in the `.credentials/` folder
+- Run `python test_gmail_auth.py` to re-authenticate
+- Check that the user has a valid email address
+- Check your spam/junk folder for the OTP email
 
 ---
 
 ## 📁 Project Structure
 
 ```
-inventory_system/
-├── config/                     # Project settings and URLs
-├── inventory_system/           # Main application
-│   ├── models.py              # Database models
-│   ├── serializers.py         # API serializers
-│   ├── views.py               # API viewsets
-│   ├── signals.py             # Django signals for automation
-│   ├── services/              # Business logic layer
-│   │   ├── inventory_service.py
-│   │   ├── order_service.py
-│   │   └── transaction_service.py
-│   └── management/            # Custom commands
-│       └── commands/
-│           ├── init_db.py     # Database initialization
-│           ├── insert_sample_data.py  # Sample data insertion
-│           └── erase_sample_data.py   # Sample data deletion
+Inventory-System/
+├── config/                    # Django project settings
+│   ├── settings.py           # Main configuration
+│   ├── urls.py               # URL routing
+│   └── wsgi.py               # WSGI configuration
+│
+├── inventory_system/          # Main application
+│   ├── models.py             # Database models
+│   ├── views.py              # API views
+│   ├── serializers.py        # REST API serializers
+│   ├── signals.py            # Automatic stock/transaction updates
+│   ├── permissions.py        # Role-based access control
+│   ├── services/             # Business logic layer
+│   └── management/commands/  # Custom CLI commands
+│
+├── static/                    # Frontend assets
+│   ├── DashboardPage/        # Dashboard UI
+│   ├── ProductPage/          # Products management UI
+│   ├── InventoryPage/        # Inventory management UI
+│   ├── TransactionPage/      # Transactions UI
+│   ├── SettingsPage/         # Settings UI
+│   ├── LoginPage/            # Authentication UI
+│   └── Sidebar/              # Navigation sidebar
+│
+├── docs/                      # Documentation
+├── testing/                   # Test scripts
 ├── manage.py                  # Django CLI
-├── requirements.txt           # Dependencies
+├── requirements.txt           # Python dependencies
 ├── setup.bat                  # Automated setup script
 └── README.md                  # This file
 ```
 
 ---
 
-## 💡 Tips
+## 📚 API Endpoints
 
-- **Always use `--verbose`** when debugging sample data insertion
-- **Use `--keep-categories`** if you want to reuse categories with different products
-- **Sample data is idempotent** - running insert twice won't duplicate data (it skips existing)
-- **Signals automatically create** stocks, batches, and transactions when receiving orders
-- **Test order workflows** - sample data includes pending, partial, and completed orders
+| Endpoint | Description |
+|----------|-------------|
+| `/api/products/` | Product CRUD operations |
+| `/api/categories/` | Category management |
+| `/api/subcategories/` | Subcategory management |
+| `/api/suppliers/` | Supplier management |
+| `/api/orders/` | Purchase orders |
+| `/api/order-items/` | Order line items |
+| `/api/receive-orders/` | Receiving records |
+| `/api/product-stocks/` | Stock levels |
+| `/api/product-batches/` | Batch tracking |
+| `/api/transactions/` | Transaction history |
+| `/api/alerts/` | Low stock & expiry alerts |
+| `/api/users/` | User management |
 
 ---
 
-That's it! You're ready to start developing. 🚀
+## 👥 User Roles
+
+| Role | Permissions |
+|------|-------------|
+| **Admin** | Full access to all features including user management |
+| **Staff** | Full access except user management |
+| **Clerk** | Read-only access to inventory and transactions |
+
+---
+
+## 📧 Contact & Support
+
+For questions or issues, please refer to the documentation in the `docs/` folder or contact the development team.
+
+---
+
+**Built with Django, Django REST Framework, and PostgreSQL** 🐍
