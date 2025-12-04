@@ -507,7 +507,8 @@ class ProductBatchViewSet(viewsets.ModelViewSet):
     permission_classes = [InventoryPermission]  # Admin/Staff full access, Clerk read-only
 
     def get_queryset(self):
-        queryset = ProductBatch.objects.all().order_by('batch_id')
+        # Filter out batches with 0 on_hand (hide depleted batches from UI)
+        queryset = ProductBatch.objects.filter(on_hand__gt=0).order_by('batch_id')
         stock_id = self.request.query_params.get('stock_id', None)
         
         if stock_id:
