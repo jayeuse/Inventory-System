@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.db import models
 from django.utils.timezone import localtime
+from django.utils import timezone
 from django.contrib.auth.models import User
 from .models import Supplier, SupplierProduct, Category, Subcategory, Product, ProductStocks, ProductBatch, OrderItem, Order, ReceiveOrder, Transaction, ArchiveLog, UserInformation
 
@@ -256,6 +257,7 @@ class ArchiveLogSerializer(serializers.ModelSerializer):
 class ProductBatchSerializer(serializers.ModelSerializer):
     stock_id = serializers.CharField(source='product_stock.stock_id', read_only=True)
     product_name = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()  # Calculate status on-the-fly
     
     # Optional fields for custom transaction details when adjusting on_hand
     transaction_remarks = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -281,14 +283,44 @@ class ProductBatchSerializer(serializers.ModelSerializer):
     def get_product_name(self, obj):
         return f"{obj.product_stock.product.brand_name} {obj.product_stock.product.generic_name}"
     
+    def get_status(self, obj):
+        """
+        Calculate batch status in real-time based on current data.
+        This ensures status is always accurate even when POS updates DB directly.
+        
+        Priority order:
+        1. Out of Stock (on_hand = 0)
+        2. Expired (past expiry date)
+        3. Near Expiry (within threshold)
+        4. Low Stock (below threshold but not zero)
+        5. Normal (default)
+        """
+        current_date = timezone.now().date()
+        product = obj.product_stock.product
+        expiry_threshold = product.expiry_threshold_days
+        low_stock_threshold = product.low_stock_threshold
+        
+        days_until_expiry = (obj.expiry_date - current_date).days
+        
+        if obj.on_hand == 0:
+            return 'Out of Stock'
+        elif days_until_expiry <= 0:
+            return 'Expired'
+        elif days_until_expiry <= expiry_threshold:
+            return 'Near Expiry'
+        elif obj.on_hand <= low_stock_threshold:
+            return 'Low Stock'
+        else:
+            return 'Normal'
+    
 
 class ProductStocksSerializer(serializers.ModelSerializer):
     brand_name = serializers.CharField(source='product.brand_name', read_only=True)
     generic_name = serializers.CharField(source='product.generic_name', read_only=True)
     product_id = serializers.CharField(source='product.product_id', read_only=True)
     product_name = serializers.SerializerMethodField()
-
-    batches = ProductBatchSerializer(many = True, read_only = True, source = 'productbatch_set')
+    status = serializers.SerializerMethodField()  # Calculate status on-the-fly
+    batches = serializers.SerializerMethodField()  # Filter out 0-stock batches
     
     class Meta:
         model = ProductStocks
@@ -306,6 +338,59 @@ class ProductStocksSerializer(serializers.ModelSerializer):
     
     def get_product_name(self, obj):
         return f"{obj.product.brand_name} {obj.product.generic_name}"
+    
+    def get_batches(self, obj):
+        """Return only batches with on_hand > 0 (hide depleted batches from UI)"""
+        active_batches = obj.productbatch_set.filter(on_hand__gt=0)
+        return ProductBatchSerializer(active_batches, many=True).data
+    
+    def get_status(self, obj):
+        """
+        Calculate stock status in real-time based on batches WITH stock.
+        Batches with 0 on_hand are ignored (they're hidden from UI).
+        
+        Status Priority (most critical first):
+        1. Out of Stock - No batches have stock (total = 0)
+        2. Expired - At least one batch with stock is expired
+        3. Near Expiry - At least one batch with stock is near expiry
+        4. Low Stock - Total on hand is below threshold
+        5. Normal - All batches are normal
+        """
+        current_date = timezone.now().date()
+        product = obj.product
+        expiry_threshold = product.expiry_threshold_days
+        low_stock_threshold = product.low_stock_threshold
+        
+        # Only consider batches with stock > 0
+        batches = obj.productbatch_set.filter(on_hand__gt=0)
+        
+        if not batches.exists():
+            return 'Out of Stock'
+        
+        # Calculate total on hand (only from active batches)
+        total_on_hand = sum(b.on_hand for b in batches)
+        
+        # Track the most critical status found
+        has_expired = False
+        has_near_expiry = False
+        
+        for batch in batches:
+            days_until_expiry = (batch.expiry_date - current_date).days
+            
+            if days_until_expiry <= 0:
+                has_expired = True
+            elif days_until_expiry <= expiry_threshold:
+                has_near_expiry = True
+        
+        # Return the most critical status
+        if has_expired:
+            return 'Expired'
+        elif has_near_expiry:
+            return 'Near Expiry'
+        elif total_on_hand <= low_stock_threshold:
+            return 'Low Stock'
+        else:
+            return 'Normal'
 
 class OrderItemSerializer(serializers.ModelSerializer):
     # Read-only display fields
